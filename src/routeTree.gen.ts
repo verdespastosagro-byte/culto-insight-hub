@@ -24,7 +24,9 @@ import { Route as AuthenticatedCongregacoesRouteImport } from './routes/_authent
 import { Route as AuthenticatedAtendimentosRouteImport } from './routes/_authenticated/atendimentos'
 import { Route as AuthenticatedAgendaRouteImport } from './routes/_authenticated/agenda'
 import { Route as AuthenticatedCultosIndexRouteImport } from './routes/_authenticated/cultos.index'
+import { Route as AuthenticatedCultoInteligenteIndexRouteImport } from './routes/_authenticated/culto-inteligente.index'
 import { Route as AuthenticatedCultosIdRouteImport } from './routes/_authenticated/cultos.$id'
+import { Route as AuthenticatedCultoInteligenteHistoricoRouteImport } from './routes/_authenticated/culto-inteligente.historico'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -103,11 +105,23 @@ const AuthenticatedCultosIndexRoute =
     path: '/cultos/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCultoInteligenteIndexRoute =
+  AuthenticatedCultoInteligenteIndexRouteImport.update({
+    id: '/culto-inteligente/',
+    path: '/culto-inteligente/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCultosIdRoute = AuthenticatedCultosIdRouteImport.update({
   id: '/cultos/$id',
   path: '/cultos/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCultoInteligenteHistoricoRoute =
+  AuthenticatedCultoInteligenteHistoricoRouteImport.update({
+    id: '/culto-inteligente/historico',
+    path: '/culto-inteligente/historico',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -123,7 +137,9 @@ export interface FileRoutesByFullPath {
   '/palavras': typeof AuthenticatedPalavrasRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/visitantes': typeof AuthenticatedVisitantesRoute
+  '/culto-inteligente/historico': typeof AuthenticatedCultoInteligenteHistoricoRoute
   '/cultos/$id': typeof AuthenticatedCultosIdRoute
+  '/culto-inteligente/': typeof AuthenticatedCultoInteligenteIndexRoute
   '/cultos/': typeof AuthenticatedCultosIndexRoute
 }
 export interface FileRoutesByTo {
@@ -140,7 +156,9 @@ export interface FileRoutesByTo {
   '/palavras': typeof AuthenticatedPalavrasRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/visitantes': typeof AuthenticatedVisitantesRoute
+  '/culto-inteligente/historico': typeof AuthenticatedCultoInteligenteHistoricoRoute
   '/cultos/$id': typeof AuthenticatedCultosIdRoute
+  '/culto-inteligente': typeof AuthenticatedCultoInteligenteIndexRoute
   '/cultos': typeof AuthenticatedCultosIndexRoute
 }
 export interface FileRoutesById {
@@ -159,7 +177,9 @@ export interface FileRoutesById {
   '/_authenticated/palavras': typeof AuthenticatedPalavrasRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/visitantes': typeof AuthenticatedVisitantesRoute
+  '/_authenticated/culto-inteligente/historico': typeof AuthenticatedCultoInteligenteHistoricoRoute
   '/_authenticated/cultos/$id': typeof AuthenticatedCultosIdRoute
+  '/_authenticated/culto-inteligente/': typeof AuthenticatedCultoInteligenteIndexRoute
   '/_authenticated/cultos/': typeof AuthenticatedCultosIndexRoute
 }
 export interface FileRouteTypes {
@@ -178,7 +198,9 @@ export interface FileRouteTypes {
     | '/palavras'
     | '/relatorios'
     | '/visitantes'
+    | '/culto-inteligente/historico'
     | '/cultos/$id'
+    | '/culto-inteligente/'
     | '/cultos/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -195,7 +217,9 @@ export interface FileRouteTypes {
     | '/palavras'
     | '/relatorios'
     | '/visitantes'
+    | '/culto-inteligente/historico'
     | '/cultos/$id'
+    | '/culto-inteligente'
     | '/cultos'
   id:
     | '__root__'
@@ -213,7 +237,9 @@ export interface FileRouteTypes {
     | '/_authenticated/palavras'
     | '/_authenticated/relatorios'
     | '/_authenticated/visitantes'
+    | '/_authenticated/culto-inteligente/historico'
     | '/_authenticated/cultos/$id'
+    | '/_authenticated/culto-inteligente/'
     | '/_authenticated/cultos/'
   fileRoutesById: FileRoutesById
 }
@@ -331,11 +357,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCultosIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/culto-inteligente/': {
+      id: '/_authenticated/culto-inteligente/'
+      path: '/culto-inteligente'
+      fullPath: '/culto-inteligente/'
+      preLoaderRoute: typeof AuthenticatedCultoInteligenteIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/cultos/$id': {
       id: '/_authenticated/cultos/$id'
       path: '/cultos/$id'
       fullPath: '/cultos/$id'
       preLoaderRoute: typeof AuthenticatedCultosIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/culto-inteligente/historico': {
+      id: '/_authenticated/culto-inteligente/historico'
+      path: '/culto-inteligente/historico'
+      fullPath: '/culto-inteligente/historico'
+      preLoaderRoute: typeof AuthenticatedCultoInteligenteHistoricoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
   }
@@ -352,7 +392,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPalavrasRoute: typeof AuthenticatedPalavrasRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedVisitantesRoute: typeof AuthenticatedVisitantesRoute
+  AuthenticatedCultoInteligenteHistoricoRoute: typeof AuthenticatedCultoInteligenteHistoricoRoute
   AuthenticatedCultosIdRoute: typeof AuthenticatedCultosIdRoute
+  AuthenticatedCultoInteligenteIndexRoute: typeof AuthenticatedCultoInteligenteIndexRoute
   AuthenticatedCultosIndexRoute: typeof AuthenticatedCultosIndexRoute
 }
 
@@ -367,7 +409,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPalavrasRoute: AuthenticatedPalavrasRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedVisitantesRoute: AuthenticatedVisitantesRoute,
+  AuthenticatedCultoInteligenteHistoricoRoute:
+    AuthenticatedCultoInteligenteHistoricoRoute,
   AuthenticatedCultosIdRoute: AuthenticatedCultosIdRoute,
+  AuthenticatedCultoInteligenteIndexRoute:
+    AuthenticatedCultoInteligenteIndexRoute,
   AuthenticatedCultosIndexRoute: AuthenticatedCultosIndexRoute,
 }
 
