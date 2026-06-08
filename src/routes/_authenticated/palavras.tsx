@@ -109,11 +109,11 @@ function Page() {
           <p className="text-sm text-muted-foreground">Histórico das mensagens.</p>
         </div>
         {canEdit && (
-          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setCongId(""); setCultoId(""); } }}>
+          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setCongId(""); setCultoId(""); setResumo(""); } }}>
             <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" />Nova palavra</Button></DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>Registrar palavra</DialogTitle></DialogHeader>
-              <form onSubmit={handleSave} className="space-y-3">
+              <form ref={formRef} onSubmit={handleSave} className="space-y-3">
                 <div>
                   <Label>Igreja / Congregação</Label>
                   <Select value={congId} onValueChange={(v) => { setCongId(v); setCultoId(""); }}>
