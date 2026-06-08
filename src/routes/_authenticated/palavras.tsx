@@ -10,9 +10,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { formatDate, FUNCOES_VISITANTE } from "@/lib/constants";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Sparkles, Loader2 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { gerarResumoPalavra } from "@/lib/palavras.functions";
 
 export const Route = createFileRoute("/_authenticated/palavras")({ component: Page });
 
@@ -23,6 +25,31 @@ function Page() {
   const [open, setOpen] = useState(false);
   const [congId, setCongId] = useState<string>("");
   const [cultoId, setCultoId] = useState<string>("");
+  const [resumo, setResumo] = useState("");
+  const [gerando, setGerando] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const gerarResumo = useServerFn(gerarResumoPalavra);
+
+  async function handleGerarResumo() {
+    const fd = new FormData(formRef.current ?? undefined);
+    const tema = String(fd.get("tema") || "").trim();
+    const texto_biblico = String(fd.get("texto_biblico") || "").trim();
+    const nome_irmao = String(fd.get("nome_irmao") || "").trim();
+    if (!tema && !texto_biblico) {
+      toast.error("Informe o tema ou o texto bíblico antes de gerar o resumo");
+      return;
+    }
+    setGerando(true);
+    try {
+      const r = await gerarResumo({ data: { tema, texto_biblico, nome_irmao } });
+      setResumo(r.resumo);
+      toast.success("Resumo gerado");
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao gerar resumo");
+    } finally {
+      setGerando(false);
+    }
+  }
 
   const { data } = useQuery({
     queryKey: ["palavras-all"],
@@ -66,7 +93,7 @@ function Page() {
     const { error } = await supabase.from("palavras").insert(payload);
     if (error) { toast.error(error.message); return; }
     toast.success("Palavra registrada");
-    setOpen(false); setCongId(""); setCultoId("");
+    setOpen(false); setCongId(""); setCultoId(""); setResumo("");
     qc.invalidateQueries({ queryKey: ["palavras-all"] });
   }
 
@@ -82,11 +109,11 @@ function Page() {
           <p className="text-sm text-muted-foreground">Histórico das mensagens.</p>
         </div>
         {canEdit && (
-          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setCongId(""); setCultoId(""); } }}>
+          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setCongId(""); setCultoId(""); setResumo(""); } }}>
             <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" />Nova palavra</Button></DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>Registrar palavra</DialogTitle></DialogHeader>
-              <form onSubmit={handleSave} className="space-y-3">
+              <form ref={formRef} onSubmit={handleSave} className="space-y-3">
                 <div>
                   <Label>Igreja / Congregação</Label>
                   <Select value={congId} onValueChange={(v) => { setCongId(v); setCultoId(""); }}>
@@ -130,7 +157,16 @@ function Page() {
                 </div>
                 <div><Label>Onde foi lido (texto bíblico)</Label><Input name="texto_biblico" placeholder="Ex.: Salmos 23" /></div>
                 <div><Label>Tema</Label><Input name="tema" /></div>
-                <div><Label>Resumo da mensagem</Label><Textarea name="resumo" rows={3} /></div>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <Label>Resumo da mensagem</Label>
+                    <Button type="button" size="sm" variant="outline" onClick={handleGerarResumo} disabled={gerando}>
+                      {gerando ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5" />}
+                      Gerar com IA
+                    </Button>
+                  </div>
+                  <Textarea name="resumo" rows={4} value={resumo} onChange={(e) => setResumo(e.target.value)} placeholder="Clique em 'Gerar com IA' após informar tema/texto, ou escreva manualmente." />
+                </div>
                 <DialogFooter><Button type="submit">Registrar</Button></DialogFooter>
               </form>
             </DialogContent>
