@@ -319,7 +319,7 @@ export const salvarCultoConfirmado = createServerFn({ method: "POST" })
         nome: a.nome,
         cargo: a.cargo ?? null,
         congregacao_origem: a.congregacao_origem ?? null,
-        cidade_origem: a.cidade_origem ?? null,
+        cidade: a.cidade_origem ?? null,
         observacoes: a.observacoes ?? null,
       }));
       const r = await supabase.from("atendimentos").insert(rows);
@@ -331,8 +331,7 @@ export const salvarCultoConfirmado = createServerFn({ method: "POST" })
         culto_id: cultoId,
         nome: v.nome,
         congregacao_origem: v.congregacao_origem ?? null,
-        cidade_origem: v.cidade_origem ?? null,
-        observacoes: v.observacoes ?? null,
+        cidade: v.cidade_origem ?? null,
       }));
       const r = await supabase.from("visitantes").insert(rows);
       if (r.error) throw new Error(r.error.message);
