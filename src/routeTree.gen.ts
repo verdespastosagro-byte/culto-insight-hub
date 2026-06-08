@@ -17,6 +17,7 @@ import { Route as AuthenticatedVisitantesRouteImport } from './routes/_authentic
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedPalavrasRouteImport } from './routes/_authenticated/palavras'
 import { Route as AuthenticatedMusicosRouteImport } from './routes/_authenticated/musicos'
+import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
 import { Route as AuthenticatedHinosRouteImport } from './routes/_authenticated/hinos'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCongregacoesRouteImport } from './routes/_authenticated/congregacoes'
@@ -62,6 +63,11 @@ const AuthenticatedPalavrasRoute = AuthenticatedPalavrasRouteImport.update({
 const AuthenticatedMusicosRoute = AuthenticatedMusicosRouteImport.update({
   id: '/musicos',
   path: '/musicos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedHinosRoute = AuthenticatedHinosRouteImport.update({
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/congregacoes': typeof AuthenticatedCongregacoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/hinos': typeof AuthenticatedHinosRoute
+  '/insights': typeof AuthenticatedInsightsRoute
   '/musicos': typeof AuthenticatedMusicosRoute
   '/palavras': typeof AuthenticatedPalavrasRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
@@ -128,6 +135,7 @@ export interface FileRoutesByTo {
   '/congregacoes': typeof AuthenticatedCongregacoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/hinos': typeof AuthenticatedHinosRoute
+  '/insights': typeof AuthenticatedInsightsRoute
   '/musicos': typeof AuthenticatedMusicosRoute
   '/palavras': typeof AuthenticatedPalavrasRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
@@ -146,6 +154,7 @@ export interface FileRoutesById {
   '/_authenticated/congregacoes': typeof AuthenticatedCongregacoesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/hinos': typeof AuthenticatedHinosRoute
+  '/_authenticated/insights': typeof AuthenticatedInsightsRoute
   '/_authenticated/musicos': typeof AuthenticatedMusicosRoute
   '/_authenticated/palavras': typeof AuthenticatedPalavrasRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
@@ -164,6 +173,7 @@ export interface FileRouteTypes {
     | '/congregacoes'
     | '/dashboard'
     | '/hinos'
+    | '/insights'
     | '/musicos'
     | '/palavras'
     | '/relatorios'
@@ -180,6 +190,7 @@ export interface FileRouteTypes {
     | '/congregacoes'
     | '/dashboard'
     | '/hinos'
+    | '/insights'
     | '/musicos'
     | '/palavras'
     | '/relatorios'
@@ -197,6 +208,7 @@ export interface FileRouteTypes {
     | '/_authenticated/congregacoes'
     | '/_authenticated/dashboard'
     | '/_authenticated/hinos'
+    | '/_authenticated/insights'
     | '/_authenticated/musicos'
     | '/_authenticated/palavras'
     | '/_authenticated/relatorios'
@@ -270,6 +282,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMusicosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/insights': {
+      id: '/_authenticated/insights'
+      path: '/insights'
+      fullPath: '/insights'
+      preLoaderRoute: typeof AuthenticatedInsightsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/hinos': {
       id: '/_authenticated/hinos'
       path: '/hinos'
@@ -328,6 +347,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCongregacoesRoute: typeof AuthenticatedCongregacoesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHinosRoute: typeof AuthenticatedHinosRoute
+  AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
   AuthenticatedMusicosRoute: typeof AuthenticatedMusicosRoute
   AuthenticatedPalavrasRoute: typeof AuthenticatedPalavrasRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
@@ -342,6 +362,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCongregacoesRoute: AuthenticatedCongregacoesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHinosRoute: AuthenticatedHinosRoute,
+  AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,
   AuthenticatedMusicosRoute: AuthenticatedMusicosRoute,
   AuthenticatedPalavrasRoute: AuthenticatedPalavrasRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
@@ -362,3 +383,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

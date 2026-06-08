@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { generateText } from "ai";
 
 export const generateInsights = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -23,7 +25,6 @@ export const generateInsights = createServerFn({ method: "POST" })
     const atendimentos = atendR.data ?? [];
     const congs = congR.data ?? [];
 
-    // Pre-agregação
     const hinoMap: Record<number, number> = {};
     hinos.forEach((h: any) => { hinoMap[h.numero] = (hinoMap[h.numero] ?? 0) + 1; });
     const topHinos = Object.entries(hinoMap).sort((a, b) => b[1] - a[1]).slice(0, 10)
@@ -57,8 +58,11 @@ export const generateInsights = createServerFn({ method: "POST" })
       return { stats, resumo: "Ainda não há registros suficientes para gerar insights. Registre cultos, hinos e palavras para receber análises automáticas." };
     }
 
-    const { generateText } = await import("ai");
-    const provider = createGateway(key);
+    const provider = createOpenAICompatible({
+      name: "lovable",
+      baseURL: "https://ai.gateway.lovable.dev/v1",
+      headers: { "Lovable-API-Key": key, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
+    });
 
     const prompt = `Você é um assistente analítico para um sistema interno da Congregação Cristã no Brasil (CCB).
 Com base nos dados agregados abaixo (JSON), produza um RESUMO conciso em português brasileiro com:
@@ -69,7 +73,7 @@ Com base nos dados agregados abaixo (JSON), produza um RESUMO conciso em portugu
 4. **Congregações** — onde há mais atividade.
 5. **Recomendações** — 2 sugestões práticas baseadas nos dados.
 
-Use linguagem respeitosa e formal, com tom pastoral. Formate em markdown com títulos curtos (###) e listas. Não invente dados que não estejam no JSON.
+Use linguagem respeitosa e formal, com tom pastoral. Formate em markdown com títulos curtos (###) e listas curtas. Não invente dados que não estejam no JSON.
 
 Dados:
 \`\`\`json
@@ -86,12 +90,3 @@ ${JSON.stringify(stats, null, 2)}
       return { stats, resumo: `Não foi possível gerar o resumo automático no momento (${e?.message ?? "erro"}). Os números acima foram calculados a partir dos seus dados.` };
     }
   });
-
-function createGateway(key: string) {
-  const { createOpenAICompatible } = require("@ai-sdk/openai-compatible");
-  return createOpenAICompatible({
-    name: "lovable",
-    baseURL: "https://ai.gateway.lovable.dev/v1",
-    headers: { "Lovable-API-Key": key, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
-  });
-}
