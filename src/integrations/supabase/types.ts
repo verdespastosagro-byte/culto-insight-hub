@@ -183,6 +183,90 @@ export type Database = {
           },
         ]
       }
+      cultos_inteligentes: {
+        Row: {
+          audio_mime: string | null
+          audio_path: string | null
+          audio_size_bytes: number | null
+          cidade_detectada: string | null
+          congregacao_id: string | null
+          created_at: string
+          culto_id: string | null
+          duracao_segundos: number | null
+          encerrado_em: string | null
+          erro_mensagem: string | null
+          extracao_json: Json | null
+          id: string
+          iniciado_em: string
+          latitude: number | null
+          longitude: number | null
+          status: string
+          transcricao_json: Json | null
+          transcricao_texto: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audio_mime?: string | null
+          audio_path?: string | null
+          audio_size_bytes?: number | null
+          cidade_detectada?: string | null
+          congregacao_id?: string | null
+          created_at?: string
+          culto_id?: string | null
+          duracao_segundos?: number | null
+          encerrado_em?: string | null
+          erro_mensagem?: string | null
+          extracao_json?: Json | null
+          id?: string
+          iniciado_em?: string
+          latitude?: number | null
+          longitude?: number | null
+          status?: string
+          transcricao_json?: Json | null
+          transcricao_texto?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audio_mime?: string | null
+          audio_path?: string | null
+          audio_size_bytes?: number | null
+          cidade_detectada?: string | null
+          congregacao_id?: string | null
+          created_at?: string
+          culto_id?: string | null
+          duracao_segundos?: number | null
+          encerrado_em?: string | null
+          erro_mensagem?: string | null
+          extracao_json?: Json | null
+          id?: string
+          iniciado_em?: string
+          latitude?: number | null
+          longitude?: number | null
+          status?: string
+          transcricao_json?: Json | null
+          transcricao_texto?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cultos_inteligentes_congregacao_id_fkey"
+            columns: ["congregacao_id"]
+            isOneToOne: false
+            referencedRelation: "congregacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cultos_inteligentes_culto_id_fkey"
+            columns: ["culto_id"]
+            isOneToOne: false
+            referencedRelation: "cultos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       escalas: {
         Row: {
           created_at: string
