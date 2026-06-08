@@ -119,7 +119,11 @@ function CultoDetail() {
   );
 }
 
-function Section({ title, icon: Icon, items, renderItem, onDelete, form, canEdit, empty }: any) {
+type SectionProps = {
+  title: string; icon: any; items: any[]; renderItem: (it: any) => any;
+  onDelete: (id: string) => void; form: (close: () => void) => any; canEdit: boolean; empty: string;
+};
+function Section({ title, icon: Icon, items, renderItem, onDelete, form, canEdit, empty }: SectionProps) {
   const [open, setOpen] = useState(false);
   return (
     <Card className="shadow-[var(--shadow-card)]">
