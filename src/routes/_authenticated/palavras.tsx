@@ -25,6 +25,31 @@ function Page() {
   const [open, setOpen] = useState(false);
   const [congId, setCongId] = useState<string>("");
   const [cultoId, setCultoId] = useState<string>("");
+  const [resumo, setResumo] = useState("");
+  const [gerando, setGerando] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const gerarResumo = useServerFn(gerarResumoPalavra);
+
+  async function handleGerarResumo() {
+    const fd = new FormData(formRef.current ?? undefined);
+    const tema = String(fd.get("tema") || "").trim();
+    const texto_biblico = String(fd.get("texto_biblico") || "").trim();
+    const nome_irmao = String(fd.get("nome_irmao") || "").trim();
+    if (!tema && !texto_biblico) {
+      toast.error("Informe o tema ou o texto bíblico antes de gerar o resumo");
+      return;
+    }
+    setGerando(true);
+    try {
+      const r = await gerarResumo({ data: { tema, texto_biblico, nome_irmao } });
+      setResumo(r.resumo);
+      toast.success("Resumo gerado");
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao gerar resumo");
+    } finally {
+      setGerando(false);
+    }
+  }
 
   const { data } = useQuery({
     queryKey: ["palavras-all"],
