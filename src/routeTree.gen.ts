@@ -13,8 +13,15 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedVisitantesRouteImport } from './routes/_authenticated/visitantes'
+import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
+import { Route as AuthenticatedPalavrasRouteImport } from './routes/_authenticated/palavras'
+import { Route as AuthenticatedMusicosRouteImport } from './routes/_authenticated/musicos'
+import { Route as AuthenticatedHinosRouteImport } from './routes/_authenticated/hinos'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCongregacoesRouteImport } from './routes/_authenticated/congregacoes'
+import { Route as AuthenticatedAtendimentosRouteImport } from './routes/_authenticated/atendimentos'
+import { Route as AuthenticatedAgendaRouteImport } from './routes/_authenticated/agenda'
 import { Route as AuthenticatedCultosIndexRouteImport } from './routes/_authenticated/cultos.index'
 import { Route as AuthenticatedCultosIdRouteImport } from './routes/_authenticated/cultos.$id'
 
@@ -37,6 +44,31 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedVisitantesRoute = AuthenticatedVisitantesRouteImport.update({
+  id: '/visitantes',
+  path: '/visitantes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPalavrasRoute = AuthenticatedPalavrasRouteImport.update({
+  id: '/palavras',
+  path: '/palavras',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMusicosRoute = AuthenticatedMusicosRouteImport.update({
+  id: '/musicos',
+  path: '/musicos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHinosRoute = AuthenticatedHinosRouteImport.update({
+  id: '/hinos',
+  path: '/hinos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -48,6 +80,17 @@ const AuthenticatedCongregacoesRoute =
     path: '/congregacoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAtendimentosRoute =
+  AuthenticatedAtendimentosRouteImport.update({
+    id: '/atendimentos',
+    path: '/atendimentos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAgendaRoute = AuthenticatedAgendaRouteImport.update({
+  id: '/agenda',
+  path: '/agenda',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCultosIndexRoute =
   AuthenticatedCultosIndexRouteImport.update({
     id: '/cultos/',
@@ -64,8 +107,15 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/agenda': typeof AuthenticatedAgendaRoute
+  '/atendimentos': typeof AuthenticatedAtendimentosRoute
   '/congregacoes': typeof AuthenticatedCongregacoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/hinos': typeof AuthenticatedHinosRoute
+  '/musicos': typeof AuthenticatedMusicosRoute
+  '/palavras': typeof AuthenticatedPalavrasRoute
+  '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/visitantes': typeof AuthenticatedVisitantesRoute
   '/cultos/$id': typeof AuthenticatedCultosIdRoute
   '/cultos/': typeof AuthenticatedCultosIndexRoute
 }
@@ -73,8 +123,15 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/agenda': typeof AuthenticatedAgendaRoute
+  '/atendimentos': typeof AuthenticatedAtendimentosRoute
   '/congregacoes': typeof AuthenticatedCongregacoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/hinos': typeof AuthenticatedHinosRoute
+  '/musicos': typeof AuthenticatedMusicosRoute
+  '/palavras': typeof AuthenticatedPalavrasRoute
+  '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/visitantes': typeof AuthenticatedVisitantesRoute
   '/cultos/$id': typeof AuthenticatedCultosIdRoute
   '/cultos': typeof AuthenticatedCultosIndexRoute
 }
@@ -84,8 +141,15 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/agenda': typeof AuthenticatedAgendaRoute
+  '/_authenticated/atendimentos': typeof AuthenticatedAtendimentosRoute
   '/_authenticated/congregacoes': typeof AuthenticatedCongregacoesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/hinos': typeof AuthenticatedHinosRoute
+  '/_authenticated/musicos': typeof AuthenticatedMusicosRoute
+  '/_authenticated/palavras': typeof AuthenticatedPalavrasRoute
+  '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/_authenticated/visitantes': typeof AuthenticatedVisitantesRoute
   '/_authenticated/cultos/$id': typeof AuthenticatedCultosIdRoute
   '/_authenticated/cultos/': typeof AuthenticatedCultosIndexRoute
 }
@@ -95,8 +159,15 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/agenda'
+    | '/atendimentos'
     | '/congregacoes'
     | '/dashboard'
+    | '/hinos'
+    | '/musicos'
+    | '/palavras'
+    | '/relatorios'
+    | '/visitantes'
     | '/cultos/$id'
     | '/cultos/'
   fileRoutesByTo: FileRoutesByTo
@@ -104,8 +175,15 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/agenda'
+    | '/atendimentos'
     | '/congregacoes'
     | '/dashboard'
+    | '/hinos'
+    | '/musicos'
+    | '/palavras'
+    | '/relatorios'
+    | '/visitantes'
     | '/cultos/$id'
     | '/cultos'
   id:
@@ -114,8 +192,15 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/reset-password'
+    | '/_authenticated/agenda'
+    | '/_authenticated/atendimentos'
     | '/_authenticated/congregacoes'
     | '/_authenticated/dashboard'
+    | '/_authenticated/hinos'
+    | '/_authenticated/musicos'
+    | '/_authenticated/palavras'
+    | '/_authenticated/relatorios'
+    | '/_authenticated/visitantes'
     | '/_authenticated/cultos/$id'
     | '/_authenticated/cultos/'
   fileRoutesById: FileRoutesById
@@ -157,6 +242,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/visitantes': {
+      id: '/_authenticated/visitantes'
+      path: '/visitantes'
+      fullPath: '/visitantes'
+      preLoaderRoute: typeof AuthenticatedVisitantesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/relatorios': {
+      id: '/_authenticated/relatorios'
+      path: '/relatorios'
+      fullPath: '/relatorios'
+      preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/palavras': {
+      id: '/_authenticated/palavras'
+      path: '/palavras'
+      fullPath: '/palavras'
+      preLoaderRoute: typeof AuthenticatedPalavrasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/musicos': {
+      id: '/_authenticated/musicos'
+      path: '/musicos'
+      fullPath: '/musicos'
+      preLoaderRoute: typeof AuthenticatedMusicosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hinos': {
+      id: '/_authenticated/hinos'
+      path: '/hinos'
+      fullPath: '/hinos'
+      preLoaderRoute: typeof AuthenticatedHinosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -169,6 +289,20 @@ declare module '@tanstack/react-router' {
       path: '/congregacoes'
       fullPath: '/congregacoes'
       preLoaderRoute: typeof AuthenticatedCongregacoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/atendimentos': {
+      id: '/_authenticated/atendimentos'
+      path: '/atendimentos'
+      fullPath: '/atendimentos'
+      preLoaderRoute: typeof AuthenticatedAtendimentosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/agenda': {
+      id: '/_authenticated/agenda'
+      path: '/agenda'
+      fullPath: '/agenda'
+      preLoaderRoute: typeof AuthenticatedAgendaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/cultos/': {
@@ -189,15 +323,29 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAgendaRoute: typeof AuthenticatedAgendaRoute
+  AuthenticatedAtendimentosRoute: typeof AuthenticatedAtendimentosRoute
   AuthenticatedCongregacoesRoute: typeof AuthenticatedCongregacoesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedHinosRoute: typeof AuthenticatedHinosRoute
+  AuthenticatedMusicosRoute: typeof AuthenticatedMusicosRoute
+  AuthenticatedPalavrasRoute: typeof AuthenticatedPalavrasRoute
+  AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
+  AuthenticatedVisitantesRoute: typeof AuthenticatedVisitantesRoute
   AuthenticatedCultosIdRoute: typeof AuthenticatedCultosIdRoute
   AuthenticatedCultosIndexRoute: typeof AuthenticatedCultosIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAgendaRoute: AuthenticatedAgendaRoute,
+  AuthenticatedAtendimentosRoute: AuthenticatedAtendimentosRoute,
   AuthenticatedCongregacoesRoute: AuthenticatedCongregacoesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedHinosRoute: AuthenticatedHinosRoute,
+  AuthenticatedMusicosRoute: AuthenticatedMusicosRoute,
+  AuthenticatedPalavrasRoute: AuthenticatedPalavrasRoute,
+  AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
+  AuthenticatedVisitantesRoute: AuthenticatedVisitantesRoute,
   AuthenticatedCultosIdRoute: AuthenticatedCultosIdRoute,
   AuthenticatedCultosIndexRoute: AuthenticatedCultosIndexRoute,
 }
@@ -214,3 +362,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
