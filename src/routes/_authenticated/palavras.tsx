@@ -157,7 +157,16 @@ function Page() {
                 </div>
                 <div><Label>Onde foi lido (texto bíblico)</Label><Input name="texto_biblico" placeholder="Ex.: Salmos 23" /></div>
                 <div><Label>Tema</Label><Input name="tema" /></div>
-                <div><Label>Resumo da mensagem</Label><Textarea name="resumo" rows={3} /></div>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <Label>Resumo da mensagem</Label>
+                    <Button type="button" size="sm" variant="outline" onClick={handleGerarResumo} disabled={gerando}>
+                      {gerando ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5" />}
+                      Gerar com IA
+                    </Button>
+                  </div>
+                  <Textarea name="resumo" rows={4} value={resumo} onChange={(e) => setResumo(e.target.value)} placeholder="Clique em 'Gerar com IA' após informar tema/texto, ou escreva manualmente." />
+                </div>
                 <DialogFooter><Button type="submit">Registrar</Button></DialogFooter>
               </form>
             </DialogContent>
