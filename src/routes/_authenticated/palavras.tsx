@@ -93,7 +93,7 @@ function Page() {
     const { error } = await supabase.from("palavras").insert(payload);
     if (error) { toast.error(error.message); return; }
     toast.success("Palavra registrada");
-    setOpen(false); setCongId(""); setCultoId("");
+    setOpen(false); setCongId(""); setCultoId(""); setResumo("");
     qc.invalidateQueries({ queryKey: ["palavras-all"] });
   }
 
