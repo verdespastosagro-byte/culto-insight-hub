@@ -2,7 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { type ReactNode, useState } from "react";
 import {
   LayoutDashboard, Building2, BookOpen, Music2, MessageSquareQuote,
-  HandHelping, UserPlus, Mic2, Calendar, BarChart3, Sparkles, LogOut, Menu, X,
+  HandHelping, UserPlus, Mic2, Calendar, BarChart3, Sparkles, LogOut, Menu, X, Radio,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/culto-inteligente", label: "Culto Inteligente", icon: Radio },
   { to: "/congregacoes", label: "Congregações", icon: Building2 },
   { to: "/cultos", label: "Cultos", icon: BookOpen },
   { to: "/hinos", label: "Hinos", icon: Music2 },
