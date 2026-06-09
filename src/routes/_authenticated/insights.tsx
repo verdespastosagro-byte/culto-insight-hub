@@ -26,12 +26,6 @@ function InsightsContent() {
     staleTime: 1000 * 60 * 5,
   });
 
-  const { data, isLoading, isFetching, refetch } = useQuery({
-    queryKey: ["insights"],
-    queryFn: () => fn(),
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5,
-  });
 
   return (
     <div className="space-y-4">
