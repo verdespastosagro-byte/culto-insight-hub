@@ -9,7 +9,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePlanLimits, PLAN_LABELS } from "@/hooks/usePlanLimits";
 import { cn } from "@/lib/utils";
 
-const NAV_GROUPS = [
+type NavItem = { to: string; label: string; icon: typeof LayoutDashboard };
+type NavGroup = { label: string; items: NavItem[] };
+
+const NAV_GROUPS: NavGroup[] = [
   {
     label: "Gestão",
     items: [
@@ -42,9 +45,10 @@ const NAV_GROUPS = [
       { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
     ],
   },
-] as const;
+];
 
-const ALL_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
+const ALL_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
+
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
