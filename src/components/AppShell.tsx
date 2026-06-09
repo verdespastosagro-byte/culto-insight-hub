@@ -106,7 +106,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   return (
                     <Link
                       key={it.to}
-                      to={it.to}
+                      to={it.to as "/dashboard"}
                       onClick={() => setOpen(false)}
                       className={cn(
                         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
