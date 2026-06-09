@@ -10,14 +10,21 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function ProtectedLayout() {
-  const { user, loading } = useAuth();
+  const { user, loading, profile } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !user) navigate({ to: "/auth" });
-  }, [loading, user, navigate]);
+    if (loading) return;
+    if (!user) {
+      navigate({ to: "/auth" });
+      return;
+    }
+    if (profile && profile.onboarding_completed === false) {
+      navigate({ to: "/onboarding" });
+    }
+  }, [loading, user, profile, navigate]);
 
-  if (loading || !user) {
+  if (loading || !user || (profile && profile.onboarding_completed === false)) {
     return (
       <div className="grid min-h-screen place-items-center bg-background">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
