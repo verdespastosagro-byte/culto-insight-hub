@@ -36,7 +36,7 @@ export type Database = {
           id?: string
           local?: string | null
           observacoes?: string | null
-          organization_id: string
+          organization_id?: string
           responsavel?: string | null
           tipo?: Database["public"]["Enums"]["tipo_reuniao"]
           updated_at?: string
@@ -85,7 +85,7 @@ export type Database = {
           id?: string
           nome: string
           observacoes?: string | null
-          organization_id: string
+          organization_id?: string
         }
         Update: {
           cargo?: string | null
@@ -138,7 +138,7 @@ export type Database = {
           id?: string
           nome: string
           observacoes?: string | null
-          organization_id: string
+          organization_id?: string
           regiao?: string | null
           updated_at?: string
         }
@@ -189,7 +189,7 @@ export type Database = {
           horario?: string | null
           id?: string
           observacoes?: string | null
-          organization_id: string
+          organization_id?: string
           participantes?: number | null
           tipo?: Database["public"]["Enums"]["tipo_reuniao"]
           updated_at?: string
@@ -265,7 +265,7 @@ export type Database = {
           iniciado_em?: string
           latitude?: number | null
           longitude?: number | null
-          organization_id: string
+          organization_id?: string
           status?: string
           transcricao_json?: Json | null
           transcricao_texto?: string | null
@@ -336,7 +336,7 @@ export type Database = {
           id?: string
           musico_id: string
           observacoes?: string | null
-          organization_id: string
+          organization_id?: string
         }
         Update: {
           created_at?: string
@@ -387,7 +387,7 @@ export type Database = {
           id?: string
           momento?: Database["public"]["Enums"]["momento_hino"]
           numero: number
-          organization_id: string
+          organization_id?: string
           titulo?: string | null
         }
         Update: {
@@ -434,7 +434,7 @@ export type Database = {
           id?: string
           instrumento?: string | null
           nome: string
-          organization_id: string
+          organization_id?: string
           updated_at?: string
         }
         Update: {
@@ -615,7 +615,7 @@ export type Database = {
           id?: string
           nome_irmao: string
           observacoes?: string | null
-          organization_id: string
+          organization_id?: string
           resumo?: string | null
           tema?: string | null
           texto_biblico?: string | null
@@ -724,7 +724,7 @@ export type Database = {
           funcao?: Database["public"]["Enums"]["funcao_visitante"]
           id?: string
           nome: string
-          organization_id: string
+          organization_id?: string
         }
         Update: {
           cidade?: string | null
@@ -760,6 +760,7 @@ export type Database = {
     Functions: {
       can_edit_org: { Args: { _user_id: string }; Returns: boolean }
       can_manage_org: { Args: { _user_id: string }; Returns: boolean }
+      current_user_org_id: { Args: never; Returns: string }
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
       has_org_role: {
         Args: {
