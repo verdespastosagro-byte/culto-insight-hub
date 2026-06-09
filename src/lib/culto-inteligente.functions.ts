@@ -40,15 +40,29 @@ const ExtracaoSchema = z.object({
 
 export type ExtracaoCulto = z.infer<typeof ExtracaoSchema>;
 
+async function getOrgId(supabase: any, userId: string): Promise<string> {
+  const { data, error } = await supabase
+    .from("organization_members")
+    .select("organization_id")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (error || !data?.organization_id) throw new Error("Usuário sem organização");
+  return data.organization_id as string;
+}
+
 // ============ Iniciar culto (cria registro) ============
 export const iniciarCulto = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { latitude?: number | null; longitude?: number | null; cidade?: string | null; congregacao_id?: string | null }) => d ?? {})
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const organization_id = await getOrgId(supabase, userId);
     const { data: row, error } = await supabase
       .from("cultos_inteligentes")
       .insert({
+        organization_id,
         user_id: userId,
         latitude: data.latitude ?? null,
         longitude: data.longitude ?? null,
@@ -61,6 +75,7 @@ export const iniciarCulto = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { id: row.id as string };
   });
+
 
 // ============ Processar áudio (transcrever + extrair) ============
 export const processarCulto = createServerFn({ method: "POST" })
