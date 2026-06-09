@@ -15,9 +15,19 @@ import { Mic, Square, Loader2, Sparkles, Plus, Trash2, History, MapPin } from "l
 import { TIPOS_REUNIAO } from "@/lib/constants";
 import { iniciarCulto, processarCulto, salvarCultoConfirmado, type ExtracaoCulto } from "@/lib/culto-inteligente.functions";
 
+import { PlanGate } from "@/components/PlanGate";
+
 export const Route = createFileRoute("/_authenticated/culto-inteligente/")({
-  component: CultoInteligentePage,
+  component: PageWithGate,
 });
+
+function PageWithGate() {
+  return (
+    <PlanGate feature="culto-inteligente">
+      <CultoInteligentePage />
+    </PlanGate>
+  );
+}
 
 type Fase = "idle" | "gravando" | "processando" | "revisao" | "salvando";
 

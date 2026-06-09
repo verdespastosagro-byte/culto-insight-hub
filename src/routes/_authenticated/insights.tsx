@@ -5,10 +5,19 @@ import { generateInsights } from "@/lib/insights.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Loader2, RefreshCcw } from "lucide-react";
+import { PlanGate } from "@/components/PlanGate";
 
 export const Route = createFileRoute("/_authenticated/insights")({ component: Page });
 
 function Page() {
+  return (
+    <PlanGate feature="ia">
+      <InsightsContent />
+    </PlanGate>
+  );
+}
+
+function InsightsContent() {
   const fn = useServerFn(generateInsights);
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["insights"],
@@ -16,6 +25,7 @@ function Page() {
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5,
   });
+
 
   return (
     <div className="space-y-4">
