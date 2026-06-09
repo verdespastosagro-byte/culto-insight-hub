@@ -1,80 +1,67 @@
-## Visão geral
+O prompt cobre ~10 grandes blocos e mexe em praticamente toda a base. Fazer tudo de uma vez em um turno só vira um Frankenstein quebrado. Proponho 4 fases entregáveis, nesta ordem. Cada fase termina com o app funcionando e testável.
 
-Nova seção **Culto Inteligente** acessível pelo menu lateral. Um botão "Iniciar Culto" grava áudio direto do navegador, captura data/hora/GPS, e ao "Encerrar Culto" envia o áudio para transcrição por IA, extrai automaticamente os dados estruturados (hinos, palavra, pregador, atendimentos, congregações, versículos), apresenta um **relatório editável** para conferência e, ao confirmar, grava nas tabelas existentes (`cultos`, `hinos`, `palavras`, `atendimentos`, `visitantes`) e arquiva a gravação + transcrição.
+## Fase 1 — Fundação multi-tenant + planos (esta entrega)
 
-## Escopo desta entrega (MVP funcional ponta-a-ponta)
+Sem isso, nada do resto faz sentido (cobrar sem isolar dados = vazamento + processo). É também onde está o problema de segurança que já levantamos.
 
-1. Gravação de áudio no navegador (MediaRecorder, formato webm/opus) com cronômetro, pausa e botão "Encerrar".
-2. Captura automática de: data, horário início/fim, duração, GPS (latitude/longitude) e cidade aproximada (reverse geocode IBGE/Nominatim).
-3. Upload da gravação para bucket privado de Storage.
-4. Transcrição com **ElevenLabs Scribe v2** (PT-BR, com diarização e timestamps).
-5. Extração estruturada via **Lovable AI (Gemini 3 Flash)** com schema Zod: hinos chamados, palavra (irmão, cargo, texto bíblico, tema, resumo), atendimentos, visitantes mencionados, versículos citados, temas-chave, observações.
-6. Tela de **revisão humana**: formulário editável pré-preenchido (corrigir, adicionar, remover) antes de salvar.
-7. Ao confirmar, persiste em `cultos` + filhos (`hinos`, `palavras`, `atendimentos`, `visitantes`) e em nova tabela `cultos_inteligentes` (áudio, transcrição, metadados, status).
-8. **Histórico**: lista das gravações com player, download, busca dentro da transcrição (ILIKE) e link para o culto gerado.
-9. Reaproveita o dashboard **Insights** existente — os dados extraídos alimentam automaticamente "hinos mais chamados / pregadores frequentes / congregações visitadas".
+**Banco (1 migração):**
+- `organizations` (id, name, slug, plan enum free|pro|church, plan_status enum trialing|active|past_due|cancelled|expired, trial_ends_at, stripe_customer_id, stripe_subscription_id, created_at, updated_at).
+- `organization_members` (id, organization_id, user_id, role enum owner|admin|editor|viewer, invited_by, created_at), unique (org_id, user_id).
+- `organization_invites` (id, organization_id, email, role, token, expires_at, accepted_at, invited_by).
+- Coluna `organization_id uuid` em: `cultos, congregacoes, hinos, palavras, atendimentos, visitantes, musicos, agenda, escalas, cultos_inteligentes`. Backfill: cria 1 org "Migração" e atribui registros existentes + membros existentes a ela (preserva dados atuais).
+- Coluna `onboarding_completed boolean default false` em `profiles`.
+- Function `public.get_user_org_id(_user_id uuid) returns uuid` SECURITY DEFINER stable.
+- Function `public.is_org_member(_org_id uuid, _user_id uuid) returns boolean` e `public.has_org_role(_org_id, _user_id, _role)` SECURITY DEFINER.
+- Trigger em `auth.users` (extensão do `handle_new_user` existente): cria org com nome "<nome> (Congregação)", insere o usuário como `owner`, marca `plan='free'`, `plan_status='trialing'`, `trial_ends_at = now()+14 days`.
+- **Reescrita completa das policies** de todas as tabelas listadas: SELECT/INSERT/UPDATE/DELETE filtram por `organization_id = get_user_org_id(auth.uid())`. Mantém distinção viewer/editor/admin via `has_org_role`. Resolve as duas findings de segurança abertas (profiles + tabelas operacionais).
+- Policy de `profiles`: usuário vê o próprio + membros da mesma org (sem email para não-admins via view `public.profiles_public`).
 
-## Fora de escopo (deixar claro)
+**Server functions:**
+- `getCurrentOrganization()` — devolve org + role + plan + trialDaysLeft.
+- `updateOrganization({name, cidade, estado, timezone})` (owner/admin).
+- `inviteMember({email, role})` (owner/admin) — cria invite token.
+- `acceptInvite({token})`.
+- `removeMember({userId})` (owner/admin).
+- `listMembers()`.
 
-- Transcrição em tempo real (streaming) — usaremos transcrição em lote após "Encerrar". Mais barata, mais precisa.
-- Identificação biométrica de voz por pessoa (apenas diarização anônima por "Speaker A/B…").
-- App nativo offline. Funciona em qualquer celular moderno via navegador; precisa de internet para subir.
+**Frontend:**
+- `useAuth` ganha `organization, organizationId, plan, planStatus, trialDaysLeft, isOwner, canManageOrg`.
+- Hook `usePlanLimits()` com `canAddCongregacao, canAddCulto, canUseIA, canUseCultoInteligente, cultoInteligenteUsedThisMonth` consultando contagens via server fn.
+- `<PlanGate feature="ia"|"culto-inteligente"|"relatorio-avancado">` que renderiza paywall ou children.
+- `<UpgradeModal>` reutilizável.
+- Badge do plano + dias de trial na sidebar; banner global "trial termina em X dias" quando `trialDaysLeft <= 7`.
+- Aplicar gates em: Insights IA (PRO+), Culto Inteligente (PRO+ com contador mensal), Relatórios PDF/Excel (PRO+).
 
-## Decisões técnicas
+## Fase 2 — Onboarding, configurações, sidebar, telas de auth (próxima entrega)
 
-```text
-Frontend gravação → MediaRecorder (audio/webm;codecs=opus)
-Upload          → Storage bucket privado "cultos-audio" (cada arquivo: user_id/<id>.webm)
-Transcrição     → ElevenLabs scribe_v2, language_code="por", diarize=true, tag_audio_events=true
-Extração IA     → Gemini 3 Flash via Lovable AI Gateway com Output.object(schema)
-Persistência    → server functions (createServerFn) com requireSupabaseAuth
-```
+- Onboarding wizard 3 passos (`/onboarding`) com redirect automático quando `onboarding_completed=false`.
+- `/configuracoes` com abas Minha conta · Organização · Membros · Plano (esta última ainda sem Stripe — placeholder "em breve" até a Fase 4).
+- Reset de senha decente: rota `/esqueci-senha` + tela `/reset-password` funcional.
+- Sidebar agrupada (Gestão / Registros / Inteligência / Administração).
+- 404 amigável.
 
-## Pré-requisitos / o que preciso confirmar com você
+## Fase 3 — Landing comercial + páginas legais
 
-1. **Conector ElevenLabs**: vou pedir para você linkar o conector ElevenLabs (1 clique). Sem ele não há transcrição em português com qualidade.
-2. **Permissão de microfone**: o navegador pedirá ao iniciar — normal.
-3. **Bucket privado de áudios**: vou criar `cultos-audio` (privado, áudios baixados via URL assinada).
+- Reescrita de `src/routes/index.tsx`: hero, prova social, funcionalidades (6 cards), destaque Culto Inteligente, pricing (3 cards), FAQ, footer.
+- `/pricing` reutilizando o bloco de planos.
+- `/termos` e `/privacidade` (conteúdo genérico LGPD/SaaS BR).
+- Checkbox de aceite no `/auth` cadastro.
+- Meta tags comerciais por rota; favicon conferido.
 
-## Tabelas / migrações
+## Fase 4 — Cobrança Stripe
 
-- Nova tabela `cultos_inteligentes`:
-  - `id`, `user_id`, `culto_id` (FK opcional após confirmação), `iniciado_em`, `encerrado_em`, `duracao_segundos`
-  - `latitude`, `longitude`, `cidade_detectada`
-  - `audio_path` (caminho no Storage), `audio_size_bytes`, `audio_mime`
-  - `transcricao_texto`, `transcricao_json` (palavras+timestamps+speakers)
-  - `extracao_json` (resultado bruto da IA)
-  - `status` ('gravando' | 'processando' | 'aguardando_revisao' | 'salvo' | 'erro')
-  - `erro_mensagem`
-  - RLS: leitura/escrita pelo dono; admin vê tudo
-  - GRANT padrão authenticated + service_role
-- Bucket Storage privado `cultos-audio` com políticas por dono.
+Requer plano **Pro** da Lovable e ativação dos Pagamentos pela Lovable (Stripe seamless). Eu rodo o check de elegibilidade, ativo o Stripe, crio os produtos (Pro R$47/mês, Church R$127/mês), implemento `/account` com portal, webhook que sincroniza `organizations.plan` e `plan_status`, banner de trial expirado, downgrade automático para Free quando assinatura cai.
 
-## Server functions (todas autenticadas)
+Pode-se rodar a Fase 4 antes da 2/3 se a prioridade for cobrar — mas o normal é deixar para o fim para não cobrar de um produto ainda inacabado.
 
-- `iniciarCulto()` → cria registro `status='gravando'`, retorna `{ id }`.
-- `finalizarUpload({ id, audioPath, duracao, lat, lng })` → marca `status='processando'`, dispara transcrição + extração e responde com `{ extracao }`.
-- `salvarCultoConfirmado({ id, dadosEditados })` → cria `culto` + hinos/palavras/atendimentos/visitantes, vincula `culto_id`, marca `status='salvo'`.
-- `urlAudioAssinada({ id })` → retorna signed URL de 1h para player/download.
-- `buscarTranscricao({ termo })` → busca textual nas transcrições do usuário.
+## Polish (transversal, aplicado ao longo das fases)
 
-## Telas
+- Empty states com ícone+CTA nas listas que tocarmos.
+- Skeletons substituindo `null` no carregamento.
+- Tradução de erros comuns do Supabase em um helper `traduzErro()`.
 
-- `/_authenticated/culto-inteligente` — botão grande "Iniciar Culto" + cronômetro + indicador de gravação. Ao encerrar, mostra spinner ("Transcrevendo… Analisando…") e abre o formulário de revisão.
-- `/_authenticated/culto-inteligente/historico` — lista de gravações com busca, player inline, download, status, link para o culto associado.
+## Decisão necessária
 
-## Custos & limites (transparência)
+Confirmo que vou **começar pela Fase 1 agora** (migração + reescrita de RLS + planos/gates + trigger de signup). É a entrega mais pesada e arriscada porque mexe nas policies de todas as tabelas. As Fases 2–4 seguem em entregas separadas, conforme você for aprovando.
 
-Cultos longos = arquivos grandes. Vou comprimir o áudio (opus ~24 kbps mono) — um culto de 2h fica ~25 MB. A transcrição via ElevenLabs é cobrada por minuto de áudio; a extração via Lovable AI consome uma chamada Gemini (barata). Vou avisar no UI o tamanho estimado antes do envio.
-
-## Sequência de execução (após sua aprovação)
-
-1. Linkar conector ElevenLabs.
-2. Migração (tabela `cultos_inteligentes`).
-3. Criar bucket privado `cultos-audio` + policies.
-4. Server functions de gravação/transcrição/extração/salvamento.
-5. Tela "Culto Inteligente" (gravação + revisão).
-6. Tela "Histórico".
-7. Item no menu lateral.
-
-**Posso seguir com esse plano?** (Confirme e eu já abro o pedido de conexão do ElevenLabs e parto para a migração.)
+Posso seguir?
