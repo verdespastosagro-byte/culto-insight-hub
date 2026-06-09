@@ -52,9 +52,8 @@ const ALL_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const { profile, organization, plan, signOut } = useAuth();
+  const { profile, organization, plan, signOut, trialDaysLeft } = useAuth();
   const { isTrialing, isExpired } = usePlanLimits();
-  const { trialDaysLeft } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
