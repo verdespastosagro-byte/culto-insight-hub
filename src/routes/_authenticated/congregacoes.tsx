@@ -143,18 +143,31 @@ function CongregacoesPage() {
     else partes.push(s.endereco.split(",")[0]);
     setNome(partes.join(" - "));
     if (s.bairro) setRegiao(s.bairro);
-    if (s.horarios.length) {
-      const obs = Object.entries(
-        s.horarios.reduce<Record<string, string[]>>((acc, h) => {
-          (acc[h.diaLabel] ||= []).push(h.hora);
-          return acc;
-        }, {}),
-      )
-        .map(([d, hs]) => `${d}: ${[...new Set(hs)].sort().join(", ")}`)
-        .join(" | ");
-      setObservacoes(obs);
-    }
+    setSugestaoSelecionada(s);
+    setHorarioVisita("");
   }
+
+  function formatarDataBR(iso: string) {
+    if (!iso) return "";
+    const [y, m, d] = iso.split("-");
+    return `${d}/${m}/${y}`;
+  }
+
+  // Atualiza observações automaticamente ao mudar data ou horário escolhido
+  useEffect(() => {
+    if (!horarioVisita || !dataVisita) return;
+    const linha = `Visitei em ${formatarDataBR(dataVisita)} • ${horarioVisita}`;
+    setObservacoes((prev) => {
+      // remove qualquer linha "Visitei em ..." anterior e prepende a nova
+      const limpo = (prev ?? "")
+        .split("\n")
+        .filter((l) => !/^Visitei em /i.test(l.trim()))
+        .join("\n")
+        .trim();
+      return limpo ? `${linha}\n${limpo}` : linha;
+    });
+  }, [dataVisita, horarioVisita]);
+
 
   async function handleSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
