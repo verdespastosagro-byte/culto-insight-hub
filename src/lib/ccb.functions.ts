@@ -36,7 +36,7 @@ const DIA_ABREV: Record<string, { idx: number; label: string }> = {
   sab: { idx: 6, label: "Sábado" },
 };
 
-function parseHorariosString(raw: string | null | undefined): CCBHorario[] {
+function parseHorariosString(raw: string | null | undefined, tipo: "culto" | "rjm"): CCBHorario[] {
   if (!raw || raw === "—") return [];
   const out: CCBHorario[] = [];
   const re = /(Dom|Seg|Ter|Qua|Qui|Sex|S[áa]b)\s+(\d{1,2}):(\d{2})/gi;
@@ -49,6 +49,7 @@ function parseHorariosString(raw: string | null | undefined): CCBHorario[] {
       diaSemana: d.idx,
       diaLabel: d.label,
       hora: `${m[2].padStart(2, "0")}:${m[3]}`,
+      tipo,
     });
   }
   return out;
