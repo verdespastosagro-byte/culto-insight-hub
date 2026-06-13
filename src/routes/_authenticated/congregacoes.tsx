@@ -12,8 +12,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Building2, Plus, Pencil, Trash2, Search, Loader2, MapPin } from "lucide-react";
-import { listarCongregacoesPorCidade, type CongregacaoCidade } from "@/lib/ccb.functions";
+import { listarCongregacoesPorCidade, buscarCidadesUf, type CongregacaoCidade, type CidadeOpcao } from "@/lib/ccb.functions";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+
+const UFS = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"] as const;
 
 export const Route = createFileRoute("/_authenticated/congregacoes")({
   component: CongregacoesPage,
