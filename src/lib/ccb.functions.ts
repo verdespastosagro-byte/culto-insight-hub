@@ -25,196 +25,110 @@ export type CCBChurch = {
   uf?: string;
 };
 
-const norm = (s: string) =>
-  s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9 ]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-const slug = (s: string) =>
-  s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-
-const DIAS_MAP: Record<string, { idx: number; label: string }> = {
-  domingo: { idx: 0, label: "Domingo" },
-  "segunda-feira": { idx: 1, label: "Segunda" },
-  segunda: { idx: 1, label: "Segunda" },
-  "terca-feira": { idx: 2, label: "Terça" },
-  terca: { idx: 2, label: "Terça" },
-  "quarta-feira": { idx: 3, label: "Quarta" },
-  quarta: { idx: 3, label: "Quarta" },
-  "quinta-feira": { idx: 4, label: "Quinta" },
-  quinta: { idx: 4, label: "Quinta" },
-  "sexta-feira": { idx: 5, label: "Sexta" },
-  sexta: { idx: 5, label: "Sexta" },
-  sabado: { idx: 6, label: "Sábado" },
+const DIA_ABREV: Record<string, { idx: number; label: string }> = {
+  dom: { idx: 0, label: "Domingo" },
+  seg: { idx: 1, label: "Segunda" },
+  ter: { idx: 2, label: "Terça" },
+  qua: { idx: 3, label: "Quarta" },
+  qui: { idx: 4, label: "Quinta" },
+  sex: { idx: 5, label: "Sexta" },
+  sab: { idx: 6, label: "Sábado" },
 };
 
-function isCCB(name: string) {
-  const n = norm(name);
-  return (
-    n.includes("congregacao crista no brasil") ||
-    n.includes("congregacao crista") ||
-    /\bccb\b/.test(n)
-  );
-}
-
-async function reverseGeocode(
-  lat: number,
-  lng: number,
-  lovableKey: string,
-  mapsKey: string,
-): Promise<{ cidade?: string; uf?: string }> {
-  try {
-    const url = `https://connector-gateway.lovable.dev/google_maps/maps/api/geocode/json?latlng=${lat},${lng}&language=pt-BR`;
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": mapsKey,
-      },
+function parseHorariosString(raw: string | null | undefined): CCBHorario[] {
+  if (!raw || raw === "—") return [];
+  const out: CCBHorario[] = [];
+  const re = /(Dom|Seg|Ter|Qua|Qui|Sex|S[áa]b)\s+(\d{1,2}):(\d{2})/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(raw)) !== null) {
+    const key = m[1].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").slice(0, 3);
+    const d = DIA_ABREV[key];
+    if (!d) continue;
+    out.push({
+      diaSemana: d.idx,
+      diaLabel: d.label,
+      hora: `${m[2].padStart(2, "0")}:${m[3]}`,
     });
-    if (!res.ok) return {};
-    const json = (await res.json()) as {
-      results?: Array<{
-        address_components?: Array<{ long_name: string; short_name: string; types: string[] }>;
-      }>;
-    };
-    let cidade: string | undefined;
-    let uf: string | undefined;
-    for (const r of json.results ?? []) {
-      for (const c of r.address_components ?? []) {
-        if (!cidade && (c.types.includes("administrative_area_level_2") || c.types.includes("locality"))) {
-          cidade = c.long_name;
-        }
-        if (!uf && c.types.includes("administrative_area_level_1")) {
-          uf = c.short_name.toLowerCase();
-        }
-      }
-      if (cidade && uf) break;
-    }
-    return { cidade, uf };
-  } catch (e) {
-    console.error("reverseGeocode error", e);
-    return {};
   }
+  return out;
 }
 
-type CongregacaoSite = {
-  endereco: string;
-  bairro?: string;
-  horarios: CCBHorario[];
+type Row = {
+  code: string;
+  name: string;
+  address: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  uf: string | null;
+  cultos: string | null;
+  rjm: string | null;
+  lat: number;
+  lng: number;
 };
 
-function parseCongregacoesSite(html: string): CongregacaoSite[] {
-  // Tenta extrair blocos por endereço. O site tipicamente lista:
-  // <h3>Rua X, 123 - Bairro</h3> seguido de dias/horários.
-  // Estratégia: capturar texto bruto e parsear por linhas.
-  const text = html
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/(p|div|li|h\d|tr|td)>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/[ \t]+/g, " ");
+function rowToChurch(r: Row, dist?: number): CCBChurch {
+  const horarios = [...parseHorariosString(r.cultos), ...parseHorariosString(r.rjm)];
+  return {
+    id: r.code,
+    name: r.name,
+    address: r.address ?? "",
+    lat: r.lat,
+    lng: r.lng,
+    bairro: r.neighborhood ?? undefined,
+    cidade: r.city ?? undefined,
+    uf: r.uf ?? undefined,
+    horarios,
+    ...(dist !== undefined ? { distancia: dist } : {}),
+  };
+}
 
-  const linhas = text
-    .split("\n")
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0);
+export const buscarCongregacoes = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => InputSchema.parse(data))
+  .handler(async ({ data }): Promise<{ items: CCBChurch[]; error?: string }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-  const itens: CongregacaoSite[] = [];
-  let atual: CongregacaoSite | null = null;
+    // bounding box rápido para filtragem inicial
+    const R = 6371;
+    const dLat = (data.radiusKm / R) * (180 / Math.PI);
+    const dLng =
+      (data.radiusKm / (R * Math.cos((data.lat * Math.PI) / 180))) * (180 / Math.PI);
 
-  const reEndereco = /(rua|av\.?|avenida|travessa|praça|praca|estrada|rod\.?|rodovia|alameda|servidão|servidao|beco|largo|via)\b[^,]{2,120},?\s*(s\/n|sn|\d{1,6}[a-zA-Z]?)/i;
-  const reHorario = /\b(\d{1,2})(?::|h)(\d{2})?\b/g;
-  const reDia = /\b(domingo|segunda(?:-feira)?|terca(?:-feira)?|terça(?:-feira)?|quarta(?:-feira)?|quinta(?:-feira)?|sexta(?:-feira)?|sabado|sábado)\b/gi;
+    const { data: rows, error } = await supabaseAdmin
+      .from("congregacoes_ccb")
+      .select("code,name,address,neighborhood,city,uf,cultos,rjm,lat,lng")
+      .gte("lat", data.lat - dLat)
+      .lte("lat", data.lat + dLat)
+      .gte("lng", data.lng - dLng)
+      .lte("lng", data.lng + dLng)
+      .limit(500);
 
-  for (const linha of linhas) {
-    const matchEnd = linha.match(reEndereco);
-    if (matchEnd) {
-      if (atual) itens.push(atual);
-      const partes = linha.split(" - ");
-      const endereco = partes[0]?.trim() ?? linha;
-      const bairro = partes[1]?.trim();
-      atual = { endereco, bairro, horarios: [] };
-      continue;
+    if (error) {
+      console.error("buscarCongregacoes db error", error);
+      return { items: [], error: "Erro ao consultar a base de congregações." };
     }
-    if (!atual) continue;
 
-    // procura dia + hora na mesma linha
-    const linhaNorm = norm(linha);
-    const dias: { idx: number; label: string }[] = [];
-    let m: RegExpExecArray | null;
-    reDia.lastIndex = 0;
-    while ((m = reDia.exec(linhaNorm)) !== null) {
-      const key = m[1].replace("ç", "c").replace("á", "a");
-      const d = DIAS_MAP[key] ?? DIAS_MAP[key.replace("-feira", "")];
-      if (d) dias.push(d);
-    }
-    const horas: string[] = [];
-    reHorario.lastIndex = 0;
-    while ((m = reHorario.exec(linha)) !== null) {
-      const h = parseInt(m[1], 10);
-      const min = m[2] ? parseInt(m[2], 10) : 0;
-      if (h >= 5 && h <= 23) horas.push(`${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`);
-    }
-    if (dias.length && horas.length) {
-      for (const d of dias) {
-        for (const h of horas) {
-          atual.horarios.push({ diaSemana: d.idx, diaLabel: d.label, hora: h });
-        }
-      }
-    }
-  }
-  if (atual) itens.push(atual);
+    // distância real (Haversine) + filtro de raio + ordenação
+    const items = (rows as Row[])
+      .map((r) => {
+        const dLatR = ((r.lat - data.lat) * Math.PI) / 180;
+        const dLngR = ((r.lng - data.lng) * Math.PI) / 180;
+        const a =
+          Math.sin(dLatR / 2) ** 2 +
+          Math.cos((data.lat * Math.PI) / 180) *
+            Math.cos((r.lat * Math.PI) / 180) *
+            Math.sin(dLngR / 2) ** 2;
+        const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return { row: r, dist };
+      })
+      .filter((x) => x.dist <= data.radiusKm)
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, 100)
+      .map((x) => rowToChurch(x.row, x.dist));
 
-  // dedup horários por item
-  return itens.map((i) => {
-    const seen = new Set<string>();
-    const horarios = i.horarios.filter((h) => {
-      const k = `${h.diaSemana}-${h.hora}`;
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    });
-    return { ...i, horarios };
+    return { items };
   });
-}
 
-async function buscarHorariosCidade(
-  cidade: string,
-  uf: string,
-): Promise<CongregacaoSite[]> {
-  try {
-    const url = `https://congregacoes.com.br/ccb/br/${uf}/${slug(cidade)}`;
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (compatible; CCBPertoBot/1.0; +https://lovable.dev)",
-        Accept: "text/html,application/xhtml+xml",
-      },
-    });
-    if (!res.ok) {
-      console.warn("congregacoes.com.br status", res.status, url);
-      return [];
-    }
-    const html = await res.text();
-    return parseCongregacoesSite(html);
-  } catch (e) {
-    console.error("buscarHorariosCidade error", e);
-    return [];
-  }
-}
-
+// Listagem por cidade (usada na tela "Nova congregação")
 const ListarInput = z.object({
   cidade: z.string().min(1).max(120),
   uf: z.string().length(2),
@@ -229,142 +143,28 @@ export type CongregacaoCidade = {
 export const listarCongregacoesPorCidade = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => ListarInput.parse(data))
   .handler(async ({ data }): Promise<{ items: CongregacaoCidade[]; error?: string }> => {
-    try {
-      const itens = await buscarHorariosCidade(data.cidade, data.uf.toLowerCase());
-      return { items: itens };
-    } catch (e) {
-      console.error("listarCongregacoesPorCidade error", e);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("congregacoes_ccb")
+      .select("address,neighborhood,cultos,rjm")
+      .ilike("city", data.cidade)
+      .ilike("uf", data.uf)
+      .order("neighborhood", { ascending: true })
+      .limit(500);
+
+    if (error) {
+      console.error("listarCongregacoesPorCidade db error", error);
       return { items: [], error: "Erro ao buscar congregações da cidade." };
     }
-  });
 
-function similaridadeEndereco(a: string, b: string): number {
-  const na = norm(a);
-  const nb = norm(b);
-  if (!na || !nb) return 0;
-  const tokensA = new Set(na.split(" ").filter((t) => t.length > 2));
-  const tokensB = new Set(nb.split(" ").filter((t) => t.length > 2));
-  if (!tokensA.size || !tokensB.size) return 0;
-  let comuns = 0;
-  for (const t of tokensA) if (tokensB.has(t)) comuns++;
-  return comuns / Math.max(tokensA.size, tokensB.size);
-}
+    const items: CongregacaoCidade[] = (rows ?? []).map((r) => ({
+      endereco: r.address ?? "",
+      bairro: r.neighborhood ?? undefined,
+      horarios: [
+        ...parseHorariosString(r.cultos),
+        ...parseHorariosString(r.rjm),
+      ],
+    }));
 
-export const buscarCongregacoes = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => InputSchema.parse(data))
-  .handler(async ({ data }): Promise<{ items: CCBChurch[]; error?: string; cidade?: string; uf?: string }> => {
-    const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-    const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
-    if (!LOVABLE_API_KEY || !GOOGLE_MAPS_API_KEY) {
-      return { items: [], error: "Credenciais do Google Maps não configuradas." };
-    }
-
-    const radiusMeters = Math.min(50000, Math.round(data.radiusKm * 1000));
-
-    try {
-      // 1) Places API
-      const res = await fetch(
-        "https://connector-gateway.lovable.dev/google_maps/places/v1/places:searchText",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "X-Connection-Api-Key": GOOGLE_MAPS_API_KEY,
-            "Content-Type": "application/json",
-            "X-Goog-FieldMask":
-              "places.id,places.displayName,places.formattedAddress,places.location",
-          },
-          body: JSON.stringify({
-            textQuery: "Congregação Cristã no Brasil",
-            maxResultCount: 20,
-            locationBias: {
-              circle: {
-                center: { latitude: data.lat, longitude: data.lng },
-                radius: radiusMeters,
-              },
-            },
-          }),
-        },
-      );
-
-      if (!res.ok) {
-        const txt = await res.text();
-        console.error("Places API error", res.status, txt);
-        return { items: [], error: `Falha na busca (${res.status})` };
-      }
-
-      const json = (await res.json()) as {
-        places?: Array<{
-          id: string;
-          displayName?: { text?: string };
-          formattedAddress?: string;
-          location?: { latitude: number; longitude: number };
-        }>;
-      };
-
-      const extrairBairroDeAddress = (addr: string): string | undefined => {
-        // Padrão BR: "Rua X, 123 - Bairro, Cidade - UF, CEP, Brasil"
-        const partes = addr.split(",").map((s) => s.trim());
-        const primeira = partes[0] ?? "";
-        const segunda = partes[1] ?? "";
-        const m1 = primeira.match(/-\s*(.+)$/);
-        if (m1?.[1]) return m1[1].trim();
-        const m2 = segunda.match(/^([^-]+?)(?:\s*-\s*.+)?$/);
-        if (m2?.[1] && !/^\d/.test(m2[1])) return m2[1].trim();
-        return undefined;
-      };
-
-      const placesItems: CCBChurch[] = (json.places ?? [])
-        .filter((p) => p.location && isCCB(p.displayName?.text ?? ""))
-        .map((p) => ({
-          id: p.id,
-          name: p.displayName?.text ?? "Congregação Cristã no Brasil",
-          address: p.formattedAddress ?? "",
-          lat: p.location!.latitude,
-          lng: p.location!.longitude,
-          bairro: extrairBairroDeAddress(p.formattedAddress ?? ""),
-        }));
-
-      // 2) Reverse geocode + horários do site
-      const { cidade, uf } = await reverseGeocode(
-        data.lat,
-        data.lng,
-        LOVABLE_API_KEY,
-        GOOGLE_MAPS_API_KEY,
-      );
-
-      let horariosSite: CongregacaoSite[] = [];
-      if (cidade && uf) {
-        horariosSite = await buscarHorariosCidade(cidade, uf);
-      }
-
-      // 3) Cruza por similaridade de endereço
-      const items = placesItems.map((p) => {
-        if (!horariosSite.length) return { ...p, cidade, uf };
-        let melhor: CongregacaoSite | null = null;
-        let melhorScore = 0;
-        for (const s of horariosSite) {
-          const score = similaridadeEndereco(p.address, s.endereco);
-          if (score > melhorScore) {
-            melhorScore = score;
-            melhor = s;
-          }
-        }
-        if (melhor && melhorScore >= 0.35) {
-          return {
-            ...p,
-            cidade,
-            uf,
-            bairro: melhor.bairro ?? p.bairro,
-            horarios: melhor.horarios,
-          };
-        }
-        return { ...p, cidade, uf };
-      });
-
-      return { items, cidade, uf };
-    } catch (err) {
-      console.error("buscarCongregacoes error", err);
-      return { items: [], error: "Erro ao consultar o serviço de busca." };
-    }
+    return { items };
   });

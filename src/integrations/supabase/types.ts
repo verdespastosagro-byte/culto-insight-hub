@@ -165,6 +165,54 @@ export type Database = {
           },
         ]
       }
+      congregacoes_ccb: {
+        Row: {
+          address: string | null
+          cep: string | null
+          city: string | null
+          code: string
+          created_at: string
+          cultos: string | null
+          id: number
+          lat: number
+          lng: number
+          name: string
+          neighborhood: string | null
+          rjm: string | null
+          uf: string | null
+        }
+        Insert: {
+          address?: string | null
+          cep?: string | null
+          city?: string | null
+          code: string
+          created_at?: string
+          cultos?: string | null
+          id?: number
+          lat: number
+          lng: number
+          name: string
+          neighborhood?: string | null
+          rjm?: string | null
+          uf?: string | null
+        }
+        Update: {
+          address?: string | null
+          cep?: string | null
+          city?: string | null
+          code?: string
+          created_at?: string
+          cultos?: string | null
+          id?: number
+          lat?: number
+          lng?: number
+          name?: string
+          neighborhood?: string | null
+          rjm?: string | null
+          uf?: string | null
+        }
+        Relationships: []
+      }
       cultos: {
         Row: {
           cidade: string | null
