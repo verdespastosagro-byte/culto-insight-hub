@@ -6,6 +6,7 @@ import {
   PieChart, Pie, Cell, Legend,
 } from "recharts";
 import { BookOpen, Building2, MessageSquareQuote, HandHelping, Music2, TrendingUp } from "lucide-react";
+import { InstallPWA } from "@/components/InstallPWA";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { formatDate, TIPOS_REUNIAO } from "@/lib/constants";
 
@@ -107,6 +108,7 @@ function Dashboard() {
 
   return (
     <div className="space-y-6">
+      <InstallPWA className="mb-2" />
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Visão geral</h2>
         <p className="text-sm text-muted-foreground">Resumo do sistema de gestão de cultos.</p>
