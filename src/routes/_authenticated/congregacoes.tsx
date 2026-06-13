@@ -94,6 +94,25 @@ function CongregacoesPage() {
     return () => clearTimeout(t);
   }, [cidade, estado, open, listar]);
 
+  // Autocomplete cidade
+  useEffect(() => {
+    if (!open) return;
+    const c = cidade.trim();
+    if (c.length < 2) {
+      setCidadeOpcoes([]);
+      return;
+    }
+    const t = setTimeout(async () => {
+      try {
+        const resp = await buscarCidades({ data: { q: c } });
+        setCidadeOpcoes(resp.items);
+      } catch (e) {
+        console.error(e);
+      }
+    }, 250);
+    return () => clearTimeout(t);
+  }, [cidade, open, buscarCidades]);
+
   const { data, isLoading } = useQuery({
     queryKey: ["congregacoes"],
     queryFn: async () => {
