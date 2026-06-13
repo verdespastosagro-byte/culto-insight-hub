@@ -83,7 +83,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-5">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--gradient-primary)] text-primary-foreground">
+            <div
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-primary-foreground shadow-sm"
+              style={{ background: "var(--gradient-primary, hsl(var(--primary)))", backgroundColor: "hsl(var(--primary))" }}
+            >
               <BookOpen className="h-4 w-4" />
             </div>
             <div className="leading-tight">
