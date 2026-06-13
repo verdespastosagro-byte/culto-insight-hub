@@ -46,7 +46,7 @@ function distanciaKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-type CCBHorario = { diaSemana: number; diaLabel: string; hora: string };
+type CCBHorario = { diaSemana: number; diaLabel: string; hora: string; tipo: "culto" | "rjm" };
 
 function formatarHorarios(horarios: CCBHorario[]): string {
   if (!horarios.length) return "";
