@@ -187,8 +187,47 @@ function CongregacoesPage() {
               <DialogHeader><DialogTitle>{editing ? "Editar" : "Nova"} congregação</DialogTitle></DialogHeader>
               <form onSubmit={handleSave} className="space-y-3">
                 <div className="grid grid-cols-[1fr_auto] gap-3">
-                  <div><Label>Cidade</Label><Input value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Ex: Vitória da Conquista" /></div>
-                  <div><Label>UF</Label><Input value={estado} onChange={(e) => setEstado(e.target.value.toUpperCase())} maxLength={2} className="w-20" placeholder="BA" /></div>
+                  <div className="relative">
+                    <Label>Cidade</Label>
+                    <Input
+                      value={cidade}
+                      onChange={(e) => { setCidade(e.target.value); setShowCidadeOpcoes(true); }}
+                      onFocus={() => setShowCidadeOpcoes(true)}
+                      onBlur={() => setTimeout(() => setShowCidadeOpcoes(false), 150)}
+                      placeholder="Ex: Vitória da Conquista"
+                      autoComplete="off"
+                    />
+                    {showCidadeOpcoes && cidadeOpcoes.length > 0 && (
+                      <ul className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-md border bg-popover shadow-md">
+                        {cidadeOpcoes.map((op, i) => (
+                          <li key={`${op.cidade}-${op.uf}-${i}`}>
+                            <button
+                              type="button"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setCidade(op.cidade);
+                                setEstado(op.uf);
+                                setShowCidadeOpcoes(false);
+                              }}
+                              className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-muted"
+                            >
+                              <span>{op.cidade}</span>
+                              <span className="text-xs text-muted-foreground">{op.uf}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  <div>
+                    <Label>UF</Label>
+                    <Select value={estado} onValueChange={setEstado}>
+                      <SelectTrigger className="w-24"><SelectValue placeholder="UF" /></SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {UFS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 {/* Sugestões CCB */}
