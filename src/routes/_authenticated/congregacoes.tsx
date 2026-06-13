@@ -45,10 +45,31 @@ function CongregacoesPage() {
   const [endereco, setEndereco] = useState("");
   const [observacoes, setObservacoes] = useState("");
 
+  // Visita: data + horário escolhido
+  const [dataVisita, setDataVisita] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [horarioVisita, setHorarioVisita] = useState<string>("");
+  const [sugestaoSelecionada, setSugestaoSelecionada] = useState<CongregacaoCidade | null>(null);
+
   // Sugestões CCB da cidade
   const [sugestoes, setSugestoes] = useState<CongregacaoCidade[]>([]);
   const [loadingSug, setLoadingSug] = useState(false);
   const [erroSug, setErroSug] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setNome(editing?.nome ?? "");
+    setCidade(editing?.cidade ?? "");
+    setEstado(editing?.estado ?? "");
+    setRegiao(editing?.regiao ?? "");
+    setEndereco(editing?.endereco ?? "");
+    setObservacoes(editing?.observacoes ?? "");
+    setSugestoes([]);
+    setErroSug(null);
+    setHorarioVisita("");
+    setSugestaoSelecionada(null);
+    setDataVisita(new Date().toISOString().slice(0, 10));
+  }, [open, editing]);
+
 
   useEffect(() => {
     if (!open) return;
