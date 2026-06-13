@@ -17,6 +17,7 @@ import { buscarCongregacoes, type CCBChurch } from "@/lib/ccb.functions";
 const RAIO_OPCOES = [1, 2, 3, 5, 10, 20, 30, 50] as const;
 const DIAS = [
   { idx: -1, label: "Todos" },
+  { idx: -2, label: "Hoje" },
   { idx: 0, label: "Dom" },
   { idx: 1, label: "Seg" },
   { idx: 2, label: "Ter" },
@@ -45,7 +46,7 @@ function distanciaKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-type CCBHorario = { diaSemana: number; diaLabel: string; hora: string };
+type CCBHorario = { diaSemana: number; diaLabel: string; hora: string; tipo: "culto" | "rjm" };
 
 function formatarHorarios(horarios: CCBHorario[]): string {
   if (!horarios.length) return "";
@@ -133,8 +134,9 @@ export default function CCBPerto() {
 
   const igrejasFiltradas = useMemo(() => {
     if (diaFiltro === -1) return igrejas;
-    return igrejas.filter((i) => i.horarios?.some((h) => h.diaSemana === diaFiltro));
-  }, [igrejas, diaFiltro]);
+    const alvo = diaFiltro === -2 ? hojeIdx : diaFiltro;
+    return igrejas.filter((i) => i.horarios?.some((h) => h.diaSemana === alvo));
+  }, [igrejas, diaFiltro, hojeIdx]);
 
   useEffect(() => {
     if (!mapaInstanceRef.current || !window.google) return;
@@ -292,24 +294,21 @@ export default function CCBPerto() {
           </h2>
           <ul className="space-y-2">
             {igrejasFiltradas.map((ig, idx) => {
-              const horariosHoje = ig.horarios?.filter((h) => h.diaSemana === hojeIdx) ?? [];
-              const temCultoHoje = horariosHoje.length > 0;
-              // Bairro como título; fallback p/ 1º trecho do endereço
+              const todos = ig.horarios ?? [];
+              const horariosHoje = todos.filter((h) => h.diaSemana === hojeIdx);
+              const temCultoHoje = horariosHoje.some((h) => h.tipo === "culto");
+              const temRJMHoje = horariosHoje.some((h) => h.tipo === "rjm");
               const titulo = ig.bairro || ig.address.split(",")[0]?.trim() || "Congregação";
               const cidadeUf = [ig.cidade, ig.uf?.toUpperCase()].filter(Boolean).join("/");
               const subtitulo = [ig.bairro, cidadeUf, `${ig.distancia.toFixed(1)} km`]
                 .filter(Boolean)
                 .join(" • ");
 
-              // Agrupa cultos (todos exceto RJM domingo manhã) e RJM separado
-              const horariosNaoRJM = (ig.horarios ?? []).filter(
-                (h) => !(h.diaSemana === 0 && parseInt(h.hora, 10) < 12),
-              );
-              const horariosRJM = (ig.horarios ?? []).filter(
-                (h) => h.diaSemana === 0 && parseInt(h.hora, 10) < 12,
-              );
-              const cultosTexto = formatarHorarios(horariosNaoRJM);
-              const rjmTexto = formatarHorarios(horariosRJM);
+              // Mostrar apenas os horários do dia quando o filtro for "Hoje" ou um dia específico
+              const horariosVisiveis =
+                diaFiltro === -1 ? todos : todos.filter((h) => h.diaSemana === (diaFiltro === -2 ? hojeIdx : diaFiltro));
+              const cultosTexto = formatarHorarios(horariosVisiveis.filter((h) => h.tipo === "culto"));
+              const rjmTexto = formatarHorarios(horariosVisiveis.filter((h) => h.tipo === "rjm"));
 
               return (
                 <li key={ig.id}>
@@ -326,6 +325,11 @@ export default function CCBPerto() {
                             {temCultoHoje && (
                               <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">
                                 Culto hoje
+                              </Badge>
+                            )}
+                            {temRJMHoje && (
+                              <Badge className="bg-violet-600 text-white hover:bg-violet-600">
+                                RJM hoje
                               </Badge>
                             )}
                           </div>

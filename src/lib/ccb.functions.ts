@@ -11,6 +11,7 @@ export type CCBHorario = {
   diaSemana: number; // 0=Domingo ... 6=Sábado
   diaLabel: string;
   hora: string; // "19:30"
+  tipo: "culto" | "rjm";
 };
 
 export type CCBChurch = {
@@ -35,7 +36,7 @@ const DIA_ABREV: Record<string, { idx: number; label: string }> = {
   sab: { idx: 6, label: "Sábado" },
 };
 
-function parseHorariosString(raw: string | null | undefined): CCBHorario[] {
+function parseHorariosString(raw: string | null | undefined, tipo: "culto" | "rjm"): CCBHorario[] {
   if (!raw || raw === "—") return [];
   const out: CCBHorario[] = [];
   const re = /(Dom|Seg|Ter|Qua|Qui|Sex|S[áa]b)\s+(\d{1,2}):(\d{2})/gi;
@@ -48,6 +49,7 @@ function parseHorariosString(raw: string | null | undefined): CCBHorario[] {
       diaSemana: d.idx,
       diaLabel: d.label,
       hora: `${m[2].padStart(2, "0")}:${m[3]}`,
+      tipo,
     });
   }
   return out;
@@ -67,7 +69,7 @@ type Row = {
 };
 
 function rowToChurch(r: Row, dist?: number): CCBChurch {
-  const horarios = [...parseHorariosString(r.cultos), ...parseHorariosString(r.rjm)];
+  const horarios = [...parseHorariosString(r.cultos, "culto"), ...parseHorariosString(r.rjm, "rjm")];
   return {
     id: r.code,
     name: r.name,
@@ -161,8 +163,8 @@ export const listarCongregacoesPorCidade = createServerFn({ method: "POST" })
       endereco: r.address ?? "",
       bairro: r.neighborhood ?? undefined,
       horarios: [
-        ...parseHorariosString(r.cultos),
-        ...parseHorariosString(r.rjm),
+        ...parseHorariosString(r.cultos, "culto"),
+        ...parseHorariosString(r.rjm, "rjm"),
       ],
     }));
 
