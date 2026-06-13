@@ -294,11 +294,50 @@ function CongregacoesPage() {
                   </div>
                 )}
 
+                <div className="rounded-md border border-dashed bg-primary/5 p-3 space-y-2">
+                  <Label className="text-xs font-semibold">Registrar visita</Label>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-[160px_1fr]">
+                    <Input
+                      type="date"
+                      value={dataVisita}
+                      onChange={(e) => setDataVisita(e.target.value)}
+                    />
+                    {sugestaoSelecionada && sugestaoSelecionada.horarios.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {sugestaoSelecionada.horarios.map((h, i) => {
+                          const label = `${h.diaLabel} às ${h.hora}${h.tipo === "rjm" ? " (RJM)" : ""}`;
+                          const ativo = horarioVisita === label;
+                          return (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => setHorarioVisita(label)}
+                              className={cn(
+                                "rounded-full border px-2.5 py-1 text-xs transition",
+                                ativo
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : "border-border bg-background hover:bg-muted",
+                              )}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="self-center text-xs text-muted-foreground">
+                        Escolha uma congregação acima para selecionar o horário do culto que você participou.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
                 <div><Label>Nome</Label><Input value={nome} onChange={(e) => setNome(e.target.value)} required /></div>
                 <div><Label>Região / Bairro</Label><Input value={regiao} onChange={(e) => setRegiao(e.target.value)} /></div>
                 <div><Label>Endereço</Label><Input value={endereco} onChange={(e) => setEndereco(e.target.value)} /></div>
                 <div><Label>Observações</Label><Textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} /></div>
                 <DialogFooter><Button type="submit">Salvar</Button></DialogFooter>
+
               </form>
             </DialogContent>
           </Dialog>
