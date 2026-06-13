@@ -758,8 +758,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_edit_org: { Args: { _user_id: string }; Returns: boolean }
-      can_manage_org: { Args: { _user_id: string }; Returns: boolean }
+      can_edit_org:
+        | { Args: { _user_id: string }; Returns: boolean }
+        | { Args: { _org_id: string; _user_id: string }; Returns: boolean }
+      can_manage_org:
+        | { Args: { _user_id: string }; Returns: boolean }
+        | { Args: { _org_id: string; _user_id: string }; Returns: boolean }
       current_user_org_id: { Args: never; Returns: string }
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
       has_org_role: {
