@@ -28,9 +28,14 @@ function CongregacoesPage() {
   const qc = useQueryClient();
   const { canEdit, isAdmin } = useAuth();
   const listar = useServerFn(listarCongregacoesPorCidade);
+  const buscarCidades = useServerFn(buscarCidadesUf);
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<Cong | null>(null);
   const [open, setOpen] = useState(false);
+
+  // Autocomplete de cidade
+  const [cidadeOpcoes, setCidadeOpcoes] = useState<CidadeOpcao[]>([]);
+  const [showCidadeOpcoes, setShowCidadeOpcoes] = useState(false);
 
   // Form state controlado p/ poder preencher ao escolher uma sugestão
   const [nome, setNome] = useState("");
