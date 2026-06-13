@@ -45,6 +45,11 @@ function CongregacoesPage() {
   const [endereco, setEndereco] = useState("");
   const [observacoes, setObservacoes] = useState("");
 
+  // Visita: data + horário escolhido
+  const [dataVisita, setDataVisita] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [horarioVisita, setHorarioVisita] = useState<string>("");
+  const [sugestaoSelecionada, setSugestaoSelecionada] = useState<CongregacaoCidade | null>(null);
+
   // Sugestões CCB da cidade
   const [sugestoes, setSugestoes] = useState<CongregacaoCidade[]>([]);
   const [loadingSug, setLoadingSug] = useState(false);
@@ -60,7 +65,13 @@ function CongregacoesPage() {
     setObservacoes(editing?.observacoes ?? "");
     setSugestoes([]);
     setErroSug(null);
+    setHorarioVisita("");
+    setSugestaoSelecionada(null);
+    setDataVisita(new Date().toISOString().slice(0, 10));
   }, [open, editing]);
+
+
+
 
   // Busca sugestões quando cidade+UF estão preenchidos (debounced)
   useEffect(() => {
@@ -132,18 +143,31 @@ function CongregacoesPage() {
     else partes.push(s.endereco.split(",")[0]);
     setNome(partes.join(" - "));
     if (s.bairro) setRegiao(s.bairro);
-    if (s.horarios.length) {
-      const obs = Object.entries(
-        s.horarios.reduce<Record<string, string[]>>((acc, h) => {
-          (acc[h.diaLabel] ||= []).push(h.hora);
-          return acc;
-        }, {}),
-      )
-        .map(([d, hs]) => `${d}: ${[...new Set(hs)].sort().join(", ")}`)
-        .join(" | ");
-      setObservacoes(obs);
-    }
+    setSugestaoSelecionada(s);
+    setHorarioVisita("");
   }
+
+  function formatarDataBR(iso: string) {
+    if (!iso) return "";
+    const [y, m, d] = iso.split("-");
+    return `${d}/${m}/${y}`;
+  }
+
+  // Atualiza observações automaticamente ao mudar data ou horário escolhido
+  useEffect(() => {
+    if (!horarioVisita || !dataVisita) return;
+    const linha = `Visitei em ${formatarDataBR(dataVisita)} • ${horarioVisita}`;
+    setObservacoes((prev) => {
+      // remove qualquer linha "Visitei em ..." anterior e prepende a nova
+      const limpo = (prev ?? "")
+        .split("\n")
+        .filter((l) => !/^Visitei em /i.test(l.trim()))
+        .join("\n")
+        .trim();
+      return limpo ? `${linha}\n${limpo}` : linha;
+    });
+  }, [dataVisita, horarioVisita]);
+
 
   async function handleSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -270,11 +294,50 @@ function CongregacoesPage() {
                   </div>
                 )}
 
+                <div className="rounded-md border border-dashed bg-primary/5 p-3 space-y-2">
+                  <Label className="text-xs font-semibold">Registrar visita</Label>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-[160px_1fr]">
+                    <Input
+                      type="date"
+                      value={dataVisita}
+                      onChange={(e) => setDataVisita(e.target.value)}
+                    />
+                    {sugestaoSelecionada && sugestaoSelecionada.horarios.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {sugestaoSelecionada.horarios.map((h, i) => {
+                          const label = `${h.diaLabel} às ${h.hora}${h.tipo === "rjm" ? " (RJM)" : ""}`;
+                          const ativo = horarioVisita === label;
+                          return (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => setHorarioVisita(label)}
+                              className={cn(
+                                "rounded-full border px-2.5 py-1 text-xs transition",
+                                ativo
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : "border-border bg-background hover:bg-muted",
+                              )}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="self-center text-xs text-muted-foreground">
+                        Escolha uma congregação acima para selecionar o horário do culto que você participou.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
                 <div><Label>Nome</Label><Input value={nome} onChange={(e) => setNome(e.target.value)} required /></div>
                 <div><Label>Região / Bairro</Label><Input value={regiao} onChange={(e) => setRegiao(e.target.value)} /></div>
                 <div><Label>Endereço</Label><Input value={endereco} onChange={(e) => setEndereco(e.target.value)} /></div>
                 <div><Label>Observações</Label><Textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} /></div>
                 <DialogFooter><Button type="submit">Salvar</Button></DialogFooter>
+
               </form>
             </DialogContent>
           </Dialog>
