@@ -100,11 +100,6 @@ const AuthenticatedContaRoute = AuthenticatedContaRouteImport.update({
   path: '/conta',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedContaRoute = AuthenticatedContaRouteImport.update({
-  id: '/conta',
-  path: '/conta',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedCongregacoesRoute =
   AuthenticatedCongregacoesRouteImport.update({
     id: '/congregacoes',
