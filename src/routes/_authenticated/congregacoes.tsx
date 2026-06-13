@@ -71,17 +71,7 @@ function CongregacoesPage() {
   }, [open, editing]);
 
 
-  useEffect(() => {
-    if (!open) return;
-    setNome(editing?.nome ?? "");
-    setCidade(editing?.cidade ?? "");
-    setEstado(editing?.estado ?? "");
-    setRegiao(editing?.regiao ?? "");
-    setEndereco(editing?.endereco ?? "");
-    setObservacoes(editing?.observacoes ?? "");
-    setSugestoes([]);
-    setErroSug(null);
-  }, [open, editing]);
+
 
   // Busca sugestões quando cidade+UF estão preenchidos (debounced)
   useEffect(() => {
