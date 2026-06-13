@@ -11,6 +11,7 @@ export type CCBHorario = {
   diaSemana: number; // 0=Domingo ... 6=Sábado
   diaLabel: string;
   hora: string; // "19:30"
+  tipo: "culto" | "rjm";
 };
 
 export type CCBChurch = {
