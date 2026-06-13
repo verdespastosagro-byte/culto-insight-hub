@@ -215,6 +215,29 @@ async function buscarHorariosCidade(
   }
 }
 
+const ListarInput = z.object({
+  cidade: z.string().min(1).max(120),
+  uf: z.string().length(2),
+});
+
+export type CongregacaoCidade = {
+  endereco: string;
+  bairro?: string;
+  horarios: CCBHorario[];
+};
+
+export const listarCongregacoesPorCidade = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => ListarInput.parse(data))
+  .handler(async ({ data }): Promise<{ items: CongregacaoCidade[]; error?: string }> => {
+    try {
+      const itens = await buscarHorariosCidade(data.cidade, data.uf.toLowerCase());
+      return { items: itens };
+    } catch (e) {
+      console.error("listarCongregacoesPorCidade error", e);
+      return { items: [], error: "Erro ao buscar congregações da cidade." };
+    }
+  });
+
 function similaridadeEndereco(a: string, b: string): number {
   const na = norm(a);
   const nb = norm(b);
