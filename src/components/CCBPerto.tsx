@@ -45,6 +45,19 @@ function distanciaKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+type CCBHorario = { diaSemana: number; diaLabel: string; hora: string };
+
+function formatarHorarios(horarios: CCBHorario[]): string {
+  if (!horarios.length) return "";
+  const porDia = horarios.reduce<Record<string, string[]>>((acc, h) => {
+    (acc[h.diaLabel] ||= []).push(h.hora);
+    return acc;
+  }, {});
+  return Object.entries(porDia)
+    .map(([dia, horas]) => `${dia.slice(0, 3)}: ${[...new Set(horas)].sort().join(", ")}`)
+    .join(" • ");
+}
+
 type ItemComDist = CCBChurch & { distancia: number };
 
 export default function CCBPerto() {
@@ -281,98 +294,103 @@ export default function CCBPerto() {
             {igrejasFiltradas.map((ig, idx) => {
               const horariosHoje = ig.horarios?.filter((h) => h.diaSemana === hojeIdx) ?? [];
               const temCultoHoje = horariosHoje.length > 0;
+              // Bairro como título; fallback p/ 1º trecho do endereço
+              const titulo = ig.bairro || ig.address.split(",")[0]?.trim() || "Congregação";
+              const cidadeUf = [ig.cidade, ig.uf?.toUpperCase()].filter(Boolean).join("/");
+              const subtitulo = [ig.bairro, cidadeUf, `${ig.distancia.toFixed(1)} km`]
+                .filter(Boolean)
+                .join(" • ");
+
+              // Agrupa cultos (todos exceto RJM domingo manhã) e RJM separado
+              const horariosNaoRJM = (ig.horarios ?? []).filter(
+                (h) => !(h.diaSemana === 0 && parseInt(h.hora, 10) < 12),
+              );
+              const horariosRJM = (ig.horarios ?? []).filter(
+                (h) => h.diaSemana === 0 && parseInt(h.hora, 10) < 12,
+              );
+              const cultosTexto = formatarHorarios(horariosNaoRJM);
+              const rjmTexto = formatarHorarios(horariosRJM);
+
               return (
                 <li key={ig.id}>
-                  <Card className="flex flex-col gap-3 p-3">
-                    <div className="flex items-start justify-between gap-3">
+                  <Card className="overflow-hidden p-0">
+                    {/* Cabeçalho */}
+                    <div className="flex items-start justify-between gap-3 border-b bg-muted/40 px-4 py-3">
                       <div className="flex min-w-0 items-start gap-3">
-                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                        <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
                           {idx + 1}
                         </div>
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="truncate text-sm font-medium">{ig.name}</p>
+                            <h3 className="truncate text-sm font-semibold">{titulo}</h3>
                             {temCultoHoje && (
                               <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">
                                 Culto hoje
                               </Badge>
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground">{ig.address}</p>
-                          {ig.bairro && (
-                            <p className="text-xs text-muted-foreground">Bairro: {ig.bairro}</p>
-                          )}
-                          <p className="mt-0.5 text-xs font-medium text-primary">
-                            {ig.distancia.toFixed(2)} km
-                          </p>
+                          <p className="truncate text-xs text-muted-foreground">{subtitulo}</p>
                         </div>
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            type="button"
-                            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                          >
-                            <Navigation className="h-3.5 w-3.5" />
-                            Como chegar
-                            <ChevronDown className="h-3 w-3" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <a
-                              href={`https://www.google.com/maps/dir/?api=1&destination=${ig.lat},${ig.lng}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              Google Maps
-                            </a>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <a
-                              href={`https://waze.com/ul?ll=${ig.lat},${ig.lng}&navigate=yes`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              Waze
-                            </a>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <a
-                              href={`https://maps.apple.com/?daddr=${ig.lat},${ig.lng}&dirflg=d`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              Apple Maps
-                            </a>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </div>
-                    {ig.horarios && ig.horarios.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-1.5 border-t pt-2">
-                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                        {Object.entries(
-                          ig.horarios.reduce<Record<string, string[]>>((acc, h) => {
-                            (acc[h.diaLabel] ||= []).push(h.hora);
-                            return acc;
-                          }, {}),
-                        ).map(([dia, horas]) => (
-                          <span
-                            key={dia}
-                            className={cn(
-                              "rounded-md border px-2 py-0.5 text-xs",
-                              DIAS.find((d) => d.label.startsWith(dia.slice(0, 3)))?.idx === hojeIdx
-                                ? "border-emerald-600 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
-                                : "border-border bg-muted/40 text-foreground",
-                            )}
-                          >
-                            <strong className="font-semibold">{dia}:</strong>{" "}
-                            {[...new Set(horas)].sort().join(", ")}
-                          </span>
-                        ))}
+
+                    {/* Corpo */}
+                    <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 space-y-1 text-xs">
+                        <p className="text-muted-foreground">
+                          {ig.address || "Endereço não informado"}
+                        </p>
+                        <p>
+                          <span className="font-semibold">Cultos:</span>{" "}
+                          <span className="text-muted-foreground">{cultosTexto || "—"}</span>
+                        </p>
+                        <p>
+                          <span className="font-semibold">RJM:</span>{" "}
+                          <span className="text-muted-foreground">{rjmTexto || "—"}</span>
+                        </p>
                       </div>
-                    )}
+                      <div className="flex shrink-0 flex-col gap-1.5">
+                        <a
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${ig.lat},${ig.lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                        >
+                          <MapPin className="h-3.5 w-3.5 text-rose-500" />
+                          Maps
+                        </a>
+                        <a
+                          href={`https://waze.com/ul?ll=${ig.lat},${ig.lng}&navigate=yes`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                        >
+                          <Navigation className="h-3.5 w-3.5 text-sky-500" />
+                          Waze
+                        </a>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              className="inline-flex items-center justify-center gap-1 rounded-md border border-border bg-background px-3 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted"
+                            >
+                              Mais <ChevronDown className="h-3 w-3" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                              <a
+                                href={`https://maps.apple.com/?daddr=${ig.lat},${ig.lng}&dirflg=d`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Apple Maps
+                              </a>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
                   </Card>
                 </li>
               );
