@@ -163,8 +163,8 @@ export const listarCongregacoesPorCidade = createServerFn({ method: "POST" })
       endereco: r.address ?? "",
       bairro: r.neighborhood ?? undefined,
       horarios: [
-        ...parseHorariosString(r.cultos),
-        ...parseHorariosString(r.rjm),
+        ...parseHorariosString(r.cultos, "culto"),
+        ...parseHorariosString(r.rjm, "rjm"),
       ],
     }));
 
