@@ -426,9 +426,33 @@ function CongregacoesPage() {
         )}
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Buscar..." value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative max-w-sm flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="Buscar..." value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {([
+            { id: "todas", label: "Todas" },
+            { id: "hoje", label: "Visitei hoje" },
+            { id: "semana", label: "Últimos 7 dias" },
+            { id: "rjm", label: "Com RJM" },
+          ] as { id: Filtro; label: string }[]).map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setFiltro(f.id)}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs transition",
+                filtro === f.id
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-background hover:bg-muted",
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {isLoading ? (
@@ -436,30 +460,49 @@ function CongregacoesPage() {
       ) : filtered.length === 0 ? (
         <Card><CardContent className="grid place-items-center gap-2 py-12 text-center text-sm text-muted-foreground">
           <Building2 className="h-10 w-10 opacity-40" />
-          Nenhuma congregação cadastrada.
+          Nenhuma congregação encontrada.
         </CardContent></Card>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((c) => (
-            <Card key={c.id} className="shadow-[var(--shadow-card)]">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h3 className="truncate font-semibold">{c.nome}</h3>
-                    <p className="text-xs text-muted-foreground">{[c.cidade, c.estado].filter(Boolean).join(" / ") || "—"}</p>
-                    {c.regiao && <p className="mt-1 text-xs text-muted-foreground">Região: {c.regiao}</p>}
-                  </div>
-                  {canEdit && (
-                    <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
-                      {isAdmin && <Button size="icon" variant="ghost" onClick={() => handleDelete(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+          {filtered.map((c) => {
+            const s = statsPorCong.get(c.id);
+            return (
+              <Card key={c.id} className="shadow-[var(--shadow-card)]">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="truncate font-semibold">{c.nome}</h3>
+                      <p className="text-xs text-muted-foreground">{[c.cidade, c.estado].filter(Boolean).join(" / ") || "—"}</p>
+                      {c.regiao && <p className="mt-1 text-xs text-muted-foreground">Região: {c.regiao}</p>}
                     </div>
-                  )}
-                </div>
-                {c.endereco && <p className="mt-3 text-xs text-muted-foreground">{c.endereco}</p>}
-              </CardContent>
-            </Card>
-          ))}
+                    {canEdit && (
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                        {isAdmin && <Button size="icon" variant="ghost" onClick={() => handleDelete(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+                      </div>
+                    )}
+                  </div>
+                  {c.endereco && <p className="mt-3 text-xs text-muted-foreground">{c.endereco}</p>}
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    <span className={cn(
+                      "rounded-full border px-2 py-0.5 text-[11px] font-semibold",
+                      (s?.total ?? 0) > 0
+                        ? "border-primary/30 bg-primary/10 text-primary"
+                        : "border-border bg-muted text-muted-foreground",
+                    )}>
+                      {s?.total ?? 0} {(s?.total ?? 0) === 1 ? "visita" : "visitas"}
+                    </span>
+                    {s?.tipos.has("rjm") && (
+                      <span className="rounded-full border border-purple-500/30 bg-purple-500/10 px-2 py-0.5 text-[11px] font-semibold text-purple-700 dark:text-purple-300">RJM</span>
+                    )}
+                    {s?.ultima && (
+                      <span className="text-[11px] text-muted-foreground">Última: {formatarDataBR(s.ultima)}</span>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
