@@ -17,6 +17,7 @@ import { buscarCongregacoes, type CCBChurch } from "@/lib/ccb.functions";
 const RAIO_OPCOES = [1, 2, 3, 5, 10, 20, 30, 50] as const;
 const DIAS = [
   { idx: -1, label: "Todos" },
+  { idx: -2, label: "Hoje" },
   { idx: 0, label: "Dom" },
   { idx: 1, label: "Seg" },
   { idx: 2, label: "Ter" },
