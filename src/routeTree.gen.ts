@@ -24,6 +24,7 @@ import { Route as AuthenticatedHinosRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedContaRouteImport } from './routes/_authenticated/conta'
 import { Route as AuthenticatedCongregacoesRouteImport } from './routes/_authenticated/congregacoes'
+import { Route as AuthenticatedCcbPertoDeMimRouteImport } from './routes/_authenticated/ccb-perto-de-mim'
 import { Route as AuthenticatedAtendimentosRouteImport } from './routes/_authenticated/atendimentos'
 import { Route as AuthenticatedAgendaRouteImport } from './routes/_authenticated/agenda'
 import { Route as AuthenticatedCultosIndexRouteImport } from './routes/_authenticated/cultos.index'
@@ -106,6 +107,12 @@ const AuthenticatedCongregacoesRoute =
     path: '/congregacoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCcbPertoDeMimRoute =
+  AuthenticatedCcbPertoDeMimRouteImport.update({
+    id: '/ccb-perto-de-mim',
+    path: '/ccb-perto-de-mim',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAtendimentosRoute =
   AuthenticatedAtendimentosRouteImport.update({
     id: '/atendimentos',
@@ -149,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/agenda': typeof AuthenticatedAgendaRoute
   '/atendimentos': typeof AuthenticatedAtendimentosRoute
+  '/ccb-perto-de-mim': typeof AuthenticatedCcbPertoDeMimRoute
   '/congregacoes': typeof AuthenticatedCongregacoesRoute
   '/conta': typeof AuthenticatedContaRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -171,6 +179,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/agenda': typeof AuthenticatedAgendaRoute
   '/atendimentos': typeof AuthenticatedAtendimentosRoute
+  '/ccb-perto-de-mim': typeof AuthenticatedCcbPertoDeMimRoute
   '/congregacoes': typeof AuthenticatedCongregacoesRoute
   '/conta': typeof AuthenticatedContaRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -195,6 +204,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/agenda': typeof AuthenticatedAgendaRoute
   '/_authenticated/atendimentos': typeof AuthenticatedAtendimentosRoute
+  '/_authenticated/ccb-perto-de-mim': typeof AuthenticatedCcbPertoDeMimRoute
   '/_authenticated/congregacoes': typeof AuthenticatedCongregacoesRoute
   '/_authenticated/conta': typeof AuthenticatedContaRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/agenda'
     | '/atendimentos'
+    | '/ccb-perto-de-mim'
     | '/congregacoes'
     | '/conta'
     | '/dashboard'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/agenda'
     | '/atendimentos'
+    | '/ccb-perto-de-mim'
     | '/congregacoes'
     | '/conta'
     | '/dashboard'
@@ -264,6 +276,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_authenticated/agenda'
     | '/_authenticated/atendimentos'
+    | '/_authenticated/ccb-perto-de-mim'
     | '/_authenticated/congregacoes'
     | '/_authenticated/conta'
     | '/_authenticated/dashboard'
@@ -395,6 +408,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCongregacoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/ccb-perto-de-mim': {
+      id: '/_authenticated/ccb-perto-de-mim'
+      path: '/ccb-perto-de-mim'
+      fullPath: '/ccb-perto-de-mim'
+      preLoaderRoute: typeof AuthenticatedCcbPertoDeMimRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/atendimentos': {
       id: '/_authenticated/atendimentos'
       path: '/atendimentos'
@@ -443,6 +463,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAgendaRoute: typeof AuthenticatedAgendaRoute
   AuthenticatedAtendimentosRoute: typeof AuthenticatedAtendimentosRoute
+  AuthenticatedCcbPertoDeMimRoute: typeof AuthenticatedCcbPertoDeMimRoute
   AuthenticatedCongregacoesRoute: typeof AuthenticatedCongregacoesRoute
   AuthenticatedContaRoute: typeof AuthenticatedContaRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -461,6 +482,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAgendaRoute: AuthenticatedAgendaRoute,
   AuthenticatedAtendimentosRoute: AuthenticatedAtendimentosRoute,
+  AuthenticatedCcbPertoDeMimRoute: AuthenticatedCcbPertoDeMimRoute,
   AuthenticatedCongregacoesRoute: AuthenticatedCongregacoesRoute,
   AuthenticatedContaRoute: AuthenticatedContaRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
