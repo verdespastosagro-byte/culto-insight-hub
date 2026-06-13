@@ -32,6 +32,7 @@ function CongregacoesPage() {
   const listar = useServerFn(listarCongregacoesPorCidade);
   const buscarCidades = useServerFn(buscarCidadesUf);
   const [q, setQ] = useState("");
+  const [filtro, setFiltro] = useState<Filtro>("todas");
   const [editing, setEditing] = useState<Cong | null>(null);
   const [open, setOpen] = useState(false);
 
