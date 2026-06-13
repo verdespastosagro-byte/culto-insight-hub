@@ -45,6 +45,19 @@ function distanciaKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+type CCBHorario = { diaSemana: number; diaLabel: string; hora: string };
+
+function formatarHorarios(horarios: CCBHorario[]): string {
+  if (!horarios.length) return "";
+  const porDia = horarios.reduce<Record<string, string[]>>((acc, h) => {
+    (acc[h.diaLabel] ||= []).push(h.hora);
+    return acc;
+  }, {});
+  return Object.entries(porDia)
+    .map(([dia, horas]) => `${dia.slice(0, 3)}: ${[...new Set(horas)].sort().join(", ")}`)
+    .join(" • ");
+}
+
 type ItemComDist = CCBChurch & { distancia: number };
 
 export default function CCBPerto() {
