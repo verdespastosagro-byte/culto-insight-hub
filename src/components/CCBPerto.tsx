@@ -134,8 +134,9 @@ export default function CCBPerto() {
 
   const igrejasFiltradas = useMemo(() => {
     if (diaFiltro === -1) return igrejas;
-    return igrejas.filter((i) => i.horarios?.some((h) => h.diaSemana === diaFiltro));
-  }, [igrejas, diaFiltro]);
+    const alvo = diaFiltro === -2 ? hojeIdx : diaFiltro;
+    return igrejas.filter((i) => i.horarios?.some((h) => h.diaSemana === alvo));
+  }, [igrejas, diaFiltro, hojeIdx]);
 
   useEffect(() => {
     if (!mapaInstanceRef.current || !window.google) return;
