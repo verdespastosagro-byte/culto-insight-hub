@@ -302,6 +302,18 @@ export const buscarCongregacoes = createServerFn({ method: "POST" })
         }>;
       };
 
+      const extrairBairroDeAddress = (addr: string): string | undefined => {
+        // Padrão BR: "Rua X, 123 - Bairro, Cidade - UF, CEP, Brasil"
+        const partes = addr.split(",").map((s) => s.trim());
+        const primeira = partes[0] ?? "";
+        const segunda = partes[1] ?? "";
+        const m1 = primeira.match(/-\s*(.+)$/);
+        if (m1?.[1]) return m1[1].trim();
+        const m2 = segunda.match(/^([^-]+?)(?:\s*-\s*.+)?$/);
+        if (m2?.[1] && !/^\d/.test(m2[1])) return m2[1].trim();
+        return undefined;
+      };
+
       const placesItems: CCBChurch[] = (json.places ?? [])
         .filter((p) => p.location && isCCB(p.displayName?.text ?? ""))
         .map((p) => ({
@@ -310,6 +322,7 @@ export const buscarCongregacoes = createServerFn({ method: "POST" })
           address: p.formattedAddress ?? "",
           lat: p.location!.latitude,
           lng: p.location!.longitude,
+          bairro: extrairBairroDeAddress(p.formattedAddress ?? ""),
         }));
 
       // 2) Reverse geocode + horários do site
