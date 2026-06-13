@@ -23,6 +23,8 @@ export const Route = createFileRoute("/_authenticated/congregacoes")({
 });
 
 type Cong = { id: string; nome: string; cidade: string|null; estado: string|null; regiao: string|null; endereco: string|null; observacoes: string|null };
+type CultoRow = { id: string; data: string; tipo: string; congregacao_id: string | null };
+type Filtro = "todas" | "hoje" | "semana" | "rjm";
 
 function CongregacoesPage() {
   const qc = useQueryClient();
@@ -30,6 +32,7 @@ function CongregacoesPage() {
   const listar = useServerFn(listarCongregacoesPorCidade);
   const buscarCidades = useServerFn(buscarCidadesUf);
   const [q, setQ] = useState("");
+  const [filtro, setFiltro] = useState<Filtro>("todas");
   const [editing, setEditing] = useState<Cong | null>(null);
   const [open, setOpen] = useState(false);
 
@@ -132,9 +135,49 @@ function CongregacoesPage() {
     },
   });
 
-  const filtered = (data ?? []).filter((c) =>
-    [c.nome, c.cidade, c.estado, c.regiao].some((v) => v?.toLowerCase().includes(q.toLowerCase()))
-  );
+  const { data: cultos } = useQuery({
+    queryKey: ["cultos-resumo"],
+    queryFn: async () => {
+      const { data } = await supabase.from("cultos").select("id, data, tipo, congregacao_id");
+      return (data ?? []) as CultoRow[];
+    },
+  });
+
+  // Mapa: congregacao_id -> stats
+  const statsPorCong = (() => {
+    const m = new Map<string, { total: number; ultima: string | null; tipos: Set<string>; datas: Set<string> }>();
+    (cultos ?? []).forEach((c) => {
+      if (!c.congregacao_id) return;
+      const cur = m.get(c.congregacao_id) ?? { total: 0, ultima: null, tipos: new Set<string>(), datas: new Set<string>() };
+      cur.total += 1;
+      if (!cur.ultima || c.data > cur.ultima) cur.ultima = c.data;
+      cur.tipos.add(c.tipo);
+      cur.datas.add(c.data);
+      m.set(c.congregacao_id, cur);
+    });
+    return m;
+  })();
+
+  const hojeISO = new Date().toISOString().slice(0, 10);
+  const seteDiasAtras = (() => {
+    const d = new Date(); d.setDate(d.getDate() - 7);
+    return d.toISOString().slice(0, 10);
+  })();
+
+  const filtered = (data ?? [])
+    .filter((c) =>
+      [c.nome, c.cidade, c.estado, c.regiao].some((v) => v?.toLowerCase().includes(q.toLowerCase()))
+    )
+    .filter((c) => {
+      if (filtro === "todas") return true;
+      const s = statsPorCong.get(c.id);
+      if (!s) return false;
+      if (filtro === "hoje") return s.datas.has(hojeISO);
+      if (filtro === "semana") return Array.from(s.datas).some((d) => d >= seteDiasAtras);
+      if (filtro === "rjm") return s.tipos.has("rjm");
+      return true;
+    })
+    .sort((a, b) => (statsPorCong.get(b.id)?.total ?? 0) - (statsPorCong.get(a.id)?.total ?? 0));
 
   function escolherSugestao(s: CongregacaoCidade) {
     setEndereco(s.endereco);
@@ -158,7 +201,6 @@ function CongregacoesPage() {
     if (!horarioVisita || !dataVisita) return;
     const linha = `Visitei em ${formatarDataBR(dataVisita)} • ${horarioVisita}`;
     setObservacoes((prev) => {
-      // remove qualquer linha "Visitei em ..." anterior e prepende a nova
       const limpo = (prev ?? "")
         .split("\n")
         .filter((l) => !/^Visitei em /i.test(l.trim()))
@@ -180,12 +222,52 @@ function CongregacoesPage() {
       observacoes: observacoes.trim() || null,
     };
     if (!payload.nome) { toast.error("Nome obrigatório"); return; }
-    const { error } = editing?.id
-      ? await supabase.from("congregacoes").update(payload).eq("id", editing.id)
-      : await supabase.from("congregacoes").insert(payload);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Salvo!"); setOpen(false); setEditing(null);
+
+    let congId = editing?.id ?? null;
+
+    if (!editing) {
+      // Dedupe: procura uma congregação existente pelo mesmo endereço (ou nome+cidade)
+      const existentes = data ?? [];
+      const igual = existentes.find((c) => {
+        if (payload.endereco && c.endereco && c.endereco.trim().toLowerCase() === payload.endereco.toLowerCase()) return true;
+        const mesmoNome = c.nome.trim().toLowerCase() === payload.nome.toLowerCase();
+        const mesmaCidade = (c.cidade ?? "").trim().toLowerCase() === (payload.cidade ?? "").toLowerCase();
+        return mesmoNome && mesmaCidade;
+      });
+      if (igual) {
+        congId = igual.id;
+        toast.info("Congregação já cadastrada — vou apenas registrar sua visita.");
+      } else {
+        const { data: ins, error } = await supabase.from("congregacoes").insert(payload).select("id").single();
+        if (error) { toast.error(error.message); return; }
+        congId = ins!.id as string;
+      }
+    } else {
+      const { error } = await supabase.from("congregacoes").update(payload).eq("id", editing.id);
+      if (error) { toast.error(error.message); return; }
+    }
+
+    // Se um horário foi escolhido, registra a visita como um culto
+    if (!editing && congId && horarioVisita && dataVisita) {
+      const isRjm = /RJM/i.test(horarioVisita);
+      const horaMatch = horarioVisita.match(/(\d{2}):(\d{2})/);
+      const horario = horaMatch ? `${horaMatch[1]}:${horaMatch[2]}` : null;
+      const { error: ce } = await supabase.from("cultos").insert({
+        data: dataVisita,
+        horario,
+        tipo: (isRjm ? "rjm" : "culto_oficial") as never,
+        congregacao_id: congId,
+        cidade: payload.cidade,
+      });
+      if (ce) toast.error(`Visita não registrada: ${ce.message}`);
+      else toast.success("Visita registrada!");
+    } else {
+      toast.success("Salvo!");
+    }
+
+    setOpen(false); setEditing(null);
     qc.invalidateQueries({ queryKey: ["congregacoes"] });
+    qc.invalidateQueries({ queryKey: ["cultos-resumo"] });
   }
 
   async function handleDelete(id: string) {
@@ -344,9 +426,33 @@ function CongregacoesPage() {
         )}
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Buscar..." value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative max-w-sm flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="Buscar..." value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {([
+            { id: "todas", label: "Todas" },
+            { id: "hoje", label: "Visitei hoje" },
+            { id: "semana", label: "Últimos 7 dias" },
+            { id: "rjm", label: "Com RJM" },
+          ] as { id: Filtro; label: string }[]).map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setFiltro(f.id)}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs transition",
+                filtro === f.id
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-background hover:bg-muted",
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {isLoading ? (
@@ -354,30 +460,49 @@ function CongregacoesPage() {
       ) : filtered.length === 0 ? (
         <Card><CardContent className="grid place-items-center gap-2 py-12 text-center text-sm text-muted-foreground">
           <Building2 className="h-10 w-10 opacity-40" />
-          Nenhuma congregação cadastrada.
+          Nenhuma congregação encontrada.
         </CardContent></Card>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((c) => (
-            <Card key={c.id} className="shadow-[var(--shadow-card)]">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h3 className="truncate font-semibold">{c.nome}</h3>
-                    <p className="text-xs text-muted-foreground">{[c.cidade, c.estado].filter(Boolean).join(" / ") || "—"}</p>
-                    {c.regiao && <p className="mt-1 text-xs text-muted-foreground">Região: {c.regiao}</p>}
-                  </div>
-                  {canEdit && (
-                    <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
-                      {isAdmin && <Button size="icon" variant="ghost" onClick={() => handleDelete(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+          {filtered.map((c) => {
+            const s = statsPorCong.get(c.id);
+            return (
+              <Card key={c.id} className="shadow-[var(--shadow-card)]">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="truncate font-semibold">{c.nome}</h3>
+                      <p className="text-xs text-muted-foreground">{[c.cidade, c.estado].filter(Boolean).join(" / ") || "—"}</p>
+                      {c.regiao && <p className="mt-1 text-xs text-muted-foreground">Região: {c.regiao}</p>}
                     </div>
-                  )}
-                </div>
-                {c.endereco && <p className="mt-3 text-xs text-muted-foreground">{c.endereco}</p>}
-              </CardContent>
-            </Card>
-          ))}
+                    {canEdit && (
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                        {isAdmin && <Button size="icon" variant="ghost" onClick={() => handleDelete(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+                      </div>
+                    )}
+                  </div>
+                  {c.endereco && <p className="mt-3 text-xs text-muted-foreground">{c.endereco}</p>}
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    <span className={cn(
+                      "rounded-full border px-2 py-0.5 text-[11px] font-semibold",
+                      (s?.total ?? 0) > 0
+                        ? "border-primary/30 bg-primary/10 text-primary"
+                        : "border-border bg-muted text-muted-foreground",
+                    )}>
+                      {s?.total ?? 0} {(s?.total ?? 0) === 1 ? "visita" : "visitas"}
+                    </span>
+                    {s?.tipos.has("rjm") && (
+                      <span className="rounded-full border border-purple-500/30 bg-purple-500/10 px-2 py-0.5 text-[11px] font-semibold text-purple-700 dark:text-purple-300">RJM</span>
+                    )}
+                    {s?.ultima && (
+                      <span className="text-[11px] text-muted-foreground">Última: {formatarDataBR(s.ultima)}</span>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
