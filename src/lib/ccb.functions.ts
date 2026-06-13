@@ -69,7 +69,7 @@ type Row = {
 };
 
 function rowToChurch(r: Row, dist?: number): CCBChurch {
-  const horarios = [...parseHorariosString(r.cultos), ...parseHorariosString(r.rjm)];
+  const horarios = [...parseHorariosString(r.cultos, "culto"), ...parseHorariosString(r.rjm, "rjm")];
   return {
     id: r.code,
     name: r.name,
