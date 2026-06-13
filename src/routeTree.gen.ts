@@ -22,6 +22,7 @@ import { Route as AuthenticatedMusicosRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
 import { Route as AuthenticatedHinosRouteImport } from './routes/_authenticated/hinos'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedContaRouteImport } from './routes/_authenticated/conta'
 import { Route as AuthenticatedCongregacoesRouteImport } from './routes/_authenticated/congregacoes'
 import { Route as AuthenticatedAtendimentosRouteImport } from './routes/_authenticated/atendimentos'
 import { Route as AuthenticatedAgendaRouteImport } from './routes/_authenticated/agenda'
@@ -94,6 +95,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedContaRoute = AuthenticatedContaRouteImport.update({
+  id: '/conta',
+  path: '/conta',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCongregacoesRoute =
   AuthenticatedCongregacoesRouteImport.update({
     id: '/congregacoes',
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/agenda': typeof AuthenticatedAgendaRoute
   '/atendimentos': typeof AuthenticatedAtendimentosRoute
   '/congregacoes': typeof AuthenticatedCongregacoesRoute
+  '/conta': typeof AuthenticatedContaRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/hinos': typeof AuthenticatedHinosRoute
   '/insights': typeof AuthenticatedInsightsRoute
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/agenda': typeof AuthenticatedAgendaRoute
   '/atendimentos': typeof AuthenticatedAtendimentosRoute
   '/congregacoes': typeof AuthenticatedCongregacoesRoute
+  '/conta': typeof AuthenticatedContaRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/hinos': typeof AuthenticatedHinosRoute
   '/insights': typeof AuthenticatedInsightsRoute
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/_authenticated/agenda': typeof AuthenticatedAgendaRoute
   '/_authenticated/atendimentos': typeof AuthenticatedAtendimentosRoute
   '/_authenticated/congregacoes': typeof AuthenticatedCongregacoesRoute
+  '/_authenticated/conta': typeof AuthenticatedContaRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/hinos': typeof AuthenticatedHinosRoute
   '/_authenticated/insights': typeof AuthenticatedInsightsRoute
@@ -211,6 +220,7 @@ export interface FileRouteTypes {
     | '/agenda'
     | '/atendimentos'
     | '/congregacoes'
+    | '/conta'
     | '/dashboard'
     | '/hinos'
     | '/insights'
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
     | '/agenda'
     | '/atendimentos'
     | '/congregacoes'
+    | '/conta'
     | '/dashboard'
     | '/hinos'
     | '/insights'
@@ -254,6 +265,7 @@ export interface FileRouteTypes {
     | '/_authenticated/agenda'
     | '/_authenticated/atendimentos'
     | '/_authenticated/congregacoes'
+    | '/_authenticated/conta'
     | '/_authenticated/dashboard'
     | '/_authenticated/hinos'
     | '/_authenticated/insights'
@@ -369,6 +381,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/conta': {
+      id: '/_authenticated/conta'
+      path: '/conta'
+      fullPath: '/conta'
+      preLoaderRoute: typeof AuthenticatedContaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/congregacoes': {
       id: '/_authenticated/congregacoes'
       path: '/congregacoes'
@@ -425,6 +444,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAgendaRoute: typeof AuthenticatedAgendaRoute
   AuthenticatedAtendimentosRoute: typeof AuthenticatedAtendimentosRoute
   AuthenticatedCongregacoesRoute: typeof AuthenticatedCongregacoesRoute
+  AuthenticatedContaRoute: typeof AuthenticatedContaRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHinosRoute: typeof AuthenticatedHinosRoute
   AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
@@ -442,6 +462,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAgendaRoute: AuthenticatedAgendaRoute,
   AuthenticatedAtendimentosRoute: AuthenticatedAtendimentosRoute,
   AuthenticatedCongregacoesRoute: AuthenticatedCongregacoesRoute,
+  AuthenticatedContaRoute: AuthenticatedContaRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHinosRoute: AuthenticatedHinosRoute,
   AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,

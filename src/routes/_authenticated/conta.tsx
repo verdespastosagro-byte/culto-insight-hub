@@ -1,0 +1,275 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, type FormEvent } from "react";
+import { User, Lock, Building2, Crown, Mail, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { usePlanLimits, PLAN_LABELS } from "@/hooks/usePlanLimits";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+
+export const Route = createFileRoute("/_authenticated/conta")({
+  component: ContaPage,
+});
+
+type Status = { type: "ok" | "err"; msg: string } | null;
+
+function ContaPage() {
+  const { user, profile, organization, orgRole, plan, planStatus, trialDaysLeft, refreshOrg } = useAuth();
+  const { isTrialing, isExpired } = usePlanLimits();
+
+  const [nome, setNome] = useState(profile?.nome ?? "");
+  const [cargo, setCargo] = useState(profile?.cargo ?? "");
+  const [congregacao, setCongregacao] = useState(profile?.congregacao ?? "");
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileStatus, setProfileStatus] = useState<Status>(null);
+
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordStatus, setPasswordStatus] = useState<Status>(null);
+
+  async function handleSaveProfile(e: FormEvent) {
+    e.preventDefault();
+    if (!user) return;
+    setSavingProfile(true);
+    setProfileStatus(null);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ nome: nome.trim(), cargo: cargo.trim() || null, congregacao: congregacao.trim() || null })
+      .eq("id", user.id);
+    setSavingProfile(false);
+    if (error) {
+      setProfileStatus({ type: "err", msg: error.message });
+    } else {
+      setProfileStatus({ type: "ok", msg: "Perfil atualizado com sucesso." });
+      await refreshOrg();
+    }
+  }
+
+  async function handleChangePassword(e: FormEvent) {
+    e.preventDefault();
+    setPasswordStatus(null);
+    if (newPassword.length < 8) {
+      setPasswordStatus({ type: "err", msg: "A senha precisa ter pelo menos 8 caracteres." });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordStatus({ type: "err", msg: "As senhas não coincidem." });
+      return;
+    }
+    setSavingPassword(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setSavingPassword(false);
+    if (error) {
+      setPasswordStatus({ type: "err", msg: error.message });
+    } else {
+      setPasswordStatus({ type: "ok", msg: "Senha alterada com sucesso." });
+      setNewPassword("");
+      setConfirmPassword("");
+    }
+  }
+
+  const planLabel = isTrialing ? "Trial" : PLAN_LABELS[plan];
+  const planTone =
+    isExpired ? "text-destructive"
+    : isTrialing ? "text-amber-600 dark:text-amber-400"
+    : plan === "free" ? "text-muted-foreground"
+    : "text-primary";
+
+  const orgRoleLabel: Record<string, string> = {
+    owner: "Proprietário",
+    admin: "Administrador",
+    editor: "Editor",
+    viewer: "Visualizador",
+  };
+
+  return (
+    <div className="mx-auto w-full max-w-4xl space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold tracking-tight">Minha conta</h2>
+        <p className="text-sm text-muted-foreground">Gerencie seus dados pessoais, senha e plano.</p>
+      </div>
+
+      {/* Perfil */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <User className="h-4 w-4" /> Dados pessoais
+          </CardTitle>
+          <CardDescription>Atualize seu nome e função na congregação.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSaveProfile} className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="email">E-mail</Label>
+                <div className="flex items-center gap-2 rounded-md border border-input bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+                  <Mail className="h-4 w-4" />
+                  <span className="truncate">{user?.email ?? "—"}</span>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="nome">Nome completo</Label>
+                <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} required maxLength={120} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cargo">Cargo</Label>
+                <Input
+                  id="cargo"
+                  value={cargo}
+                  onChange={(e) => setCargo(e.target.value)}
+                  placeholder="Ex.: Ancião, Cooperador, Diácono"
+                  maxLength={120}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="congregacao">Congregação</Label>
+                <Input
+                  id="congregacao"
+                  value={congregacao}
+                  onChange={(e) => setCongregacao(e.target.value)}
+                  placeholder="Nome da congregação onde serve"
+                  maxLength={160}
+                />
+              </div>
+            </div>
+            <StatusLine status={profileStatus} />
+            <div className="flex justify-end">
+              <Button type="submit" disabled={savingProfile}>
+                {savingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Salvar alterações
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Senha */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Lock className="h-4 w-4" /> Senha
+          </CardTitle>
+          <CardDescription>Use uma senha forte e única para esta conta.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="newPassword">Nova senha</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  minLength={8}
+                  autoComplete="new-password"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  minLength={8}
+                  autoComplete="new-password"
+                />
+              </div>
+            </div>
+            <StatusLine status={passwordStatus} />
+            <div className="flex justify-end">
+              <Button type="submit" variant="secondary" disabled={savingPassword || !newPassword}>
+                {savingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Atualizar senha
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Organização & Plano */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Building2 className="h-4 w-4" /> Organização
+            </CardTitle>
+            <CardDescription>Sua congregação no Culto Insight Hub.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <Row label="Nome" value={organization?.name ?? "—"} />
+            <Row
+              label="Localização"
+              value={
+                organization?.cidade || organization?.estado
+                  ? [organization?.cidade, organization?.estado].filter(Boolean).join(" / ")
+                  : "—"
+              }
+            />
+            <Row label="Seu papel" value={orgRole ? orgRoleLabel[orgRole] ?? orgRole : "—"} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Crown className="h-4 w-4" /> Plano
+            </CardTitle>
+            <CardDescription>Status da sua assinatura.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <Row label="Plano atual" value={<span className={cn("font-semibold", planTone)}>{planLabel}</span>} />
+            <Row label="Status" value={planStatus} />
+            {isTrialing && (
+              <Row
+                label="Trial"
+                value={
+                  <span className="text-amber-600 dark:text-amber-400">
+                    {trialDaysLeft} {trialDaysLeft === 1 ? "dia restante" : "dias restantes"}
+                  </span>
+                }
+              />
+            )}
+            <Separator />
+            <Button asChild className="w-full" variant={plan === "free" || isExpired ? "default" : "outline"}>
+              <Link to="/pricing">{plan === "free" || isExpired ? "Ver planos" : "Gerenciar plano"}</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="text-right">{value}</span>
+    </div>
+  );
+}
+
+function StatusLine({ status }: { status: Status }) {
+  if (!status) return null;
+  const Icon = status.type === "ok" ? CheckCircle2 : AlertCircle;
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2 rounded-md border px-3 py-2 text-sm",
+        status.type === "ok"
+          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+          : "border-destructive/30 bg-destructive/10 text-destructive"
+      )}
+    >
+      <Icon className="h-4 w-4 shrink-0" />
+      <span>{status.msg}</span>
+    </div>
+  );
+}

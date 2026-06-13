@@ -2,7 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { type ReactNode, useState } from "react";
 import {
   LayoutDashboard, Building2, BookOpen, Music2, MessageSquareQuote,
-  HandHelping, UserPlus, Mic2, Calendar, BarChart3, Sparkles, LogOut, Menu, X, Radio, AlertTriangle,
+  HandHelping, UserPlus, Mic2, Calendar, BarChart3, Sparkles, LogOut, Menu, X, Radio, AlertTriangle, UserCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -125,8 +125,18 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="m-3 rounded-xl border border-sidebar-border bg-card/60 p-3">
-          <p className="truncate text-sm font-medium">{profile?.nome ?? "Usuário"}</p>
-          <div className="mt-1.5 flex items-center gap-2">
+          <Link
+            to="/conta"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 rounded-md -m-1 p-1 hover:bg-sidebar-accent/60"
+          >
+            <UserCircle className="h-8 w-8 text-muted-foreground shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{profile?.nome ?? "Usuário"}</p>
+              <p className="truncate text-[10px] text-muted-foreground">Minha conta</p>
+            </div>
+          </Link>
+          <div className="mt-2 flex items-center gap-2">
             <span className={cn("rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wide", planBadgeClass)}>
               {planLabel}
             </span>
