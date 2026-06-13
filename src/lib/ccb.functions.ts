@@ -66,8 +66,24 @@ export const buscarCongregacoes = createServerFn({ method: "POST" })
         }>;
       };
 
+      // Normaliza para filtrar apenas Congregação Cristã no Brasil (CCB)
+      const norm = (s: string) =>
+        s
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
+
+      const isCCB = (name: string) => {
+        const n = norm(name);
+        return (
+          n.includes("congregacao crista no brasil") ||
+          n.includes("congregacao crista") ||
+          /\bccb\b/.test(n)
+        );
+      };
+
       const items: CCBChurch[] = (json.places ?? [])
-        .filter((p) => p.location)
+        .filter((p) => p.location && isCCB(p.displayName?.text ?? ""))
         .map((p) => ({
           id: p.id,
           name: p.displayName?.text ?? "Congregação Cristã no Brasil",
