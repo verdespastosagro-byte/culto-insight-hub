@@ -135,9 +135,49 @@ function CongregacoesPage() {
     },
   });
 
-  const filtered = (data ?? []).filter((c) =>
-    [c.nome, c.cidade, c.estado, c.regiao].some((v) => v?.toLowerCase().includes(q.toLowerCase()))
-  );
+  const { data: cultos } = useQuery({
+    queryKey: ["cultos-resumo"],
+    queryFn: async () => {
+      const { data } = await supabase.from("cultos").select("id, data, tipo, congregacao_id");
+      return (data ?? []) as CultoRow[];
+    },
+  });
+
+  // Mapa: congregacao_id -> stats
+  const statsPorCong = (() => {
+    const m = new Map<string, { total: number; ultima: string | null; tipos: Set<string>; datas: Set<string> }>();
+    (cultos ?? []).forEach((c) => {
+      if (!c.congregacao_id) return;
+      const cur = m.get(c.congregacao_id) ?? { total: 0, ultima: null, tipos: new Set<string>(), datas: new Set<string>() };
+      cur.total += 1;
+      if (!cur.ultima || c.data > cur.ultima) cur.ultima = c.data;
+      cur.tipos.add(c.tipo);
+      cur.datas.add(c.data);
+      m.set(c.congregacao_id, cur);
+    });
+    return m;
+  })();
+
+  const hojeISO = new Date().toISOString().slice(0, 10);
+  const seteDiasAtras = (() => {
+    const d = new Date(); d.setDate(d.getDate() - 7);
+    return d.toISOString().slice(0, 10);
+  })();
+
+  const filtered = (data ?? [])
+    .filter((c) =>
+      [c.nome, c.cidade, c.estado, c.regiao].some((v) => v?.toLowerCase().includes(q.toLowerCase()))
+    )
+    .filter((c) => {
+      if (filtro === "todas") return true;
+      const s = statsPorCong.get(c.id);
+      if (!s) return false;
+      if (filtro === "hoje") return s.datas.has(hojeISO);
+      if (filtro === "semana") return Array.from(s.datas).some((d) => d >= seteDiasAtras);
+      if (filtro === "rjm") return s.tipos.has("rjm");
+      return true;
+    })
+    .sort((a, b) => (statsPorCong.get(b.id)?.total ?? 0) - (statsPorCong.get(a.id)?.total ?? 0));
 
   function escolherSugestao(s: CongregacaoCidade) {
     setEndereco(s.endereco);
@@ -161,7 +201,6 @@ function CongregacoesPage() {
     if (!horarioVisita || !dataVisita) return;
     const linha = `Visitei em ${formatarDataBR(dataVisita)} • ${horarioVisita}`;
     setObservacoes((prev) => {
-      // remove qualquer linha "Visitei em ..." anterior e prepende a nova
       const limpo = (prev ?? "")
         .split("\n")
         .filter((l) => !/^Visitei em /i.test(l.trim()))
@@ -183,12 +222,52 @@ function CongregacoesPage() {
       observacoes: observacoes.trim() || null,
     };
     if (!payload.nome) { toast.error("Nome obrigatório"); return; }
-    const { error } = editing?.id
-      ? await supabase.from("congregacoes").update(payload).eq("id", editing.id)
-      : await supabase.from("congregacoes").insert(payload);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Salvo!"); setOpen(false); setEditing(null);
+
+    let congId = editing?.id ?? null;
+
+    if (!editing) {
+      // Dedupe: procura uma congregação existente pelo mesmo endereço (ou nome+cidade)
+      const existentes = data ?? [];
+      const igual = existentes.find((c) => {
+        if (payload.endereco && c.endereco && c.endereco.trim().toLowerCase() === payload.endereco.toLowerCase()) return true;
+        const mesmoNome = c.nome.trim().toLowerCase() === payload.nome.toLowerCase();
+        const mesmaCidade = (c.cidade ?? "").trim().toLowerCase() === (payload.cidade ?? "").toLowerCase();
+        return mesmoNome && mesmaCidade;
+      });
+      if (igual) {
+        congId = igual.id;
+        toast.info("Congregação já cadastrada — vou apenas registrar sua visita.");
+      } else {
+        const { data: ins, error } = await supabase.from("congregacoes").insert(payload).select("id").single();
+        if (error) { toast.error(error.message); return; }
+        congId = ins!.id as string;
+      }
+    } else {
+      const { error } = await supabase.from("congregacoes").update(payload).eq("id", editing.id);
+      if (error) { toast.error(error.message); return; }
+    }
+
+    // Se um horário foi escolhido, registra a visita como um culto
+    if (!editing && congId && horarioVisita && dataVisita) {
+      const isRjm = /RJM/i.test(horarioVisita);
+      const horaMatch = horarioVisita.match(/(\d{2}):(\d{2})/);
+      const horario = horaMatch ? `${horaMatch[1]}:${horaMatch[2]}` : null;
+      const { error: ce } = await supabase.from("cultos").insert({
+        data: dataVisita,
+        horario,
+        tipo: (isRjm ? "rjm" : "culto_oficial") as never,
+        congregacao_id: congId,
+        cidade: payload.cidade,
+      });
+      if (ce) toast.error(`Visita não registrada: ${ce.message}`);
+      else toast.success("Visita registrada!");
+    } else {
+      toast.success("Salvo!");
+    }
+
+    setOpen(false); setEditing(null);
     qc.invalidateQueries({ queryKey: ["congregacoes"] });
+    qc.invalidateQueries({ queryKey: ["cultos-resumo"] });
   }
 
   async function handleDelete(id: string) {
