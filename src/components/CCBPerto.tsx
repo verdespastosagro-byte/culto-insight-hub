@@ -257,15 +257,47 @@ export default function CCBPerto() {
                       </p>
                     </div>
                   </div>
-                  <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${ig.lat},${ig.lng}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                  >
-                    <Navigation className="h-3.5 w-3.5" />
-                    Rota
-                  </a>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                      >
+                        <Navigation className="h-3.5 w-3.5" />
+                        Rota
+                        <ChevronDown className="h-3 w-3" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <a
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${ig.lat},${ig.lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Google Maps
+                        </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <a
+                          href={`https://waze.com/ul?ll=${ig.lat},${ig.lng}&navigate=yes`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Waze
+                        </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <a
+                          href={`https://maps.apple.com/?daddr=${ig.lat},${ig.lng}&dirflg=d`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Apple Maps
+                        </a>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </Card>
               </li>
             ))}
