@@ -170,3 +170,36 @@ export const listarCongregacoesPorCidade = createServerFn({ method: "POST" })
 
     return { items };
   });
+
+// Autocomplete de cidades (distinct city+uf, prefixo da busca)
+const CidadeBuscaInput = z.object({ q: z.string().min(1).max(80) });
+export type CidadeOpcao = { cidade: string; uf: string };
+
+export const buscarCidadesUf = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => CidadeBuscaInput.parse(data))
+  .handler(async ({ data }): Promise<{ items: CidadeOpcao[] }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("congregacoes_ccb")
+      .select("city,uf")
+      .ilike("city", `${data.q}%`)
+      .not("city", "is", null)
+      .not("uf", "is", null)
+      .limit(200);
+    if (error) {
+      console.error("buscarCidadesUf error", error);
+      return { items: [] };
+    }
+    const seen = new Set<string>();
+    const items: CidadeOpcao[] = [];
+    for (const r of rows ?? []) {
+      const key = `${r.city}|${r.uf}`.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      items.push({ cidade: r.city as string, uf: (r.uf as string).toUpperCase() });
+      if (items.length >= 12) break;
+    }
+    items.sort((a, b) => a.cidade.localeCompare(b.cidade, "pt-BR"));
+    return { items };
+  });
+

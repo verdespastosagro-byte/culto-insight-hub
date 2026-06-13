@@ -12,8 +12,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Building2, Plus, Pencil, Trash2, Search, Loader2, MapPin } from "lucide-react";
-import { listarCongregacoesPorCidade, type CongregacaoCidade } from "@/lib/ccb.functions";
+import { listarCongregacoesPorCidade, buscarCidadesUf, type CongregacaoCidade, type CidadeOpcao } from "@/lib/ccb.functions";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+
+const UFS = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"] as const;
 
 export const Route = createFileRoute("/_authenticated/congregacoes")({
   component: CongregacoesPage,
@@ -25,9 +28,14 @@ function CongregacoesPage() {
   const qc = useQueryClient();
   const { canEdit, isAdmin } = useAuth();
   const listar = useServerFn(listarCongregacoesPorCidade);
+  const buscarCidades = useServerFn(buscarCidadesUf);
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<Cong | null>(null);
   const [open, setOpen] = useState(false);
+
+  // Autocomplete de cidade
+  const [cidadeOpcoes, setCidadeOpcoes] = useState<CidadeOpcao[]>([]);
+  const [showCidadeOpcoes, setShowCidadeOpcoes] = useState(false);
 
   // Form state controlado p/ poder preencher ao escolher uma sugestão
   const [nome, setNome] = useState("");
@@ -85,6 +93,25 @@ function CongregacoesPage() {
     }, 600);
     return () => clearTimeout(t);
   }, [cidade, estado, open, listar]);
+
+  // Autocomplete cidade
+  useEffect(() => {
+    if (!open) return;
+    const c = cidade.trim();
+    if (c.length < 2) {
+      setCidadeOpcoes([]);
+      return;
+    }
+    const t = setTimeout(async () => {
+      try {
+        const resp = await buscarCidades({ data: { q: c } });
+        setCidadeOpcoes(resp.items);
+      } catch (e) {
+        console.error(e);
+      }
+    }, 250);
+    return () => clearTimeout(t);
+  }, [cidade, open, buscarCidades]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["congregacoes"],
@@ -160,8 +187,47 @@ function CongregacoesPage() {
               <DialogHeader><DialogTitle>{editing ? "Editar" : "Nova"} congregação</DialogTitle></DialogHeader>
               <form onSubmit={handleSave} className="space-y-3">
                 <div className="grid grid-cols-[1fr_auto] gap-3">
-                  <div><Label>Cidade</Label><Input value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Ex: Vitória da Conquista" /></div>
-                  <div><Label>UF</Label><Input value={estado} onChange={(e) => setEstado(e.target.value.toUpperCase())} maxLength={2} className="w-20" placeholder="BA" /></div>
+                  <div className="relative">
+                    <Label>Cidade</Label>
+                    <Input
+                      value={cidade}
+                      onChange={(e) => { setCidade(e.target.value); setShowCidadeOpcoes(true); }}
+                      onFocus={() => setShowCidadeOpcoes(true)}
+                      onBlur={() => setTimeout(() => setShowCidadeOpcoes(false), 150)}
+                      placeholder="Ex: Vitória da Conquista"
+                      autoComplete="off"
+                    />
+                    {showCidadeOpcoes && cidadeOpcoes.length > 0 && (
+                      <ul className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-md border bg-popover shadow-md">
+                        {cidadeOpcoes.map((op, i) => (
+                          <li key={`${op.cidade}-${op.uf}-${i}`}>
+                            <button
+                              type="button"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setCidade(op.cidade);
+                                setEstado(op.uf);
+                                setShowCidadeOpcoes(false);
+                              }}
+                              className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-muted"
+                            >
+                              <span>{op.cidade}</span>
+                              <span className="text-xs text-muted-foreground">{op.uf}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  <div>
+                    <Label>UF</Label>
+                    <Select value={estado} onValueChange={setEstado}>
+                      <SelectTrigger className="w-24"><SelectValue placeholder="UF" /></SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {UFS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 {/* Sugestões CCB */}
