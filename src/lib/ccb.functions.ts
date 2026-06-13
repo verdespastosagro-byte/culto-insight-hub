@@ -355,7 +355,7 @@ export const buscarCongregacoes = createServerFn({ method: "POST" })
             ...p,
             cidade,
             uf,
-            bairro: melhor.bairro,
+            bairro: melhor.bairro ?? p.bairro,
             horarios: melhor.horarios,
           };
         }
