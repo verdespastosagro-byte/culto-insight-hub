@@ -6,6 +6,7 @@ import {
   PieChart, Pie, Cell, Legend,
 } from "recharts";
 import { BookOpen, Building2, MessageSquareQuote, HandHelping, Music2, TrendingUp } from "lucide-react";
+import { InstallPWA } from "@/components/InstallPWA";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { formatDate, TIPOS_REUNIAO } from "@/lib/constants";
 
