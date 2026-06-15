@@ -281,8 +281,10 @@ function CongregacoesPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Congregações</h2>
-          <p className="text-sm text-muted-foreground">Cadastro das congregações.</p>
+          <h2 className="text-2xl font-bold tracking-tight">Congregações que congreguei</h2>
+          <p className="text-sm text-muted-foreground">
+            Registre aqui cada congregação em que você participou de um culto. Se já tiver cadastrado uma congregação, não precisa cadastrar de novo — basta registrar a nova visita pelo botão de edição ou registrando o culto pelo mesmo endereço.
+          </p>
         </div>
         {canEdit && (
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(null); }}>
