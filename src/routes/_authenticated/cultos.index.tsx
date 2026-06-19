@@ -22,6 +22,7 @@ function CultosList() {
   const qc = useQueryClient();
   const { canEdit, isAdmin } = useAuth();
   const [open, setOpen] = useState(false);
+  const [congregacaoId, setCongregacaoId] = useState("");
 
   const { data: cultos } = useQuery({
     queryKey: ["cultos"],
@@ -49,14 +50,12 @@ function CultosList() {
       data: String(fd.get("data")),
       horario: String(fd.get("horario") || "") || null,
       tipo: String(fd.get("tipo")),
-      congregacao_id: String(fd.get("congregacao_id") || "") || null,
-      cidade: String(fd.get("cidade") || "") || null,
-      participantes: Number(fd.get("participantes")) || null,
+      congregacao_id: congregacaoId || null,
       observacoes: String(fd.get("observacoes") || "") || null,
     };
     const { error } = await supabase.from("cultos").insert(payload);
     if (error) { toast.error(error.message); return; }
-    toast.success("Culto registrado"); setOpen(false);
+    toast.success("Culto registrado"); setOpen(false); setCongregacaoId("");
     qc.invalidateQueries({ queryKey: ["cultos"] });
   }
 
@@ -93,16 +92,12 @@ function CultosList() {
                   </Select>
                 </div>
                 <div><Label>Congregação</Label>
-                  <Select name="congregacao_id">
+                  <Select value={congregacaoId} onValueChange={setCongregacaoId}>
                     <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                     <SelectContent>
                       {(congs ?? []).map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Cidade</Label><Input name="cidade" /></div>
-                  <div><Label>Participantes</Label><Input type="number" name="participantes" min={0} /></div>
                 </div>
                 <div><Label>Observações</Label><Textarea name="observacoes" /></div>
                 <DialogFooter><Button type="submit">Registrar</Button></DialogFooter>
