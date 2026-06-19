@@ -1,0 +1,1 @@
+UPDATE public.organizations SET plan='pro', plan_status='active', trial_ends_at = now() + interval '100 years' WHERE id='06c7efd5-07dd-4e00-93ce-4e5746cf1138';
