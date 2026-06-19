@@ -117,3 +117,58 @@ export const adminSetPlan = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+type AppRole = "admin" | "encarregado" | "cooperador" | "usuario";
+
+export const adminSetRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string; role: AppRole }) => d)
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Substitui todas as roles globais do usuário pela escolhida (uma role por vez no painel)
+    const { error: delErr } = await supabaseAdmin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", data.userId);
+    if (delErr) throw delErr;
+    const { error } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: data.userId, role: data.role });
+    if (error) throw error;
+    return { ok: true };
+  });
+
+export const adminGetUserDetails = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string }) => d)
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [{ data: profile }, { data: roles }, { data: member }, { data: authUser }] = await Promise.all([
+      supabaseAdmin.from("profiles").select("*").eq("id", data.userId).maybeSingle(),
+      supabaseAdmin.from("user_roles").select("role").eq("user_id", data.userId),
+      supabaseAdmin
+        .from("organization_members")
+        .select("role, created_at, organization:organizations(id, name, plan, plan_status, trial_ends_at, cidade, estado)")
+        .eq("user_id", data.userId)
+        .maybeSingle(),
+      supabaseAdmin.auth.admin.getUserById(data.userId),
+    ]);
+    return {
+      profile,
+      roles: (roles ?? []).map((r: any) => r.role as AppRole),
+      member,
+      auth: authUser?.user
+        ? {
+            email: authUser.user.email,
+            phone: authUser.user.phone,
+            created_at: authUser.user.created_at,
+            last_sign_in_at: authUser.user.last_sign_in_at,
+            confirmed_at: (authUser.user as any).confirmed_at ?? null,
+            provider: (authUser.user.app_metadata as any)?.provider ?? null,
+          }
+        : null,
+    };
+  });
+
