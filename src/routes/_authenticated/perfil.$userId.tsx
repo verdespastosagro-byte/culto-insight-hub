@@ -286,6 +286,91 @@ function PerfilPublicoPage() {
   );
 }
 
+function MinhaComumCard({ comum }: { comum: MinhaComum }) {
+  const [open, setOpen] = useState(false);
+  const enderecoCompleto = [
+    comum.endereco,
+    comum.bairro,
+    comum.cidade && comum.uf ? `${comum.cidade} - ${comum.uf}` : comum.cidade || comum.uf,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  const queryEndereco = encodeURIComponent(`${comum.nome}, ${enderecoCompleto}`);
+  const googleMapsUrl =
+    comum.lat && comum.lng
+      ? `https://www.google.com/maps/dir/?api=1&destination=${comum.lat},${comum.lng}`
+      : `https://www.google.com/maps/dir/?api=1&destination=${queryEndereco}`;
+  const wazeUrl =
+    comum.lat && comum.lng
+      ? `https://waze.com/ul?ll=${comum.lat},${comum.lng}&navigate=yes`
+      : `https://waze.com/ul?q=${queryEndereco}&navigate=yes`;
+
+  return (
+    <Card className="overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-accent"
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Building2 className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Comum</p>
+            <p className="truncate text-sm font-semibold">{comum.nome}</p>
+            {(comum.cidade || comum.uf) && (
+              <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                <MapPin className="h-3 w-3" />
+                {comum.cidade ?? "—"}
+                {comum.uf ? `/${comum.uf}` : ""}
+              </p>
+            )}
+          </div>
+        </div>
+        <ChevronDown
+          className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div className="space-y-3 border-t bg-muted/30 p-4">
+          <div className="space-y-1 text-sm">
+            <p className="flex items-start gap-2">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="text-foreground">
+                {enderecoCompleto || "Endereço não informado"}
+              </span>
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button asChild variant="default" size="sm" className="gap-2">
+              <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
+                <Navigation className="h-4 w-4" /> Google Maps
+              </a>
+            </Button>
+            <Button asChild variant="secondary" size="sm" className="gap-2">
+              <a href={wazeUrl} target="_blank" rel="noopener noreferrer">
+                <Navigation className="h-4 w-4" /> Waze
+              </a>
+            </Button>
+          </div>
+          <Link
+            to="/comum/$congregacaoCcbId"
+            params={{ congregacaoCcbId: String(comum.id) }}
+            className="block text-center text-xs text-primary hover:underline"
+          >
+            Ver página da comum →
+          </Link>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+
+
 function BackLink() {
   return (
     <Link
