@@ -153,33 +153,6 @@ function Section({ title, icon: Icon, items, renderItem, onDelete, form, canEdit
   );
 }
 
-function HinoForm({ cultoId, onSaved }: { cultoId: string; onSaved: () => void }) {
-  return (
-    <form onSubmit={async (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.currentTarget);
-      const { error } = await supabase.from("hinos").insert({
-        culto_id: cultoId,
-        numero: Number(fd.get("numero")),
-        titulo: String(fd.get("titulo") || "") || null,
-        momento: String(fd.get("momento")) as any,
-      });
-      if (error) toast.error(error.message); else { toast.success("Hino adicionado"); onSaved(); }
-    }} className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
-        <div><Label>Número</Label><Input type="number" name="numero" required min={1} max={9999} /></div>
-        <div><Label>Momento</Label>
-          <Select name="momento" defaultValue="entrada">
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{Object.entries(MOMENTOS_HINO).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div><Label>Título (opcional)</Label><Input name="titulo" /></div>
-      <DialogFooter><Button type="submit">Adicionar</Button></DialogFooter>
-    </form>
-  );
-}
 
 function PalavraForm({ cultoId, onSaved }: { cultoId: string; onSaved: () => void }) {
   return (
