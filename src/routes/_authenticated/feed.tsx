@@ -250,8 +250,9 @@ function PostCard({
                 params={{ userId: post.user_id }}
                 className="block truncate text-sm font-semibold hover:underline"
               >
-                {post.autor_nome}
+                {primeirosDoisNomes(post.autor_nome)}
               </Link>
+
               <p className="text-xs text-muted-foreground">
                 {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: ptBR })}
               </p>
