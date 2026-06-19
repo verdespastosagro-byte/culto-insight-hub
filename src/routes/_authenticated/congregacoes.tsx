@@ -574,3 +574,18 @@ function CongregacoesPage() {
     </div>
   );
 }
+
+function CongFoto({ path, className }: { path: string; className?: string }) {
+  const { data: url } = useQuery({
+    queryKey: ["cong-foto", path],
+    queryFn: async () => {
+      const { data } = await supabase.storage
+        .from("congregacoes-fotos")
+        .createSignedUrl(path, 60 * 60);
+      return data?.signedUrl ?? null;
+    },
+    staleTime: 50 * 60 * 1000,
+  });
+  if (!url) return <div className={cn("bg-muted animate-pulse", className)} />;
+  return <img src={url} alt="Foto da congregação" className={className} loading="lazy" />;
+}
