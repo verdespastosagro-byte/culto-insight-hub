@@ -65,13 +65,27 @@ function CheckInDetalhePage() {
       {/* Cabeçalho do check-in */}
       <Card className="p-5">
         <div className="flex items-start gap-3">
-          <Avatar className="h-12 w-12">
-            {ci.autor_foto_url ? <AvatarImage src={ci.autor_foto_url} alt={ci.autor_nome} /> : null}
-            <AvatarFallback>{ci.autor_nome?.[0]?.toUpperCase() ?? "?"}</AvatarFallback>
-          </Avatar>
+          <Link
+            to="/perfil/$userId"
+            params={{ userId: ci.user_id }}
+            className="shrink-0"
+            aria-label={`Ver perfil de ${ci.autor_nome}`}
+          >
+            <Avatar className="h-12 w-12">
+              {ci.autor_foto_url ? <AvatarImage src={ci.autor_foto_url} alt={ci.autor_nome} /> : null}
+              <AvatarFallback>{ci.autor_nome?.[0]?.toUpperCase() ?? "?"}</AvatarFallback>
+            </Avatar>
+          </Link>
           <div className="min-w-0 flex-1">
             <p className="text-sm">
-              <span className="font-semibold">{ci.autor_nome}</span> esteve em
+              <Link
+                to="/perfil/$userId"
+                params={{ userId: ci.user_id }}
+                className="font-semibold hover:underline"
+              >
+                {ci.autor_nome}
+              </Link>{" "}
+              esteve em
             </p>
             <Link
               to="/comum/$congregacaoCcbId"
@@ -112,14 +126,20 @@ function CheckInDetalhePage() {
         ) : (
           <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {q.data.companheiros.map((v) => (
-              <li key={v.user_id} className="flex items-center gap-2 rounded-md border bg-card p-2">
-                <Avatar className="h-8 w-8">
-                  {v.foto_url ? <AvatarImage src={v.foto_url} alt={v.nome} /> : null}
-                  <AvatarFallback className="text-xs">
-                    {v.nome?.[0]?.toUpperCase() ?? "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <p className="truncate text-xs font-medium">{v.nome}</p>
+              <li key={v.user_id}>
+                <Link
+                  to="/perfil/$userId"
+                  params={{ userId: v.user_id }}
+                  className="flex items-center gap-2 rounded-md border bg-card p-2 transition-colors hover:bg-accent"
+                >
+                  <Avatar className="h-8 w-8">
+                    {v.foto_url ? <AvatarImage src={v.foto_url} alt={v.nome} /> : null}
+                    <AvatarFallback className="text-xs">
+                      {v.nome?.[0]?.toUpperCase() ?? "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="truncate text-xs font-medium">{v.nome}</p>
+                </Link>
               </li>
             ))}
           </ul>

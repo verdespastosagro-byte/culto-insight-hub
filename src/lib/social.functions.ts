@@ -238,7 +238,7 @@ export const getCheckInDetalhe = createServerFn({ method: "POST" })
   });
 
 // ---------- Comentários ----------
-const TipoAlvo = z.enum(["check_in", "congregacao_ccb"]);
+const TipoAlvo = z.enum(["check_in", "congregacao_ccb", "post", "culto"]);
 
 export const listarComentarios = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -316,4 +316,167 @@ export const excluirComentario = createServerFn({ method: "POST" })
       .eq("user_id", context.userId);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+// ---------- Perfil público ----------
+export type CongregacaoVisitada = {
+  congregacao_ccb_id: number;
+  nome: string;
+  cidade: string | null;
+  uf: string | null;
+  qtd_visitas: number;
+  primeira_visita: string | null;
+  ultima_visita: string | null;
+};
+
+export type PostItem = {
+  id: string;
+  texto: string | null;
+  foto_url: string | null;
+  created_at: string;
+};
+
+export type PerfilPublico = {
+  user_id: string;
+  nome: string;
+  cargo: string | null;
+  foto_url: string | null;
+  publico: boolean;
+  isOwn: boolean;
+  totalCongregacoes: number | null;
+  seguidores: number;
+  seguindo: number;
+  euSigo: boolean;
+  congregacoes: CongregacaoVisitada[];
+  posts: PostItem[];
+};
+
+export const getPerfilPublico = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ userId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }): Promise<{ perfil: PerfilPublico | null }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const target = data.userId;
+    const isOwn = target === context.userId;
+
+    const { data: prof } = await supabaseAdmin
+      .from("profiles")
+      .select("id,nome,cargo,foto_url")
+      .eq("id", target)
+      .maybeSingle();
+    if (!prof) return { perfil: null };
+
+    const publicSet = await loadPublicSet(supabaseAdmin, [target]);
+    const publico = publicSet.has(target);
+
+    const fotoUrl = await signAvatar(supabaseAdmin, (prof.foto_url as string) ?? null);
+
+    const [{ count: seguidores }, { count: seguindo }, { data: jaSigo }] = await Promise.all([
+      supabaseAdmin.from("follows").select("*", { count: "exact", head: true }).eq("following_id", target),
+      supabaseAdmin.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", target),
+      supabaseAdmin
+        .from("follows")
+        .select("follower_id")
+        .eq("follower_id", context.userId)
+        .eq("following_id", target)
+        .maybeSingle(),
+    ]);
+
+    const base: PerfilPublico = {
+      user_id: target,
+      nome: (prof.nome as string) ?? "Irmão(ã)",
+      cargo: (prof.cargo as string) ?? null,
+      foto_url: fotoUrl,
+      publico,
+      isOwn,
+      totalCongregacoes: null,
+      seguidores: seguidores ?? 0,
+      seguindo: seguindo ?? 0,
+      euSigo: !!jaSigo,
+      congregacoes: [],
+      posts: [],
+    };
+
+    if (!isOwn && !publico) {
+      return { perfil: base };
+    }
+
+    const { data: nTotal } = await supabaseAdmin.rpc("contar_congregacoes_pessoa", { p_user_id: target });
+    const { data: cong } = await supabaseAdmin.rpc("minhas_congregacoes_visitadas", { p_user_id: target });
+
+    const congregacoes: CongregacaoVisitada[] = (
+      (cong as Array<{
+        congregacao_ccb_id: number;
+        nome: string;
+        cidade: string | null;
+        uf: string | null;
+        qtd_visitas: number;
+        primeira_visita: string | null;
+        ultima_visita: string | null;
+      }>) ?? []
+    ).map((c) => ({
+      congregacao_ccb_id: c.congregacao_ccb_id,
+      nome: c.nome,
+      cidade: c.cidade,
+      uf: (c.uf ?? "").toUpperCase() || null,
+      qtd_visitas: Number(c.qtd_visitas ?? 0),
+      primeira_visita: c.primeira_visita,
+      ultima_visita: c.ultima_visita,
+    }));
+
+    const { data: postRows } = await supabaseAdmin
+      .from("posts")
+      .select("id,texto,foto_url,created_at")
+      .eq("user_id", target)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(30);
+
+    const posts: PostItem[] = [];
+    for (const p of (postRows as Array<{ id: string; texto: string | null; foto_url: string | null; created_at: string }>) ?? []) {
+      let signed: string | null = null;
+      if (p.foto_url) {
+        try {
+          const { data: s } = await supabaseAdmin.storage.from("posts-fotos").createSignedUrl(p.foto_url, 60 * 60);
+          signed = s?.signedUrl ?? null;
+        } catch {
+          signed = null;
+        }
+      }
+      posts.push({ id: p.id, texto: p.texto, foto_url: signed, created_at: p.created_at });
+    }
+
+    return {
+      perfil: {
+        ...base,
+        totalCongregacoes: nTotal == null ? null : Number(nTotal),
+        congregacoes,
+        posts,
+      },
+    };
+  });
+
+export const toggleSeguir = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ userId: z.string().uuid(), seguir: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data, context }): Promise<{ euSigo: boolean }> => {
+    if (data.userId === context.userId) {
+      throw new Error("Você não pode seguir a si mesmo");
+    }
+    if (data.seguir) {
+      const { error } = await context.supabase
+        .from("follows")
+        .insert({ follower_id: context.userId, following_id: data.userId });
+      if (error && !String(error.message).includes("duplicate")) throw new Error(error.message);
+      return { euSigo: true };
+    }
+    const { error } = await context.supabase
+      .from("follows")
+      .delete()
+      .eq("follower_id", context.userId)
+      .eq("following_id", data.userId);
+    if (error) throw new Error(error.message);
+    return { euSigo: false };
   });

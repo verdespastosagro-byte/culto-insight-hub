@@ -29,6 +29,7 @@ import { Route as AuthenticatedAgendaRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedCultosIndexRouteImport } from './routes/_authenticated/cultos.index'
 import { Route as AuthenticatedCultoInteligenteIndexRouteImport } from './routes/_authenticated/culto-inteligente.index'
+import { Route as AuthenticatedPerfilUserIdRouteImport } from './routes/_authenticated/perfil.$userId'
 import { Route as AuthenticatedCultosIdRouteImport } from './routes/_authenticated/cultos.$id'
 import { Route as AuthenticatedCultoInteligenteHistoricoRouteImport } from './routes/_authenticated/culto-inteligente.historico'
 import { Route as AuthenticatedComumCongregacaoCcbIdRouteImport } from './routes/_authenticated/comum.$congregacaoCcbId'
@@ -139,6 +140,12 @@ const AuthenticatedCultoInteligenteIndexRoute =
     path: '/culto-inteligente/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPerfilUserIdRoute =
+  AuthenticatedPerfilUserIdRouteImport.update({
+    id: '/perfil/$userId',
+    path: '/perfil/$userId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCultosIdRoute = AuthenticatedCultosIdRouteImport.update({
   id: '/cultos/$id',
   path: '/cultos/$id',
@@ -185,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/comum/$congregacaoCcbId': typeof AuthenticatedComumCongregacaoCcbIdRoute
   '/culto-inteligente/historico': typeof AuthenticatedCultoInteligenteHistoricoRoute
   '/cultos/$id': typeof AuthenticatedCultosIdRoute
+  '/perfil/$userId': typeof AuthenticatedPerfilUserIdRoute
   '/culto-inteligente/': typeof AuthenticatedCultoInteligenteIndexRoute
   '/cultos/': typeof AuthenticatedCultosIndexRoute
 }
@@ -210,6 +218,7 @@ export interface FileRoutesByTo {
   '/comum/$congregacaoCcbId': typeof AuthenticatedComumCongregacaoCcbIdRoute
   '/culto-inteligente/historico': typeof AuthenticatedCultoInteligenteHistoricoRoute
   '/cultos/$id': typeof AuthenticatedCultosIdRoute
+  '/perfil/$userId': typeof AuthenticatedPerfilUserIdRoute
   '/culto-inteligente': typeof AuthenticatedCultoInteligenteIndexRoute
   '/cultos': typeof AuthenticatedCultosIndexRoute
 }
@@ -237,6 +246,7 @@ export interface FileRoutesById {
   '/_authenticated/comum/$congregacaoCcbId': typeof AuthenticatedComumCongregacaoCcbIdRoute
   '/_authenticated/culto-inteligente/historico': typeof AuthenticatedCultoInteligenteHistoricoRoute
   '/_authenticated/cultos/$id': typeof AuthenticatedCultosIdRoute
+  '/_authenticated/perfil/$userId': typeof AuthenticatedPerfilUserIdRoute
   '/_authenticated/culto-inteligente/': typeof AuthenticatedCultoInteligenteIndexRoute
   '/_authenticated/cultos/': typeof AuthenticatedCultosIndexRoute
 }
@@ -264,6 +274,7 @@ export interface FileRouteTypes {
     | '/comum/$congregacaoCcbId'
     | '/culto-inteligente/historico'
     | '/cultos/$id'
+    | '/perfil/$userId'
     | '/culto-inteligente/'
     | '/cultos/'
   fileRoutesByTo: FileRoutesByTo
@@ -289,6 +300,7 @@ export interface FileRouteTypes {
     | '/comum/$congregacaoCcbId'
     | '/culto-inteligente/historico'
     | '/cultos/$id'
+    | '/perfil/$userId'
     | '/culto-inteligente'
     | '/cultos'
   id:
@@ -315,6 +327,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comum/$congregacaoCcbId'
     | '/_authenticated/culto-inteligente/historico'
     | '/_authenticated/cultos/$id'
+    | '/_authenticated/perfil/$userId'
     | '/_authenticated/culto-inteligente/'
     | '/_authenticated/cultos/'
   fileRoutesById: FileRoutesById
@@ -470,6 +483,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCultoInteligenteIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/perfil/$userId': {
+      id: '/_authenticated/perfil/$userId'
+      path: '/perfil/$userId'
+      fullPath: '/perfil/$userId'
+      preLoaderRoute: typeof AuthenticatedPerfilUserIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/cultos/$id': {
       id: '/_authenticated/cultos/$id'
       path: '/cultos/$id'
@@ -518,6 +538,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedComumCongregacaoCcbIdRoute: typeof AuthenticatedComumCongregacaoCcbIdRoute
   AuthenticatedCultoInteligenteHistoricoRoute: typeof AuthenticatedCultoInteligenteHistoricoRoute
   AuthenticatedCultosIdRoute: typeof AuthenticatedCultosIdRoute
+  AuthenticatedPerfilUserIdRoute: typeof AuthenticatedPerfilUserIdRoute
   AuthenticatedCultoInteligenteIndexRoute: typeof AuthenticatedCultoInteligenteIndexRoute
   AuthenticatedCultosIndexRoute: typeof AuthenticatedCultosIndexRoute
 }
@@ -541,6 +562,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCultoInteligenteHistoricoRoute:
     AuthenticatedCultoInteligenteHistoricoRoute,
   AuthenticatedCultosIdRoute: AuthenticatedCultosIdRoute,
+  AuthenticatedPerfilUserIdRoute: AuthenticatedPerfilUserIdRoute,
   AuthenticatedCultoInteligenteIndexRoute:
     AuthenticatedCultoInteligenteIndexRoute,
   AuthenticatedCultosIndexRoute: AuthenticatedCultosIndexRoute,
