@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -212,7 +212,13 @@ function MinhasCongregacoesPage() {
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-medium">{c.name || "Congregação"}</p>
+                      <Link
+                        to="/comum/$congregacaoCcbId"
+                        params={{ congregacaoCcbId: String(c.id) }}
+                        className="truncate text-sm font-medium hover:underline"
+                      >
+                        {c.name || "Congregação"}
+                      </Link>
                       {jaVisitou && (
                         <Badge variant="secondary" className="text-[10px]">
                           <CheckCircle2 className="mr-1 h-3 w-3" /> já visitada
@@ -262,9 +268,14 @@ function MinhasCongregacoesPage() {
                       className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left transition hover:bg-muted/40"
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold">
+                        <Link
+                          to="/comum/$congregacaoCcbId"
+                          params={{ congregacaoCcbId: String(v.congregacao_ccb_id) }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="block truncate text-sm font-semibold hover:underline"
+                        >
                           {v.congregacao_nome || "Congregação"}
-                        </p>
+                        </Link>
                         <p className="truncate text-xs text-muted-foreground">
                           {[v.congregacao_cidade, v.congregacao_uf].filter(Boolean).join("/")}
                           {" • "}
@@ -288,11 +299,15 @@ function MinhasCongregacoesPage() {
                         <ul className="space-y-1.5">
                           {datas.map((d) => (
                             <li key={d.id} className="text-xs">
-                              <span className="font-medium">
+                              <Link
+                                to="/check-in/$checkInId"
+                                params={{ checkInId: d.id }}
+                                className="font-medium hover:underline"
+                              >
                                 {format(new Date(d.data_culto + "T12:00:00"), "dd 'de' MMMM 'de' yyyy", {
                                   locale: ptBR,
                                 })}
-                              </span>
+                              </Link>
                               {d.observacao && (
                                 <span className="text-muted-foreground"> — {d.observacao}</span>
                               )}

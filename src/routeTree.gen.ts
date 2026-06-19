@@ -31,6 +31,8 @@ import { Route as AuthenticatedCultosIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedCultoInteligenteIndexRouteImport } from './routes/_authenticated/culto-inteligente.index'
 import { Route as AuthenticatedCultosIdRouteImport } from './routes/_authenticated/cultos.$id'
 import { Route as AuthenticatedCultoInteligenteHistoricoRouteImport } from './routes/_authenticated/culto-inteligente.historico'
+import { Route as AuthenticatedComumCongregacaoCcbIdRouteImport } from './routes/_authenticated/comum.$congregacaoCcbId'
+import { Route as AuthenticatedCheckInCheckInIdRouteImport } from './routes/_authenticated/check-in.$checkInId'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -148,6 +150,18 @@ const AuthenticatedCultoInteligenteHistoricoRoute =
     path: '/culto-inteligente/historico',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedComumCongregacaoCcbIdRoute =
+  AuthenticatedComumCongregacaoCcbIdRouteImport.update({
+    id: '/comum/$congregacaoCcbId',
+    path: '/comum/$congregacaoCcbId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCheckInCheckInIdRoute =
+  AuthenticatedCheckInCheckInIdRouteImport.update({
+    id: '/check-in/$checkInId',
+    path: '/check-in/$checkInId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -167,6 +181,8 @@ export interface FileRoutesByFullPath {
   '/musicos': typeof AuthenticatedMusicosRoute
   '/palavras': typeof AuthenticatedPalavrasRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/check-in/$checkInId': typeof AuthenticatedCheckInCheckInIdRoute
+  '/comum/$congregacaoCcbId': typeof AuthenticatedComumCongregacaoCcbIdRoute
   '/culto-inteligente/historico': typeof AuthenticatedCultoInteligenteHistoricoRoute
   '/cultos/$id': typeof AuthenticatedCultosIdRoute
   '/culto-inteligente/': typeof AuthenticatedCultoInteligenteIndexRoute
@@ -190,6 +206,8 @@ export interface FileRoutesByTo {
   '/musicos': typeof AuthenticatedMusicosRoute
   '/palavras': typeof AuthenticatedPalavrasRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/check-in/$checkInId': typeof AuthenticatedCheckInCheckInIdRoute
+  '/comum/$congregacaoCcbId': typeof AuthenticatedComumCongregacaoCcbIdRoute
   '/culto-inteligente/historico': typeof AuthenticatedCultoInteligenteHistoricoRoute
   '/cultos/$id': typeof AuthenticatedCultosIdRoute
   '/culto-inteligente': typeof AuthenticatedCultoInteligenteIndexRoute
@@ -215,6 +233,8 @@ export interface FileRoutesById {
   '/_authenticated/musicos': typeof AuthenticatedMusicosRoute
   '/_authenticated/palavras': typeof AuthenticatedPalavrasRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/_authenticated/check-in/$checkInId': typeof AuthenticatedCheckInCheckInIdRoute
+  '/_authenticated/comum/$congregacaoCcbId': typeof AuthenticatedComumCongregacaoCcbIdRoute
   '/_authenticated/culto-inteligente/historico': typeof AuthenticatedCultoInteligenteHistoricoRoute
   '/_authenticated/cultos/$id': typeof AuthenticatedCultosIdRoute
   '/_authenticated/culto-inteligente/': typeof AuthenticatedCultoInteligenteIndexRoute
@@ -240,6 +260,8 @@ export interface FileRouteTypes {
     | '/musicos'
     | '/palavras'
     | '/relatorios'
+    | '/check-in/$checkInId'
+    | '/comum/$congregacaoCcbId'
     | '/culto-inteligente/historico'
     | '/cultos/$id'
     | '/culto-inteligente/'
@@ -263,6 +285,8 @@ export interface FileRouteTypes {
     | '/musicos'
     | '/palavras'
     | '/relatorios'
+    | '/check-in/$checkInId'
+    | '/comum/$congregacaoCcbId'
     | '/culto-inteligente/historico'
     | '/cultos/$id'
     | '/culto-inteligente'
@@ -287,6 +311,8 @@ export interface FileRouteTypes {
     | '/_authenticated/musicos'
     | '/_authenticated/palavras'
     | '/_authenticated/relatorios'
+    | '/_authenticated/check-in/$checkInId'
+    | '/_authenticated/comum/$congregacaoCcbId'
     | '/_authenticated/culto-inteligente/historico'
     | '/_authenticated/cultos/$id'
     | '/_authenticated/culto-inteligente/'
@@ -458,6 +484,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCultoInteligenteHistoricoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/comum/$congregacaoCcbId': {
+      id: '/_authenticated/comum/$congregacaoCcbId'
+      path: '/comum/$congregacaoCcbId'
+      fullPath: '/comum/$congregacaoCcbId'
+      preLoaderRoute: typeof AuthenticatedComumCongregacaoCcbIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/check-in/$checkInId': {
+      id: '/_authenticated/check-in/$checkInId'
+      path: '/check-in/$checkInId'
+      fullPath: '/check-in/$checkInId'
+      preLoaderRoute: typeof AuthenticatedCheckInCheckInIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -474,6 +514,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMusicosRoute: typeof AuthenticatedMusicosRoute
   AuthenticatedPalavrasRoute: typeof AuthenticatedPalavrasRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
+  AuthenticatedCheckInCheckInIdRoute: typeof AuthenticatedCheckInCheckInIdRoute
+  AuthenticatedComumCongregacaoCcbIdRoute: typeof AuthenticatedComumCongregacaoCcbIdRoute
   AuthenticatedCultoInteligenteHistoricoRoute: typeof AuthenticatedCultoInteligenteHistoricoRoute
   AuthenticatedCultosIdRoute: typeof AuthenticatedCultosIdRoute
   AuthenticatedCultoInteligenteIndexRoute: typeof AuthenticatedCultoInteligenteIndexRoute
@@ -493,6 +535,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMusicosRoute: AuthenticatedMusicosRoute,
   AuthenticatedPalavrasRoute: AuthenticatedPalavrasRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
+  AuthenticatedCheckInCheckInIdRoute: AuthenticatedCheckInCheckInIdRoute,
+  AuthenticatedComumCongregacaoCcbIdRoute:
+    AuthenticatedComumCongregacaoCcbIdRoute,
   AuthenticatedCultoInteligenteHistoricoRoute:
     AuthenticatedCultoInteligenteHistoricoRoute,
   AuthenticatedCultosIdRoute: AuthenticatedCultosIdRoute,
