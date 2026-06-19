@@ -466,7 +466,9 @@ export const getPerfilPublico = createServerFn({ method: "POST" })
       euSigo: !!jaSigo,
       congregacoes: [],
       posts: [],
+      minhaComum,
     };
+
 
     if (!isOwn && !publico) {
       return { perfil: base };
