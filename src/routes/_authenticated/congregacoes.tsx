@@ -70,6 +70,9 @@ function CongregacoesPage() {
     setRegiao(editing?.regiao ?? "");
     setEndereco(editing?.endereco ?? "");
     setObservacoes(editing?.observacoes ?? "");
+    setFotoFile(null);
+    setFotoPreview(null);
+    setFotoExistente(editing?.foto_url ?? null);
     setSugestoes([]);
     setErroSug(null);
     setHorarioVisita("");
