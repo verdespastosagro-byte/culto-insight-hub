@@ -39,6 +39,7 @@ type Status = { type: "ok" | "err"; msg: string } | null;
 function ContaPage() {
   const { user, profile, organization, orgRole, plan, planStatus, trialDaysLeft, refreshOrg } = useAuth();
   const { isTrialing, isExpired } = usePlanLimits();
+  const queryClient = useQueryClient();
 
   const [nome, setNome] = useState(profile?.nome ?? "");
   const [cargo, setCargo] = useState(profile?.cargo ?? "");
