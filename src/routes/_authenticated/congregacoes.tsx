@@ -51,7 +51,10 @@ function findDuplicada(
 
 function CongregacoesPage() {
   const qc = useQueryClient();
-  const { canEdit, isAdmin } = useAuth();
+  const { canEdit: canEditApp, isAdmin, canManageOrg, orgRole } = useAuth();
+  // Permite cadastrar/editar congregação para qualquer membro com papel de edição na organização
+  // (owner/admin/editor) além das roles globais (admin/encarregado/cooperador).
+  const canEdit = canEditApp || canManageOrg || orgRole === "editor";
   const listar = useServerFn(listarCongregacoesPorCidade);
   const buscarCidades = useServerFn(buscarCidadesUf);
   const [q, setQ] = useState("");
