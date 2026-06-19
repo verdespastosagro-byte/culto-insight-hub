@@ -100,10 +100,7 @@ function CultosList() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Cidade</Label><Input name="cidade" /></div>
-                  <div><Label>Participantes</Label><Input type="number" name="participantes" min={0} /></div>
-                </div>
+                <div><Label>Participantes</Label><Input type="number" name="participantes" min={0} /></div>
                 <div><Label>Observações</Label><Textarea name="observacoes" /></div>
                 <DialogFooter><Button type="submit">Registrar</Button></DialogFooter>
               </form>
