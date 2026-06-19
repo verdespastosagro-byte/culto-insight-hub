@@ -52,7 +52,10 @@ function FeedPage() {
     queryFn: async ({ pageParam }) =>
       fetchFeed({ data: { cursor: pageParam, limite: 15 } }),
     getNextPageParam: (last) => last.nextCursor ?? undefined,
+    staleTime: 2 * 60_000,
+    placeholderData: keepPreviousData,
   });
+
 
   const [texto, setTexto] = useState("");
   const [foto, setFoto] = useState<File | null>(null);
