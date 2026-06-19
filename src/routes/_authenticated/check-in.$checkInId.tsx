@@ -126,14 +126,20 @@ function CheckInDetalhePage() {
         ) : (
           <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {q.data.companheiros.map((v) => (
-              <li key={v.user_id} className="flex items-center gap-2 rounded-md border bg-card p-2">
-                <Avatar className="h-8 w-8">
-                  {v.foto_url ? <AvatarImage src={v.foto_url} alt={v.nome} /> : null}
-                  <AvatarFallback className="text-xs">
-                    {v.nome?.[0]?.toUpperCase() ?? "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <p className="truncate text-xs font-medium">{v.nome}</p>
+              <li key={v.user_id}>
+                <Link
+                  to="/perfil/$userId"
+                  params={{ userId: v.user_id }}
+                  className="flex items-center gap-2 rounded-md border bg-card p-2 transition-colors hover:bg-accent"
+                >
+                  <Avatar className="h-8 w-8">
+                    {v.foto_url ? <AvatarImage src={v.foto_url} alt={v.nome} /> : null}
+                    <AvatarFallback className="text-xs">
+                      {v.nome?.[0]?.toUpperCase() ?? "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="truncate text-xs font-medium">{v.nome}</p>
+                </Link>
               </li>
             ))}
           </ul>
