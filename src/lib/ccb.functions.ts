@@ -203,3 +203,39 @@ export const buscarCidadesUf = createServerFn({ method: "POST" })
     return { items };
   });
 
+// Busca textual de comuns no diretório nacional (nome, cidade, bairro, endereço)
+const BuscaTextoInput = z.object({ q: z.string().min(2).max(120) });
+export type CongregacaoCcbResult = {
+  id: number;
+  name: string;
+  address: string;
+  bairro?: string;
+  cidade?: string;
+  uf?: string;
+};
+
+export const buscarCongregacoesCcbTexto = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => BuscaTextoInput.parse(data))
+  .handler(async ({ data }): Promise<{ items: CongregacaoCcbResult[] }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const like = `%${data.q.trim()}%`;
+    const { data: rows, error } = await supabaseAdmin
+      .from("congregacoes_ccb")
+      .select("id,name,address,neighborhood,city,uf")
+      .or(`name.ilike.${like},city.ilike.${like},neighborhood.ilike.${like},address.ilike.${like}`)
+      .limit(30);
+    if (error) {
+      console.error("buscarCongregacoesCcbTexto error", error);
+      return { items: [] };
+    }
+    const items: CongregacaoCcbResult[] = (rows ?? []).map((r) => ({
+      id: r.id as number,
+      name: (r.name as string) ?? "",
+      address: (r.address as string) ?? "",
+      bairro: (r.neighborhood as string) ?? undefined,
+      cidade: (r.city as string) ?? undefined,
+      uf: ((r.uf as string) ?? "").toUpperCase() || undefined,
+    }));
+    return { items };
+  });
+
