@@ -105,6 +105,15 @@ function Dashboard() {
     },
   });
 
+  // Mini-feed estilo Instagram com posts públicos da plataforma
+  const fetchFeed = useServerFn(listarFeed);
+  const feed = useQuery({
+    queryKey: ["dash-feed-mini"],
+    queryFn: async () => fetchFeed({ data: { limite: 5 } }),
+    staleTime: 2 * 60_000,
+    placeholderData: keepPreviousData,
+  });
+
   const cards = [
     { label: "Cultos registrados", value: stats.data?.cultos ?? 0, icon: BookOpen, color: "text-primary" },
     { label: "Congregações", value: stats.data?.congregacoes ?? 0, icon: Building2, color: "text-[color:var(--chart-2)]" },
@@ -112,6 +121,7 @@ function Dashboard() {
     { label: "Palavras", value: stats.data?.palavras ?? 0, icon: MessageSquareQuote, color: "text-[color:var(--chart-4)]" },
     { label: "Atendimentos", value: stats.data?.atendimentos ?? 0, icon: HandHelping, color: "text-[color:var(--chart-5)]" },
   ];
+
 
   return (
     <div className="space-y-6">
