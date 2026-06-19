@@ -43,9 +43,75 @@ function ContaPage() {
 
   const [nome, setNome] = useState(profile?.nome ?? "");
   const [cargo, setCargo] = useState(profile?.cargo ?? "");
-  const [congregacao, setCongregacao] = useState(profile?.congregacao ?? "");
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileStatus, setProfileStatus] = useState<Status>(null);
+
+  // ====== Minha comum (CCB) ======
+  const fetchCidades = useServerFn(listarCidadesCcb);
+  const fetchComuns = useServerFn(listarComunsPorCidade);
+  const fetchDefinirComum = useServerFn(definirMinhaComum);
+  const comumIdAtual = ((profile as { congregacao_ccb_id?: number | null } | null)?.congregacao_ccb_id) ?? null;
+  const [comumSelecionada, setComumSelecionada] = useState<number | null>(comumIdAtual);
+  const [cidadeBusca, setCidadeBusca] = useState("");
+  const [cidadeAtual, setCidadeAtual] = useState<string | null>(null);
+  const [ufAtual, setUfAtual] = useState<string | null>(null);
+  const [savingComum, setSavingComum] = useState(false);
+  const [comumStatus, setComumStatus] = useState<Status>(null);
+
+  useEffect(() => {
+    setComumSelecionada(((profile as { congregacao_ccb_id?: number | null } | null)?.congregacao_ccb_id) ?? null);
+  }, [profile]);
+
+  // Carrega cidade/uf atuais a partir da comum salva, na primeira renderização
+  useEffect(() => {
+    if (!comumIdAtual || cidadeAtual) return;
+    (async () => {
+      const { data } = await supabase
+        .from("congregacoes_ccb")
+        .select("city,uf")
+        .eq("id", comumIdAtual)
+        .maybeSingle();
+      if (data) {
+        setCidadeAtual(data.city ?? null);
+        setUfAtual((data.uf ?? "").toUpperCase() || null);
+        setCidadeBusca(data.city ?? "");
+      }
+    })();
+  }, [comumIdAtual, cidadeAtual]);
+
+  const cidadesQ = useQuery({
+    queryKey: ["ccb-cidades", cidadeBusca],
+    enabled: cidadeBusca.trim().length >= 2,
+    queryFn: async () => (await fetchCidades({ data: { q: cidadeBusca.trim() } })).cidades,
+    staleTime: 60_000,
+  });
+
+  const comunsQ = useQuery({
+    queryKey: ["ccb-comuns", cidadeAtual, ufAtual],
+    enabled: !!cidadeAtual && !!ufAtual,
+    queryFn: async () =>
+      (await fetchComuns({ data: { cidade: cidadeAtual!, uf: ufAtual! } })).comuns,
+    staleTime: 60_000,
+  });
+
+  async function handleSalvarComum() {
+    setSavingComum(true);
+    setComumStatus(null);
+    try {
+      const r = await fetchDefinirComum({ data: { congregacao_ccb_id: comumSelecionada } });
+      setComumStatus({
+        type: "ok",
+        msg: r.nome ? `Sua comum foi definida: ${r.nome}.` : "Sua comum foi removida do perfil.",
+      });
+      await refreshOrg();
+    } catch (e) {
+      setComumStatus({ type: "err", msg: e instanceof Error ? e.message : "Erro ao salvar" });
+    } finally {
+      setSavingComum(false);
+    }
+  }
+
+
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
