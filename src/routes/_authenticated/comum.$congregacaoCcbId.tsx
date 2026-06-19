@@ -1,14 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Loader2, MapPin, Users, ArrowLeft, Building2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getComumDetalhe, listarVisitantesRecentesComum } from "@/lib/social.functions";
 import { ComentariosMural } from "@/components/ComentariosMural";
+import { QuemEsteveAquiCarousel } from "@/components/QuemEsteveAquiCarousel";
+
 
 export const Route = createFileRoute("/_authenticated/comum/$congregacaoCcbId")({
   component: ComumDetalhePage,
