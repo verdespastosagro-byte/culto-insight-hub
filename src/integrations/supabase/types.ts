@@ -839,6 +839,7 @@ export type Database = {
           congregacao: string | null
           created_at: string
           email: string | null
+          foto_url: string | null
           id: string
           nome: string
           onboarding_completed: boolean
@@ -849,6 +850,7 @@ export type Database = {
           congregacao?: string | null
           created_at?: string
           email?: string | null
+          foto_url?: string | null
           id: string
           nome: string
           onboarding_completed?: boolean
@@ -859,6 +861,7 @@ export type Database = {
           congregacao?: string | null
           created_at?: string
           email?: string | null
+          foto_url?: string | null
           id?: string
           nome?: string
           onboarding_completed?: boolean
