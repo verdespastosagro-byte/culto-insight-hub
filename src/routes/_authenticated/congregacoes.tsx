@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/congregacoes")({
   component: CongregacoesPage,
 });
 
-type Cong = { id: string; nome: string; cidade: string|null; estado: string|null; regiao: string|null; endereco: string|null; observacoes: string|null };
+type Cong = { id: string; nome: string; cidade: string|null; estado: string|null; regiao: string|null; endereco: string|null; observacoes: string|null; foto_url: string|null };
 type CultoRow = { id: string; data: string; tipo: string; congregacao_id: string | null };
 type Filtro = "todas" | "hoje" | "semana" | "rjm";
 
