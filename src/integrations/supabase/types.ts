@@ -970,7 +970,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_minhas_congregacoes_visitadas: {
+        Row: {
+          congregacao_ccb_id: number | null
+          congregacao_cidade: string | null
+          congregacao_nome: string | null
+          congregacao_uf: string | null
+          primeira_visita: string | null
+          total_visitas: number | null
+          ultima_visita: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "check_ins_congregacao_ccb_id_fkey"
+            columns: ["congregacao_ccb_id"]
+            isOneToOne: false
+            referencedRelation: "congregacoes_ccb"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_edit_org:
@@ -979,6 +999,17 @@ export type Database = {
       can_manage_org:
         | { Args: { _user_id: string }; Returns: boolean }
         | { Args: { _org_id: string; _user_id: string }; Returns: boolean }
+      contar_visitantes_culto: {
+        Args: { p_congregacao_ccb_id: number; p_data: string }
+        Returns: {
+          publicos: Json
+          total: number
+        }[]
+      }
+      contar_visitas_totais_congregacao: {
+        Args: { p_congregacao_ccb_id: number }
+        Returns: number
+      }
       current_user_org_id: { Args: never; Returns: string }
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
       has_org_role: {
