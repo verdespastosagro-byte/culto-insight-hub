@@ -205,6 +205,15 @@ function Dashboard() {
                           loading="lazy"
                         />
                       )}
+                      {p.audio_url && (
+                        <audio
+                          src={p.audio_url}
+                          controls
+                          preload="metadata"
+                          className="mt-2 h-9 w-full"
+                        />
+                      )}
+
                     </div>
                   </div>
                 </li>
