@@ -530,7 +530,10 @@ function CongregacoesPage() {
           {filtered.map((c) => {
             const s = statsPorCong.get(c.id);
             return (
-              <Card key={c.id} className="shadow-[var(--shadow-card)]">
+              <Card key={c.id} className="overflow-hidden shadow-[var(--shadow-card)]">
+                {c.foto_url && (
+                  <CongFoto path={c.foto_url} className="h-36 w-full object-cover" />
+                )}
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
