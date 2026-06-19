@@ -13,6 +13,7 @@ interface Profile {
   email: string | null;
   cargo: string | null;
   congregacao: string | null;
+  foto_url?: string | null;
   onboarding_completed?: boolean;
 }
 
