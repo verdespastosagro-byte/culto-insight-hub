@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   User,
   Lock,
@@ -23,7 +24,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { listarCidadesCcb, listarComunsPorCidade, definirMinhaComum } from "@/lib/social.functions";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/_authenticated/conta")({
   component: ContaPage,
@@ -37,9 +42,75 @@ function ContaPage() {
 
   const [nome, setNome] = useState(profile?.nome ?? "");
   const [cargo, setCargo] = useState(profile?.cargo ?? "");
-  const [congregacao, setCongregacao] = useState(profile?.congregacao ?? "");
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileStatus, setProfileStatus] = useState<Status>(null);
+
+  // ====== Minha comum (CCB) ======
+  const fetchCidades = useServerFn(listarCidadesCcb);
+  const fetchComuns = useServerFn(listarComunsPorCidade);
+  const fetchDefinirComum = useServerFn(definirMinhaComum);
+  const comumIdAtual = ((profile as { congregacao_ccb_id?: number | null } | null)?.congregacao_ccb_id) ?? null;
+  const [comumSelecionada, setComumSelecionada] = useState<number | null>(comumIdAtual);
+  const [cidadeBusca, setCidadeBusca] = useState("");
+  const [cidadeAtual, setCidadeAtual] = useState<string | null>(null);
+  const [ufAtual, setUfAtual] = useState<string | null>(null);
+  const [savingComum, setSavingComum] = useState(false);
+  const [comumStatus, setComumStatus] = useState<Status>(null);
+
+  useEffect(() => {
+    setComumSelecionada(((profile as { congregacao_ccb_id?: number | null } | null)?.congregacao_ccb_id) ?? null);
+  }, [profile]);
+
+  // Carrega cidade/uf atuais a partir da comum salva, na primeira renderização
+  useEffect(() => {
+    if (!comumIdAtual || cidadeAtual) return;
+    (async () => {
+      const { data } = await supabase
+        .from("congregacoes_ccb")
+        .select("city,uf")
+        .eq("id", comumIdAtual)
+        .maybeSingle();
+      if (data) {
+        setCidadeAtual(data.city ?? null);
+        setUfAtual((data.uf ?? "").toUpperCase() || null);
+        setCidadeBusca(data.city ?? "");
+      }
+    })();
+  }, [comumIdAtual, cidadeAtual]);
+
+  const cidadesQ = useQuery({
+    queryKey: ["ccb-cidades", cidadeBusca],
+    enabled: cidadeBusca.trim().length >= 2,
+    queryFn: async () => (await fetchCidades({ data: { q: cidadeBusca.trim() } })).cidades,
+    staleTime: 60_000,
+  });
+
+  const comunsQ = useQuery({
+    queryKey: ["ccb-comuns", cidadeAtual, ufAtual],
+    enabled: !!cidadeAtual && !!ufAtual,
+    queryFn: async () =>
+      (await fetchComuns({ data: { cidade: cidadeAtual!, uf: ufAtual! } })).comuns,
+    staleTime: 60_000,
+  });
+
+  async function handleSalvarComum() {
+    setSavingComum(true);
+    setComumStatus(null);
+    try {
+      const r = await fetchDefinirComum({ data: { congregacao_ccb_id: comumSelecionada } });
+      setComumStatus({
+        type: "ok",
+        msg: r.nome ? `Sua comum foi definida: ${r.nome}.` : "Sua comum foi removida do perfil.",
+      });
+      await refreshOrg();
+    } catch (e) {
+      setComumStatus({ type: "err", msg: e instanceof Error ? e.message : "Erro ao salvar" });
+    } finally {
+      setSavingComum(false);
+    }
+  }
+
+
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -152,7 +223,7 @@ function ContaPage() {
     setProfileStatus(null);
     const { error } = await supabase
       .from("profiles")
-      .update({ nome: nome.trim(), cargo: cargo.trim() || null, congregacao: congregacao.trim() || null })
+      .update({ nome: nome.trim(), cargo: cargo.trim() || null })
       .eq("id", user.id);
     setSavingProfile(false);
     if (error) {
@@ -288,16 +359,6 @@ function ContaPage() {
                   maxLength={120}
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="congregacao">Congregação</Label>
-                <Input
-                  id="congregacao"
-                  value={congregacao}
-                  onChange={(e) => setCongregacao(e.target.value)}
-                  placeholder="Nome da congregação onde serve"
-                  maxLength={160}
-                />
-              </div>
             </div>
             <StatusLine status={profileStatus} />
             <div className="flex justify-end">
@@ -309,6 +370,139 @@ function ContaPage() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Minha Comum (CCB) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Building2 className="h-4 w-4" /> Minha Comum
+          </CardTitle>
+          <CardDescription>
+            Selecione a cidade e depois a comum (congregação CCB) à qual você pertence. Ela aparecerá no seu perfil público.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="cidade-busca">Cidade</Label>
+              <Input
+                id="cidade-busca"
+                value={cidadeBusca}
+                onChange={(e) => {
+                  setCidadeBusca(e.target.value);
+                }}
+                placeholder="Digite ao menos 2 letras"
+                maxLength={120}
+              />
+              {cidadesQ.data && cidadesQ.data.length > 0 && (
+                <Select
+                  value={cidadeAtual && ufAtual ? `${cidadeAtual}__${ufAtual}` : ""}
+                  onValueChange={(v) => {
+                    const [c, u] = v.split("__");
+                    setCidadeAtual(c);
+                    setUfAtual(u);
+                    setComumSelecionada(null);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Escolha a cidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cidadesQ.data.map((c) => (
+                      <SelectItem key={`${c.cidade}__${c.uf}`} value={`${c.cidade}__${c.uf}`}>
+                        {c.cidade} / {c.uf}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {cidadesQ.isLoading && (
+                <p className="text-xs text-muted-foreground">Buscando cidades…</p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="comum-select">Comum</Label>
+              <Select
+                value={comumSelecionada ? String(comumSelecionada) : ""}
+                onValueChange={(v) => setComumSelecionada(v ? Number(v) : null)}
+                disabled={!cidadeAtual || !ufAtual || comunsQ.isLoading}
+              >
+                <SelectTrigger id="comum-select">
+                  <SelectValue
+                    placeholder={
+                      !cidadeAtual
+                        ? "Escolha a cidade primeiro"
+                        : comunsQ.isLoading
+                          ? "Carregando comuns…"
+                          : "Selecione a comum"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {(comunsQ.data ?? []).map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>
+                      {c.nome}
+                      {c.bairro ? ` — ${c.bairro}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {comunsQ.data && comunsQ.data.length === 0 && cidadeAtual && (
+                <p className="text-xs text-muted-foreground">
+                  Nenhuma comum encontrada nessa cidade.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <StatusLine status={comumStatus} />
+
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-xs text-muted-foreground">
+              {comumSelecionada
+                ? "Confirme para salvar."
+                : "Você ainda não definiu uma comum."}
+            </div>
+            <div className="flex gap-2">
+              {comumIdAtual && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={savingComum}
+                  onClick={async () => {
+                    setComumSelecionada(null);
+                    setSavingComum(true);
+                    try {
+                      await fetchDefinirComum({ data: { congregacao_ccb_id: null } });
+                      setComumStatus({ type: "ok", msg: "Comum removida do perfil." });
+                      await refreshOrg();
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "Erro");
+                    } finally {
+                      setSavingComum(false);
+                    }
+                  }}
+                >
+                  Remover
+                </Button>
+              )}
+              <Button
+                type="button"
+                size="sm"
+                disabled={savingComum || !comumSelecionada || comumSelecionada === comumIdAtual}
+                onClick={handleSalvarComum}
+              >
+                {savingComum && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Salvar comum
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+
 
       {/* Privacidade */}
       <Card>

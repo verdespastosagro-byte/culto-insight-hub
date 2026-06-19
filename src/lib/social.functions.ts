@@ -371,6 +371,17 @@ export type PostItem = {
 };
 
 
+export type MinhaComum = {
+  id: number;
+  nome: string;
+  endereco: string | null;
+  bairro: string | null;
+  cidade: string | null;
+  uf: string | null;
+  lat: number | null;
+  lng: number | null;
+};
+
 export type PerfilPublico = {
   user_id: string;
   nome: string;
@@ -384,7 +395,9 @@ export type PerfilPublico = {
   euSigo: boolean;
   congregacoes: CongregacaoVisitada[];
   posts: PostItem[];
+  minhaComum: MinhaComum | null;
 };
+
 
 export const getPerfilPublico = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -396,7 +409,7 @@ export const getPerfilPublico = createServerFn({ method: "POST" })
 
     const { data: prof } = await supabaseAdmin
       .from("profiles")
-      .select("id,nome,cargo,foto_url")
+      .select("id,nome,cargo,foto_url,congregacao_ccb_id")
       .eq("id", target)
       .maybeSingle();
     if (!prof) return { perfil: null };
@@ -406,9 +419,32 @@ export const getPerfilPublico = createServerFn({ method: "POST" })
 
     const fotoUrl = await signAvatar(supabaseAdmin, (prof.foto_url as string) ?? null);
 
+    let minhaComum: MinhaComum | null = null;
+    const comumId = (prof as { congregacao_ccb_id?: number | null }).congregacao_ccb_id ?? null;
+    if (comumId) {
+      const { data: com } = await supabaseAdmin
+        .from("congregacoes_ccb")
+        .select("id,name,address,neighborhood,city,uf,lat,lng")
+        .eq("id", comumId)
+        .maybeSingle();
+      if (com) {
+        minhaComum = {
+          id: com.id as number,
+          nome: (com.name as string) ?? "",
+          endereco: (com.address as string) ?? null,
+          bairro: (com.neighborhood as string) ?? null,
+          cidade: (com.city as string) ?? null,
+          uf: ((com.uf as string) ?? "").toUpperCase() || null,
+          lat: (com.lat as number) ?? null,
+          lng: (com.lng as number) ?? null,
+        };
+      }
+    }
+
     const [{ count: seguidores }, { count: seguindo }, { data: jaSigo }] = await Promise.all([
       supabaseAdmin.from("follows").select("*", { count: "exact", head: true }).eq("following_id", target),
       supabaseAdmin.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", target),
+
       supabaseAdmin
         .from("follows")
         .select("follower_id")
@@ -430,7 +466,9 @@ export const getPerfilPublico = createServerFn({ method: "POST" })
       euSigo: !!jaSigo,
       congregacoes: [],
       posts: [],
+      minhaComum,
     };
+
 
     if (!isOwn && !publico) {
       return { perfil: base };
@@ -653,3 +691,88 @@ export const excluirPost = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// ---------- Cidades disponíveis (CCB) ----------
+export const listarCidadesCcb = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ q: z.string().trim().max(120).optional().default("") }).parse(d),
+  )
+  .handler(async ({ data }): Promise<{ cidades: Array<{ cidade: string; uf: string }> }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let query = supabaseAdmin
+      .from("congregacoes_ccb")
+      .select("city,uf")
+      .not("city", "is", null)
+      .not("uf", "is", null);
+    if (data.q) query = query.ilike("city", `%${data.q}%`);
+    const { data: rows } = await query.limit(2000);
+    const seen = new Set<string>();
+    const cidades: Array<{ cidade: string; uf: string }> = [];
+    for (const r of (rows as Array<{ city: string; uf: string }>) ?? []) {
+      const key = `${r.city}__${r.uf}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      cidades.push({ cidade: r.city, uf: (r.uf ?? "").toUpperCase() });
+    }
+    cidades.sort((a, b) => a.cidade.localeCompare(b.cidade, "pt-BR"));
+    return { cidades: cidades.slice(0, 200) };
+  });
+
+// ---------- Comuns por cidade ----------
+export const listarComunsPorCidade = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      cidade: z.string().trim().min(1).max(120),
+      uf: z.string().trim().min(2).max(4),
+    }).parse(d),
+  )
+  .handler(async ({ data }): Promise<{ comuns: Array<{ id: number; nome: string; endereco: string | null; bairro: string | null }> }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows } = await supabaseAdmin
+      .from("congregacoes_ccb")
+      .select("id,name,address,neighborhood")
+      .ilike("city", data.cidade)
+      .ilike("uf", data.uf)
+      .order("name", { ascending: true })
+      .limit(500);
+    return {
+      comuns: ((rows as Array<{ id: number; name: string; address: string | null; neighborhood: string | null }>) ?? []).map((r) => ({
+        id: r.id,
+        nome: r.name,
+        endereco: r.address,
+        bairro: r.neighborhood,
+      })),
+    };
+  });
+
+// ---------- Salvar minha comum ----------
+export const definirMinhaComum = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ congregacao_ccb_id: z.number().int().positive().nullable() }).parse(d),
+  )
+  .handler(async ({ data, context }): Promise<{ ok: true; nome: string | null }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let nome: string | null = null;
+    if (data.congregacao_ccb_id) {
+      const { data: row } = await supabaseAdmin
+        .from("congregacoes_ccb")
+        .select("name")
+        .eq("id", data.congregacao_ccb_id)
+        .maybeSingle();
+      if (!row) throw new Error("Comum não encontrada");
+      nome = (row.name as string) ?? null;
+    }
+    const { error } = await context.supabase
+      .from("profiles")
+      .update({
+        congregacao_ccb_id: data.congregacao_ccb_id,
+        congregacao: nome,
+      } as never)
+      .eq("id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true, nome };
+  });
+

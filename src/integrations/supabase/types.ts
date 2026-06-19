@@ -983,6 +983,7 @@ export type Database = {
         Row: {
           cargo: string | null
           congregacao: string | null
+          congregacao_ccb_id: number | null
           created_at: string
           email: string | null
           foto_url: string | null
@@ -994,6 +995,7 @@ export type Database = {
         Insert: {
           cargo?: string | null
           congregacao?: string | null
+          congregacao_ccb_id?: number | null
           created_at?: string
           email?: string | null
           foto_url?: string | null
@@ -1005,6 +1007,7 @@ export type Database = {
         Update: {
           cargo?: string | null
           congregacao?: string | null
+          congregacao_ccb_id?: number | null
           created_at?: string
           email?: string | null
           foto_url?: string | null
@@ -1013,7 +1016,15 @@ export type Database = {
           onboarding_completed?: boolean
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_congregacao_ccb_id_fkey"
+            columns: ["congregacao_ccb_id"]
+            isOneToOne: false
+            referencedRelation: "congregacoes_ccb"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
