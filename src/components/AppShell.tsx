@@ -2,7 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { type ReactNode, useState } from "react";
 import {
   LayoutDashboard, Building2, BookOpen, Music2, MessageSquareQuote,
-  HandHelping, UserPlus, Mic2, Calendar, BarChart3, Sparkles, LogOut, Menu, X, Radio, AlertTriangle, UserCircle, MapPin, ShieldAlert, CheckCircle2,
+  HandHelping, UserPlus, Mic2, Calendar, BarChart3, Sparkles, LogOut, Menu, X, Radio, AlertTriangle, UserCircle, MapPin, ShieldAlert, CheckCircle2, Newspaper,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
