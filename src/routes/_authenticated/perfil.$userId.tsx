@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
@@ -14,18 +15,21 @@ import {
   Building2,
   Image as ImageIcon,
   MessageCircle,
+  Navigation,
+  ChevronDown,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getPerfilPublico, toggleSeguir } from "@/lib/social.functions";
+import { getPerfilPublico, toggleSeguir, type MinhaComum } from "@/lib/social.functions";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/perfil/$userId")({
   component: PerfilPublicoPage,
 });
+
 
 function PerfilPublicoPage() {
   const { userId } = Route.useParams();
