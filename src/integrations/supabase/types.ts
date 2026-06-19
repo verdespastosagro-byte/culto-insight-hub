@@ -115,6 +115,41 @@ export type Database = {
           },
         ]
       }
+      check_ins: {
+        Row: {
+          congregacao_ccb_id: number
+          created_at: string
+          data_culto: string
+          id: string
+          observacao: string | null
+          user_id: string
+        }
+        Insert: {
+          congregacao_ccb_id: number
+          created_at?: string
+          data_culto: string
+          id?: string
+          observacao?: string | null
+          user_id: string
+        }
+        Update: {
+          congregacao_ccb_id?: number
+          created_at?: string
+          data_culto?: string
+          id?: string
+          observacao?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "check_ins_congregacao_ccb_id_fkey"
+            columns: ["congregacao_ccb_id"]
+            isOneToOne: false
+            referencedRelation: "congregacoes_ccb"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       congregacoes: {
         Row: {
           cidade: string | null
