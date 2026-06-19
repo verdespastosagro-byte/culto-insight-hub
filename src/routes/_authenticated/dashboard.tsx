@@ -40,7 +40,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 const EFEITO_OPCOES: {
   value: EfeitoFundo;
   label: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
 }[] = [
   { value: "nenhum", label: "Nenhum", icon: Sun },
   { value: "chuva", label: "Chuva", icon: CloudRain },
