@@ -185,19 +185,33 @@ function CultoInteligentePage() {
     setFCongregacaoId(congMatch?.id ?? "");
     setFCidade(ex?.cidade_mencionada ?? coords?.cidade ?? congMatch?.cidade ?? "");
     setFParticipantes("");
-    setFObservacoes(ex?.observacoes_ia ?? "");
-    setFHinos((ex?.hinos_chamados ?? []).filter((h) => h.numero != null).map((h) => ({ numero: String(h.numero ?? ""), momento: h.momento ?? "outro" })));
-    setFPalavra({
-      nome_irmao: ex?.pregador?.nome ?? "",
-      cargo: ex?.pregador?.cargo ?? "",
-      congregacao_origem: ex?.pregador?.congregacao_origem ?? "",
-      cidade_origem: "",
-      texto_biblico: ex?.palavra?.texto_biblico ?? "",
-      tema: ex?.palavra?.tema ?? "",
-      resumo: ex?.palavra?.resumo ?? "",
-    });
-    setFAtend((ex?.atendimentos ?? []).map((a) => ({ nome: a.nome, cargo: a.cargo ?? "", congregacao_origem: a.congregacao_origem ?? "", cidade_origem: "" })));
-    setFVisit((ex?.visitantes_mencionados ?? []).map((v) => ({ nome: v.nome, congregacao_origem: v.congregacao_origem ?? "", cidade_origem: v.cidade_origem ?? "" })));
+
+    // Monta um resumo completo do culto direto nas observações (inclui hinos)
+    const partes: string[] = [];
+    if (ex?.palavra?.resumo) partes.push(`Resumo: ${ex.palavra.resumo}`);
+    if (ex?.palavra?.tema) partes.push(`Tema: ${ex.palavra.tema}`);
+    if (ex?.palavra?.texto_biblico) partes.push(`Texto bíblico: ${ex.palavra.texto_biblico}`);
+    if (ex?.pregador?.nome) {
+      const p = [ex.pregador.nome, ex.pregador.cargo, ex.pregador.congregacao_origem].filter(Boolean).join(" — ");
+      partes.push(`Pregador: ${p}`);
+    }
+    const hinos = (ex?.hinos_chamados ?? []).filter((h) => h.numero != null);
+    if (hinos.length) {
+      partes.push("Hinos: " + hinos.map((h) => h.momento ? `${h.numero} (${h.momento})` : `${h.numero}`).join(", "));
+    }
+    if (ex?.atendimentos?.length) {
+      partes.push("Atendimentos: " + ex.atendimentos.map((a) => a.nome).join(", "));
+    }
+    if (ex?.visitantes_mencionados?.length) {
+      partes.push("Visitantes: " + ex.visitantes_mencionados.map((v) => v.nome).join(", "));
+    }
+    if (ex?.observacoes_ia) partes.push(ex.observacoes_ia);
+    setFObservacoes(partes.join("\n\n"));
+
+    setFHinos([]);
+    setFPalavra({ nome_irmao: "", cargo: "", congregacao_origem: "", cidade_origem: "", texto_biblico: "", tema: "", resumo: "" });
+    setFAtend([]);
+    setFVisit([]);
   }
 
   async function handleSalvar() {
