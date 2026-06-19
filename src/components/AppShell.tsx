@@ -105,7 +105,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3">
-          {NAV_GROUPS.map((g) => (
+          {groups.map((g) => (
             <div key={g.label} className="mb-4">
               <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{g.label}</p>
               <div className="flex flex-col gap-0.5">
