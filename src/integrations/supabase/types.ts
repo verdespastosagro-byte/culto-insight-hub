@@ -281,6 +281,39 @@ export type Database = {
         }
         Relationships: []
       }
+      conversations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          id: string
+          last_message_at: string
+          requested_by: string
+          status: string
+          user_a: string
+          user_b: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          requested_by: string
+          status?: string
+          user_a: string
+          user_b: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          requested_by?: string
+          status?: string
+          user_a?: string
+          user_b?: string
+        }
+        Relationships: []
+      }
       cultos: {
         Row: {
           cidade: string | null
@@ -582,6 +615,41 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          body: string
+          conversation_id: string
+          created_at: string
+          id: string
+          read_at: string | null
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -1041,6 +1109,25 @@ export type Database = {
       }
     }
     Functions: {
+      aceitar_conversa: {
+        Args: { _conv_id: string }
+        Returns: {
+          accepted_at: string | null
+          created_at: string
+          id: string
+          last_message_at: string
+          requested_by: string
+          status: string
+          user_a: string
+          user_b: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "conversations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       can_edit_org:
         | { Args: { _user_id: string }; Returns: boolean }
         | { Args: { _org_id: string; _user_id: string }; Returns: boolean }
@@ -1067,6 +1154,23 @@ export type Database = {
         Args: { p_alvo_id: string; p_tipo: string }
         Returns: boolean
       }
+      enviar_mensagem: {
+        Args: { _body: string; _to: string }
+        Returns: {
+          body: string
+          conversation_id: string
+          created_at: string
+          id: string
+          read_at: string | null
+          sender_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
       has_org_role: {
         Args: {
@@ -1092,6 +1196,7 @@ export type Database = {
         Returns: boolean
       }
       is_editor: { Args: { _user_id: string }; Returns: boolean }
+      is_mutual_follow: { Args: { _a: string; _b: string }; Returns: boolean }
       is_org_member: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
@@ -1102,6 +1207,7 @@ export type Database = {
       }
       is_post_owner_publico: { Args: { _post_id: string }; Returns: boolean }
       is_profile_publico: { Args: { _user_id: string }; Returns: boolean }
+      marcar_conversa_lida: { Args: { _conv_id: string }; Returns: undefined }
       minhas_congregacoes_visitadas: {
         Args: { p_user_id: string }
         Returns: {
@@ -1121,6 +1227,7 @@ export type Database = {
           total_geral: number
         }[]
       }
+      recusar_conversa: { Args: { _conv_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "encarregado" | "cooperador" | "usuario"

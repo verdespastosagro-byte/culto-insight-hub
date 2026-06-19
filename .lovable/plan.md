@@ -1,72 +1,59 @@
 
-# Plano de Refinamento Premium
+# Plano: Mensagens diretas (DM) com solicitações
 
-## Análise do Estado Atual
+## Comportamento
 
-**Stack visual já existente:**
-- Design system "Liquid Titanium" em `src/styles.css` (paleta oklch titânio/grafite/iridescente, gradientes oil-paint, utilitários `glass`, `glass-strong`, `titanium-surface`, `liquid-metal`, `text-iridescent`, `text-titanium`).
-- Tipografia `Inter Tight` carregada via `__root.tsx`.
-- Tema claro + escuro completos, shadcn/ui configurado com tokens semânticos.
-- Animações disponíveis via `tw-animate-css` + keyframes próprios (`iridescent-shift`, `liquid-float`, `shimmer-sweep`).
+- **Seguidores mútuos** (ambos se seguem): conversa aberta, mensagens vão direto para a caixa de entrada do destinatário.
+- **Não-mútuos**: a primeira mensagem entra como **solicitação** e fica em uma aba "Solicitações". O destinatário pode **aceitar** (vira conversa normal) ou **recusar** (remove).
+- Cada conversa exibe histórico, status de leitura simples (`read_at`), e nova mensagem em tempo real (Realtime).
 
-**Rotas-chave:** `index`, `auth`, `pricing`, `onboarding`, e área autenticada (`dashboard`, `feed`, `cultos`, `agenda`, `conta`, `perfil`, etc.) sob `AppShell`.
+## Schema (migração)
 
-**Inconsistências / oportunidades observadas:**
-1. Os utilitários `liquid-float` e `shimmer-sweep` existem mas quase não são usados — falta camada de microanimação cinematográfica.
-2. Cards, botões e modais usam shadcn padrão sem aproveitar `glass` / `titanium-surface` de forma sistemática.
-3. Não há transição de página (route transition) — navegação parece "seca".
-4. Faltam easings padronizados e duração mínima (0.6s, power3.out equivalente em CSS = `cubic-bezier(0.16, 1, 0.3, 1)`).
-5. Headings sem hierarquia tipográfica fluida (`clamp()`); densidade pode ser melhorada com mais whitespace.
-6. Hover states discretos demais — sem profundidade/elevação cinematográfica.
+**`conversations`** — uma linha por par de usuários (canônico `user_a < user_b`):
+- `user_a uuid`, `user_b uuid` (ordenados), `last_message_at timestamptz`
+- `status text check in ('pending','accepted')` — `pending` = solicitação; vira `accepted` quando aceito ou quando ambos se seguem
+- `requested_by uuid` — quem mandou a primeira mensagem (para o outro decidir)
+- `accepted_at timestamptz null`
+- UNIQUE (user_a, user_b)
 
-## Plano de Melhorias (sem reescrita)
+**`messages`**:
+- `id uuid pk`, `conversation_id uuid fk`, `sender_id uuid`, `body text` (1..2000 chars), `created_at`, `read_at timestamptz null`
 
-### 1. Camada de motion padronizada (`src/styles.css`)
-- Adicionar tokens de easing: `--ease-cinematic: cubic-bezier(0.16, 1, 0.3, 1)`, `--ease-soft: cubic-bezier(0.4, 0, 0.2, 1)`.
-- Adicionar tokens de duração: `--dur-micro: 200ms`, `--dur-base: 600ms`, `--dur-slow: 900ms`.
-- Novos keyframes: `fade-rise` (translateY 16→0 + opacity), `reveal-blur` (blur 12→0), `sheen` (gradiente passando).
-- Utilitários: `motion-rise`, `motion-blur-in`, `hover-lift` (translateY -2 + shadow), `pressable` (scale 0.98 no active).
+**Função `public.is_mutual_follow(a uuid, b uuid)`** SECURITY DEFINER — retorna `true` se ambos se seguem.
 
-### 2. Tipografia fluida e hierarquia (`styles.css` + alguns headings)
-- Headings `h1`–`h3` com `font-size: clamp(...)` no `@layer base`.
-- `font-feature-settings: "ss01", "cv11"` para Inter Tight (números proporcionais elegantes).
+**RLS:**
+- `conversations`: SELECT/UPDATE permitido se `auth.uid() in (user_a, user_b)`. INSERT via RPC.
+- `messages`: SELECT se participante da conversa. INSERT se participante E (`conversations.status='accepted'` OU é a primeira mensagem da conversa pendente OU `is_mutual_follow`).
 
-### 3. Refinos de superfície reutilizáveis
-- Padronizar `Card` shadcn para usar `glass` em superfícies elevadas (variant CSS, sem quebrar API).
-- Botão `primary` ganha leve `sheen` no hover (microinteração ≤ 200ms).
-- Inputs com foco em `ring` iridescente sutil.
+**RPC `send_direct_message(to_user uuid, body text)`** (SECURITY DEFINER):
+1. Valida `body` (1..2000), `to_user != auth.uid()`.
+2. `get_or_create_conversation(auth.uid(), to_user)` — cria com `status='accepted'` se mútuo, senão `pending` com `requested_by=auth.uid()`.
+3. Bloqueia se já existe pendente e quem está enviando **não** é o `requested_by` original (precisa aceitar antes).
+4. Insere mensagem, atualiza `last_message_at`.
 
-### 4. Transição de rotas
-- Adicionar wrapper `<PageTransition>` em `__root.tsx` / `_authenticated/route.tsx` aplicando `motion-rise` na key do pathname (sem framework extra; só CSS + chave).
+**RPC `accept_conversation(conv_id uuid)`** e `decline_conversation(conv_id uuid)`.
 
-### 5. AppShell e sidebar
-- Sidebar com `glass-strong` em vez de fundo opaco.
-- Item ativo com barra iridescente fina à esquerda + leve `text-titanium`.
-- Avatar/foto com anel iridescente sutil quando hover.
+**GRANTs:** SELECT/UPDATE em `conversations` e `messages` para `authenticated`; ALL para `service_role`. EXECUTE nas RPCs para `authenticated`.
 
-### 6. Landing (`index.tsx`) e Pricing
-- Hero com headline em `clamp()` e `text-iridescent` sutil em palavra-chave.
-- Sections com `motion-rise` ao entrar no viewport (IntersectionObserver mínimo, sem libs).
-- Cards de pricing com `titanium-surface` + `hover-lift`.
+## Frontend
 
-### 7. Responsividade e performance
-- Remover larguras/alturas fixas remanescentes; passar para `grid` + `clamp()`.
-- `prefers-reduced-motion` desativa todas as animações cinematográficas.
-- Lazy `loading="lazy"` em imagens não-críticas; manter `eager` apenas em LCP.
+- **Nova rota** `src/routes/_authenticated/mensagens.tsx` (lista de conversas + abas "Conversas" / "Solicitações") e `src/routes/_authenticated/mensagens.$userId.tsx` (thread com input).
+- **Item no menu lateral** `AppShell.tsx` (grupo "Registros") com ícone `MessageCircle` e contador de não lidas/solicitações.
+- **Botão "Enviar mensagem"** em `perfil.$userId.tsx`: vai para `/mensagens/{userId}` se mútuo, ou abre um modal "Enviar solicitação" se não.
+- Realtime: subscription do Supabase em `messages` filtrando pela conversa aberta.
+- Validação Zod (`body` máx. 2000) no client e RPC.
 
-## Arquivos previstos para edição
-- `src/styles.css` — tokens de motion, keyframes, utilitários, tipografia fluida.
-- `src/routes/__root.tsx` — wrapper de transição de rota.
-- `src/components/AppShell.tsx` — sidebar glass + active state refinado.
-- `src/components/ui/{button,card,input}.tsx` — variantes premium (apenas adições, API preservada).
-- `src/routes/index.tsx` e `src/routes/pricing.tsx` — hierarquia, reveal-on-scroll, hover-lift nos cards.
-- 1 novo arquivo: `src/components/PageTransition.tsx` (reutilizável, ~30 linhas).
+## Arquivos
+- 1 migração (tabelas + RLS + RPCs + GRANTs + função `is_mutual_follow`).
+- `src/lib/messages.ts` — wrappers de query/mutation.
+- `src/routes/_authenticated/mensagens.tsx`, `mensagens.$userId.tsx` (novos).
+- `src/components/AppShell.tsx` — item de menu.
+- `src/routes/_authenticated/perfil.$userId.tsx` — botão de mensagem.
 
 ## Garantias
-- Zero mudança de lógica de negócio, schema, auth ou edge functions.
-- Nenhum componente shadcn removido; apenas refinamento de classes/variantes.
-- `prefers-reduced-motion` respeitado.
-- Mobile/tablet/desktop testados via `clamp()` e grid.
+- Sem mudanças em outras tabelas.
+- RLS estrita; só participantes leem/escrevem.
+- Solicitação não permite spam: enquanto pendente, só o iniciador pode mandar (1) mensagem inicial; respostas só após aceitar.
 
 ## Próximo passo
-Aguardando sua aprovação para executar. Se quiser, posso também limitar o escopo a apenas 1 ou 2 itens (ex.: só motion + landing) antes de avançar no resto.
+Aprovar para eu rodar a migração e implementar o frontend.
