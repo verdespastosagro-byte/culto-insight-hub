@@ -22,6 +22,7 @@ function CultosList() {
   const qc = useQueryClient();
   const { canEdit, isAdmin } = useAuth();
   const [open, setOpen] = useState(false);
+  const [congregacaoId, setCongregacaoId] = useState("");
 
   const { data: cultos } = useQuery({
     queryKey: ["cultos"],
