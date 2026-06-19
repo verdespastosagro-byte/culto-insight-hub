@@ -16,16 +16,16 @@ export const PLAN_LABELS: Record<OrgPlan, string> = {
 };
 
 const FEATURE_MIN_PLAN: Record<PlanFeature, OrgPlan> = {
-  ia: "pro",
-  "culto-inteligente": "pro",
-  "relatorio-avancado": "pro",
-  "multi-congregacao": "pro",
-  "membros-ilimitados": "church",
+  ia: "free",
+  "culto-inteligente": "free",
+  "relatorio-avancado": "free",
+  "multi-congregacao": "free",
+  "membros-ilimitados": "free",
 };
 
 export const LIMITS: Record<OrgPlan, { cultosMes: number | null; congregacoes: number | null; cultoInteligenteMes: number | null; membros: number | null }> = {
-  free: { cultosMes: 30, congregacoes: 1, cultoInteligenteMes: 0, membros: 1 },
-  pro: { cultosMes: null, congregacoes: null, cultoInteligenteMes: 10, membros: 5 },
+  free: { cultosMes: null, congregacoes: null, cultoInteligenteMes: null, membros: null },
+  pro: { cultosMes: null, congregacoes: null, cultoInteligenteMes: null, membros: null },
   church: { cultosMes: null, congregacoes: null, cultoInteligenteMes: null, membros: null },
 };
 
