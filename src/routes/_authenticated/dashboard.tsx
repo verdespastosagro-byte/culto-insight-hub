@@ -46,6 +46,45 @@ function isEfeito(v: unknown): v is EfeitoFundo {
 function Dashboard() {
   const { user } = useAuth();
 
+  const [efeito, setEfeito] = useState<EfeitoFundo>("nenhum");
+  const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancel = false;
+    supabase
+      .from("profiles")
+      .select("fundo_animado")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancel) return;
+        if (data && isEfeito(data.fundo_animado)) setEfeito(data.fundo_animado);
+      });
+    return () => {
+      cancel = true;
+    };
+  }, [user]);
+
+  async function escolherEfeito(novo: EfeitoFundo) {
+    if (!user || novo === efeito) return;
+    const anterior = efeito;
+    setEfeito(novo);
+    setSalvando(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ fundo_animado: novo })
+      .eq("id", user.id);
+    setSalvando(false);
+    if (error) {
+      setEfeito(anterior);
+      toast.error("Não foi possível salvar a preferência");
+    } else {
+      toast.success("Preferência salva");
+    }
+  }
+
+
   const fetchPerfil = useServerFn(getPerfilPublico);
   const perfilQ = useQuery({
     queryKey: ["dash-meu-perfil", user?.id],
