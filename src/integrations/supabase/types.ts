@@ -150,6 +150,36 @@ export type Database = {
           },
         ]
       }
+      comentarios: {
+        Row: {
+          alvo_id: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          texto: string
+          tipo_alvo: string
+          user_id: string
+        }
+        Insert: {
+          alvo_id: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          texto: string
+          tipo_alvo: string
+          user_id: string
+        }
+        Update: {
+          alvo_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          texto?: string
+          tipo_alvo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       congregacoes: {
         Row: {
           cidade: string | null
