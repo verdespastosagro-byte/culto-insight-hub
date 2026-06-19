@@ -80,7 +80,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col transform border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-transform lg:relative lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col transform glass-strong border-r border-sidebar-border text-sidebar-foreground transition-transform duration-[600ms] [transition-timing-function:var(--ease-cinematic)] lg:relative lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -115,13 +115,20 @@ export function AppShell({ children }: { children: ReactNode }) {
                       to={it.to as "/dashboard"}
                       onClick={() => setOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                        "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium pressable transition-colors duration-200",
                         active
                           ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
                           : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
                       )}
                     >
-                      <it.icon className="h-4 w-4" />
+                      {active && (
+                        <span
+                          aria-hidden
+                          className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full"
+                          style={{ background: "var(--gradient-iridescent)" }}
+                        />
+                      )}
+                      <it.icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
                       {it.label}
                     </Link>
                   );
@@ -188,9 +195,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link to="/pricing" className="font-medium underline-offset-2 hover:underline">Assinar agora</Link>
           </div>
         )}
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur lg:px-6">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border/60 bg-background/60 px-4 backdrop-blur-xl saturate-150 lg:px-6">
           <button className="lg:hidden" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></button>
-          <h1 className="text-base font-semibold">{ALL_ITEMS.find((n) => pathname.startsWith(n.to))?.label ?? "Culto Insight Hub"}</h1>
+          <h1 className="text-base font-semibold tracking-tight">{ALL_ITEMS.find((n) => pathname.startsWith(n.to))?.label ?? "Culto Insight Hub"}</h1>
         </header>
         <main className="flex-1 p-4 lg:p-6">{children}</main>
       </div>
