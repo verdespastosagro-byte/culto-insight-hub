@@ -222,6 +222,18 @@ export const getCheckInDetalhe = createServerFn({ method: "POST" })
     const compPublic = await loadPublicSet(supabaseAdmin, compIds);
     const compProfiles = await loadProfilesMap(supabaseAdmin, Array.from(compPublic));
 
+    // segue-quem entre os companheiros públicos
+    const compPubArr = Array.from(compPublic);
+    const compSeguindo = new Set<string>();
+    if (compPubArr.length) {
+      const { data: fol } = await supabaseAdmin
+        .from("follows")
+        .select("following_id")
+        .eq("follower_id", context.userId)
+        .in("following_id", compPubArr);
+      for (const f of (fol as Array<{ following_id: string }>) ?? []) compSeguindo.add(f.following_id);
+    }
+
     const companheiros: Visitante[] = [];
     const seen = new Set<string>();
     for (const r of (comp as Array<{ user_id: string; data_culto: string }>) ?? []) {
@@ -233,8 +245,11 @@ export const getCheckInDetalhe = createServerFn({ method: "POST" })
         nome: p?.nome ?? "Irmão(ã)",
         foto_url: await signAvatar(supabaseAdmin, p?.foto_url ?? null),
         data_culto: r.data_culto,
+        euSigo: compSeguindo.has(r.user_id),
+        ehProprio: r.user_id === context.userId,
       });
     }
+
 
     return {
       checkIn: {
