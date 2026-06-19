@@ -409,7 +409,7 @@ export const getPerfilPublico = createServerFn({ method: "POST" })
 
     const { data: prof } = await supabaseAdmin
       .from("profiles")
-      .select("id,nome,cargo,foto_url")
+      .select("id,nome,cargo,foto_url,congregacao_ccb_id")
       .eq("id", target)
       .maybeSingle();
     if (!prof) return { perfil: null };
@@ -419,9 +419,32 @@ export const getPerfilPublico = createServerFn({ method: "POST" })
 
     const fotoUrl = await signAvatar(supabaseAdmin, (prof.foto_url as string) ?? null);
 
+    let minhaComum: MinhaComum | null = null;
+    const comumId = (prof as { congregacao_ccb_id?: number | null }).congregacao_ccb_id ?? null;
+    if (comumId) {
+      const { data: com } = await supabaseAdmin
+        .from("congregacoes_ccb")
+        .select("id,name,address,neighborhood,city,uf,lat,lng")
+        .eq("id", comumId)
+        .maybeSingle();
+      if (com) {
+        minhaComum = {
+          id: com.id as number,
+          nome: (com.name as string) ?? "",
+          endereco: (com.address as string) ?? null,
+          bairro: (com.neighborhood as string) ?? null,
+          cidade: (com.city as string) ?? null,
+          uf: ((com.uf as string) ?? "").toUpperCase() || null,
+          lat: (com.lat as number) ?? null,
+          lng: (com.lng as number) ?? null,
+        };
+      }
+    }
+
     const [{ count: seguidores }, { count: seguindo }, { data: jaSigo }] = await Promise.all([
       supabaseAdmin.from("follows").select("*", { count: "exact", head: true }).eq("following_id", target),
       supabaseAdmin.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", target),
+
       supabaseAdmin
         .from("follows")
         .select("follower_id")
