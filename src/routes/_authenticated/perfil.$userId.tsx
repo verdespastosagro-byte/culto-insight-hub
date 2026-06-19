@@ -38,7 +38,10 @@ function PerfilPublicoPage() {
   const q = useQuery({
     queryKey: key,
     queryFn: async () => (await fetchPerfil({ data: { userId } })).perfil,
+    staleTime: 5 * 60_000,
+    placeholderData: keepPreviousData,
   });
+
 
   const mSeguir = useMutation({
     mutationFn: async (seguir: boolean) => fetchSeguir({ data: { userId, seguir } }),
