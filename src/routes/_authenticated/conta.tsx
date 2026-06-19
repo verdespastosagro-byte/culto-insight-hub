@@ -481,6 +481,8 @@ function ContaPage() {
                       await fetchDefinirComum({ data: { congregacao_ccb_id: null } });
                       setComumStatus({ type: "ok", msg: "Comum removida do perfil." });
                       await refreshOrg();
+                      await queryClient.invalidateQueries({ queryKey: ["dash-meu-perfil"] });
+                      await queryClient.invalidateQueries({ queryKey: ["perfil-publico"] });
                     } catch (e) {
                       toast.error(e instanceof Error ? e.message : "Erro");
                     } finally {
