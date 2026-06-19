@@ -100,7 +100,6 @@ function CultosList() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label>Participantes</Label><Input type="number" name="participantes" min={0} /></div>
                 <div><Label>Observações</Label><Textarea name="observacoes" /></div>
                 <DialogFooter><Button type="submit">Registrar</Button></DialogFooter>
               </form>
