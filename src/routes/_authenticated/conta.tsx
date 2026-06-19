@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   User,
@@ -39,6 +39,7 @@ type Status = { type: "ok" | "err"; msg: string } | null;
 function ContaPage() {
   const { user, profile, organization, orgRole, plan, planStatus, trialDaysLeft, refreshOrg } = useAuth();
   const { isTrialing, isExpired } = usePlanLimits();
+  const queryClient = useQueryClient();
 
   const [nome, setNome] = useState(profile?.nome ?? "");
   const [cargo, setCargo] = useState(profile?.cargo ?? "");
@@ -103,6 +104,8 @@ function ContaPage() {
         msg: r.nome ? `Sua comum foi definida: ${r.nome}.` : "Sua comum foi removida do perfil.",
       });
       await refreshOrg();
+      await queryClient.invalidateQueries({ queryKey: ["dash-meu-perfil"] });
+      await queryClient.invalidateQueries({ queryKey: ["perfil-publico"] });
     } catch (e) {
       setComumStatus({ type: "err", msg: e instanceof Error ? e.message : "Erro ao salvar" });
     } finally {
@@ -478,6 +481,8 @@ function ContaPage() {
                       await fetchDefinirComum({ data: { congregacao_ccb_id: null } });
                       setComumStatus({ type: "ok", msg: "Comum removida do perfil." });
                       await refreshOrg();
+                      await queryClient.invalidateQueries({ queryKey: ["dash-meu-perfil"] });
+                      await queryClient.invalidateQueries({ queryKey: ["perfil-publico"] });
                     } catch (e) {
                       toast.error(e instanceof Error ? e.message : "Erro");
                     } finally {
