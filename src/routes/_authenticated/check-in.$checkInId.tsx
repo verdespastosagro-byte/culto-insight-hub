@@ -1,14 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Loader2, ArrowLeft, MapPin, Calendar as CalendarIcon, Users, Lock } from "lucide-react";
+import { Loader2, ArrowLeft, MapPin, Calendar as CalendarIcon, Lock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { getCheckInDetalhe } from "@/lib/social.functions";
 import { ComentariosMural } from "@/components/ComentariosMural";
+import { QuemEsteveAquiCarousel } from "@/components/QuemEsteveAquiCarousel";
+import { primeirosDoisNomes } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/check-in/$checkInId")({
   component: CheckInDetalhePage,
@@ -21,7 +22,10 @@ function CheckInDetalhePage() {
   const q = useQuery({
     queryKey: ["check-in-detalhe", checkInId],
     queryFn: async () => fn({ data: { id: checkInId } }),
+    staleTime: 5 * 60_000,
+    placeholderData: keepPreviousData,
   });
+
 
   if (q.isLoading) {
     return (
