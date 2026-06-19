@@ -1,67 +1,72 @@
-O prompt cobre ~10 grandes blocos e mexe em praticamente toda a base. Fazer tudo de uma vez em um turno só vira um Frankenstein quebrado. Proponho 4 fases entregáveis, nesta ordem. Cada fase termina com o app funcionando e testável.
 
-## Fase 1 — Fundação multi-tenant + planos (esta entrega)
+# Plano de Refinamento Premium
 
-Sem isso, nada do resto faz sentido (cobrar sem isolar dados = vazamento + processo). É também onde está o problema de segurança que já levantamos.
+## Análise do Estado Atual
 
-**Banco (1 migração):**
-- `organizations` (id, name, slug, plan enum free|pro|church, plan_status enum trialing|active|past_due|cancelled|expired, trial_ends_at, stripe_customer_id, stripe_subscription_id, created_at, updated_at).
-- `organization_members` (id, organization_id, user_id, role enum owner|admin|editor|viewer, invited_by, created_at), unique (org_id, user_id).
-- `organization_invites` (id, organization_id, email, role, token, expires_at, accepted_at, invited_by).
-- Coluna `organization_id uuid` em: `cultos, congregacoes, hinos, palavras, atendimentos, visitantes, musicos, agenda, escalas, cultos_inteligentes`. Backfill: cria 1 org "Migração" e atribui registros existentes + membros existentes a ela (preserva dados atuais).
-- Coluna `onboarding_completed boolean default false` em `profiles`.
-- Function `public.get_user_org_id(_user_id uuid) returns uuid` SECURITY DEFINER stable.
-- Function `public.is_org_member(_org_id uuid, _user_id uuid) returns boolean` e `public.has_org_role(_org_id, _user_id, _role)` SECURITY DEFINER.
-- Trigger em `auth.users` (extensão do `handle_new_user` existente): cria org com nome "<nome> (Congregação)", insere o usuário como `owner`, marca `plan='free'`, `plan_status='trialing'`, `trial_ends_at = now()+14 days`.
-- **Reescrita completa das policies** de todas as tabelas listadas: SELECT/INSERT/UPDATE/DELETE filtram por `organization_id = get_user_org_id(auth.uid())`. Mantém distinção viewer/editor/admin via `has_org_role`. Resolve as duas findings de segurança abertas (profiles + tabelas operacionais).
-- Policy de `profiles`: usuário vê o próprio + membros da mesma org (sem email para não-admins via view `public.profiles_public`).
+**Stack visual já existente:**
+- Design system "Liquid Titanium" em `src/styles.css` (paleta oklch titânio/grafite/iridescente, gradientes oil-paint, utilitários `glass`, `glass-strong`, `titanium-surface`, `liquid-metal`, `text-iridescent`, `text-titanium`).
+- Tipografia `Inter Tight` carregada via `__root.tsx`.
+- Tema claro + escuro completos, shadcn/ui configurado com tokens semânticos.
+- Animações disponíveis via `tw-animate-css` + keyframes próprios (`iridescent-shift`, `liquid-float`, `shimmer-sweep`).
 
-**Server functions:**
-- `getCurrentOrganization()` — devolve org + role + plan + trialDaysLeft.
-- `updateOrganization({name, cidade, estado, timezone})` (owner/admin).
-- `inviteMember({email, role})` (owner/admin) — cria invite token.
-- `acceptInvite({token})`.
-- `removeMember({userId})` (owner/admin).
-- `listMembers()`.
+**Rotas-chave:** `index`, `auth`, `pricing`, `onboarding`, e área autenticada (`dashboard`, `feed`, `cultos`, `agenda`, `conta`, `perfil`, etc.) sob `AppShell`.
 
-**Frontend:**
-- `useAuth` ganha `organization, organizationId, plan, planStatus, trialDaysLeft, isOwner, canManageOrg`.
-- Hook `usePlanLimits()` com `canAddCongregacao, canAddCulto, canUseIA, canUseCultoInteligente, cultoInteligenteUsedThisMonth` consultando contagens via server fn.
-- `<PlanGate feature="ia"|"culto-inteligente"|"relatorio-avancado">` que renderiza paywall ou children.
-- `<UpgradeModal>` reutilizável.
-- Badge do plano + dias de trial na sidebar; banner global "trial termina em X dias" quando `trialDaysLeft <= 7`.
-- Aplicar gates em: Insights IA (PRO+), Culto Inteligente (PRO+ com contador mensal), Relatórios PDF/Excel (PRO+).
+**Inconsistências / oportunidades observadas:**
+1. Os utilitários `liquid-float` e `shimmer-sweep` existem mas quase não são usados — falta camada de microanimação cinematográfica.
+2. Cards, botões e modais usam shadcn padrão sem aproveitar `glass` / `titanium-surface` de forma sistemática.
+3. Não há transição de página (route transition) — navegação parece "seca".
+4. Faltam easings padronizados e duração mínima (0.6s, power3.out equivalente em CSS = `cubic-bezier(0.16, 1, 0.3, 1)`).
+5. Headings sem hierarquia tipográfica fluida (`clamp()`); densidade pode ser melhorada com mais whitespace.
+6. Hover states discretos demais — sem profundidade/elevação cinematográfica.
 
-## Fase 2 — Onboarding, configurações, sidebar, telas de auth (próxima entrega)
+## Plano de Melhorias (sem reescrita)
 
-- Onboarding wizard 3 passos (`/onboarding`) com redirect automático quando `onboarding_completed=false`.
-- `/configuracoes` com abas Minha conta · Organização · Membros · Plano (esta última ainda sem Stripe — placeholder "em breve" até a Fase 4).
-- Reset de senha decente: rota `/esqueci-senha` + tela `/reset-password` funcional.
-- Sidebar agrupada (Gestão / Registros / Inteligência / Administração).
-- 404 amigável.
+### 1. Camada de motion padronizada (`src/styles.css`)
+- Adicionar tokens de easing: `--ease-cinematic: cubic-bezier(0.16, 1, 0.3, 1)`, `--ease-soft: cubic-bezier(0.4, 0, 0.2, 1)`.
+- Adicionar tokens de duração: `--dur-micro: 200ms`, `--dur-base: 600ms`, `--dur-slow: 900ms`.
+- Novos keyframes: `fade-rise` (translateY 16→0 + opacity), `reveal-blur` (blur 12→0), `sheen` (gradiente passando).
+- Utilitários: `motion-rise`, `motion-blur-in`, `hover-lift` (translateY -2 + shadow), `pressable` (scale 0.98 no active).
 
-## Fase 3 — Landing comercial + páginas legais
+### 2. Tipografia fluida e hierarquia (`styles.css` + alguns headings)
+- Headings `h1`–`h3` com `font-size: clamp(...)` no `@layer base`.
+- `font-feature-settings: "ss01", "cv11"` para Inter Tight (números proporcionais elegantes).
 
-- Reescrita de `src/routes/index.tsx`: hero, prova social, funcionalidades (6 cards), destaque Culto Inteligente, pricing (3 cards), FAQ, footer.
-- `/pricing` reutilizando o bloco de planos.
-- `/termos` e `/privacidade` (conteúdo genérico LGPD/SaaS BR).
-- Checkbox de aceite no `/auth` cadastro.
-- Meta tags comerciais por rota; favicon conferido.
+### 3. Refinos de superfície reutilizáveis
+- Padronizar `Card` shadcn para usar `glass` em superfícies elevadas (variant CSS, sem quebrar API).
+- Botão `primary` ganha leve `sheen` no hover (microinteração ≤ 200ms).
+- Inputs com foco em `ring` iridescente sutil.
 
-## Fase 4 — Cobrança Stripe
+### 4. Transição de rotas
+- Adicionar wrapper `<PageTransition>` em `__root.tsx` / `_authenticated/route.tsx` aplicando `motion-rise` na key do pathname (sem framework extra; só CSS + chave).
 
-Requer plano **Pro** da Lovable e ativação dos Pagamentos pela Lovable (Stripe seamless). Eu rodo o check de elegibilidade, ativo o Stripe, crio os produtos (Pro R$47/mês, Church R$127/mês), implemento `/account` com portal, webhook que sincroniza `organizations.plan` e `plan_status`, banner de trial expirado, downgrade automático para Free quando assinatura cai.
+### 5. AppShell e sidebar
+- Sidebar com `glass-strong` em vez de fundo opaco.
+- Item ativo com barra iridescente fina à esquerda + leve `text-titanium`.
+- Avatar/foto com anel iridescente sutil quando hover.
 
-Pode-se rodar a Fase 4 antes da 2/3 se a prioridade for cobrar — mas o normal é deixar para o fim para não cobrar de um produto ainda inacabado.
+### 6. Landing (`index.tsx`) e Pricing
+- Hero com headline em `clamp()` e `text-iridescent` sutil em palavra-chave.
+- Sections com `motion-rise` ao entrar no viewport (IntersectionObserver mínimo, sem libs).
+- Cards de pricing com `titanium-surface` + `hover-lift`.
 
-## Polish (transversal, aplicado ao longo das fases)
+### 7. Responsividade e performance
+- Remover larguras/alturas fixas remanescentes; passar para `grid` + `clamp()`.
+- `prefers-reduced-motion` desativa todas as animações cinematográficas.
+- Lazy `loading="lazy"` em imagens não-críticas; manter `eager` apenas em LCP.
 
-- Empty states com ícone+CTA nas listas que tocarmos.
-- Skeletons substituindo `null` no carregamento.
-- Tradução de erros comuns do Supabase em um helper `traduzErro()`.
+## Arquivos previstos para edição
+- `src/styles.css` — tokens de motion, keyframes, utilitários, tipografia fluida.
+- `src/routes/__root.tsx` — wrapper de transição de rota.
+- `src/components/AppShell.tsx` — sidebar glass + active state refinado.
+- `src/components/ui/{button,card,input}.tsx` — variantes premium (apenas adições, API preservada).
+- `src/routes/index.tsx` e `src/routes/pricing.tsx` — hierarquia, reveal-on-scroll, hover-lift nos cards.
+- 1 novo arquivo: `src/components/PageTransition.tsx` (reutilizável, ~30 linhas).
 
-## Decisão necessária
+## Garantias
+- Zero mudança de lógica de negócio, schema, auth ou edge functions.
+- Nenhum componente shadcn removido; apenas refinamento de classes/variantes.
+- `prefers-reduced-motion` respeitado.
+- Mobile/tablet/desktop testados via `clamp()` e grid.
 
-Confirmo que vou **começar pela Fase 1 agora** (migração + reescrita de RLS + planos/gates + trigger de signup). É a entrega mais pesada e arriscada porque mexe nas policies de todas as tabelas. As Fases 2–4 seguem em entregas separadas, conforme você for aprovando.
-
-Posso seguir?
+## Próximo passo
+Aguardando sua aprovação para executar. Se quiser, posso também limitar o escopo a apenas 1 ou 2 itens (ex.: só motion + landing) antes de avançar no resto.

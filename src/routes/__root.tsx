@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/hooks/useAuth";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { PageTransition } from "@/components/PageTransition";
 
 function NotFoundComponent() {
   return (
@@ -135,7 +136,9 @@ function RootComponent() {
       <AuthProvider>
         <TooltipProvider>
           <Toaster richColors position="top-right" />
-          <Outlet />
+          <PageTransition>
+            <Outlet />
+          </PageTransition>
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
