@@ -480,3 +480,121 @@ export const toggleSeguir = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { euSigo: false };
   });
+
+// ---------- Feed (posts) ----------
+export type FeedPostItem = {
+  id: string;
+  user_id: string;
+  texto: string | null;
+  foto_url: string | null;
+  created_at: string;
+  autor_nome: string;
+  autor_foto_url: string | null;
+  is_own: boolean;
+};
+
+export const listarFeed = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      cursor: z.string().datetime().optional(),
+      limite: z.number().int().min(1).max(30).default(15),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }): Promise<{ items: FeedPostItem[]; nextCursor: string | null }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // user_ids visíveis: eu + perfis públicos
+    const { data: pubRows } = await supabaseAdmin
+      .from("profile_privacy")
+      .select("user_id")
+      .eq("perfil_publico", true);
+    const visibleIds = new Set<string>(((pubRows as Array<{ user_id: string }>) ?? []).map((r) => r.user_id));
+    visibleIds.add(context.userId);
+
+    let q = supabaseAdmin
+      .from("posts")
+      .select("id,user_id,texto,foto_url,created_at")
+      .is("deleted_at", null)
+      .in("user_id", Array.from(visibleIds))
+      .order("created_at", { ascending: false })
+      .limit(data.limite + 1);
+
+    if (data.cursor) q = q.lt("created_at", data.cursor);
+
+    const { data: rows, error } = await q;
+    if (error) {
+      console.error("listarFeed", error);
+      return { items: [], nextCursor: null };
+    }
+
+    const list = (rows as Array<{ id: string; user_id: string; texto: string | null; foto_url: string | null; created_at: string }>) ?? [];
+    const hasMore = list.length > data.limite;
+    const slice = hasMore ? list.slice(0, data.limite) : list;
+    const nextCursor = hasMore ? slice[slice.length - 1].created_at : null;
+
+    const userIds = Array.from(new Set(slice.map((r) => r.user_id)));
+    const profilesMap = await loadProfilesMap(supabaseAdmin, userIds);
+
+    const items: FeedPostItem[] = [];
+    for (const r of slice) {
+      const p = profilesMap.get(r.user_id);
+      let signed: string | null = null;
+      if (r.foto_url) {
+        try {
+          const { data: s } = await supabaseAdmin.storage.from("posts-fotos").createSignedUrl(r.foto_url, 60 * 60);
+          signed = s?.signedUrl ?? null;
+        } catch {
+          signed = null;
+        }
+      }
+      items.push({
+        id: r.id,
+        user_id: r.user_id,
+        texto: r.texto,
+        foto_url: signed,
+        created_at: r.created_at,
+        autor_nome: p?.nome ?? "Irmão(ã)",
+        autor_foto_url: await signAvatar(supabaseAdmin, p?.foto_url ?? null),
+        is_own: r.user_id === context.userId,
+      });
+    }
+    return { items, nextCursor };
+  });
+
+export const criarPost = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      texto: z.string().trim().max(2000).optional().default(""),
+      foto_path: z.string().trim().max(300).optional().nullable(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }): Promise<{ id: string }> => {
+    const texto = (data.texto ?? "").trim();
+    const foto = data.foto_path?.trim() || null;
+    if (!texto && !foto) throw new Error("Escreva algo ou anexe uma foto.");
+    if (foto && !foto.startsWith(`${context.userId}/`)) {
+      throw new Error("Caminho de foto inválido.");
+    }
+    const { data: row, error } = await context.supabase
+      .from("posts")
+      .insert({ user_id: context.userId, texto: texto || null, foto_url: foto })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { id: row.id as string };
+  });
+
+export const excluirPost = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    const { error } = await context.supabase
+      .from("posts")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", data.id)
+      .eq("user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
