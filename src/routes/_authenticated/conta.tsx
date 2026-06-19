@@ -104,6 +104,8 @@ function ContaPage() {
         msg: r.nome ? `Sua comum foi definida: ${r.nome}.` : "Sua comum foi removida do perfil.",
       });
       await refreshOrg();
+      await queryClient.invalidateQueries({ queryKey: ["dash-meu-perfil"] });
+      await queryClient.invalidateQueries({ queryKey: ["perfil-publico"] });
     } catch (e) {
       setComumStatus({ type: "err", msg: e instanceof Error ? e.message : "Erro ao salvar" });
     } finally {
