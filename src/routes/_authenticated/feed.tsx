@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
+
 import { useRef, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
