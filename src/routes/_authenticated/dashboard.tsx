@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
 } from "recharts";
 import { BookOpen, Building2, MessageSquareQuote, HandHelping, Music2, TrendingUp, Newspaper, ArrowRight } from "lucide-react";
 import { InstallPWA } from "@/components/InstallPWA";
