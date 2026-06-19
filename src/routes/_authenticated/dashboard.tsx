@@ -166,7 +166,7 @@ function Dashboard() {
         })}
       </div>
 
-      <div className="space-y-6 pt-10">
+      <div className="space-y-3 pt-8">
         <InstallPWA className="mb-2" />
 
       <Card className="shadow-[var(--shadow-card)]">
