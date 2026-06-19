@@ -28,7 +28,10 @@ function ComumDetalhePage() {
   const visQ = useQuery({
     queryKey: ["comum-visitantes", idNum],
     queryFn: async () => visitantes({ data: { id: idNum, limite: 30 } }),
+    staleTime: 5 * 60_000,
+    placeholderData: keepPreviousData,
   });
+
 
   if (detalheQ.isLoading) {
     return (
