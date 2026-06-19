@@ -286,6 +286,75 @@ function AdminPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Ver detalhes */}
+      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Detalhes do usuário</DialogTitle>
+            <DialogDescription>{viewing?.email}</DialogDescription>
+          </DialogHeader>
+          {detailsQuery.isLoading ? (
+            <div className="grid h-32 place-items-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+          ) : detailsQuery.data ? (
+            <div className="space-y-3 text-sm">
+              <Section title="Perfil">
+                <Row k="Nome" v={detailsQuery.data.profile?.nome} />
+                <Row k="Cargo" v={detailsQuery.data.profile?.cargo} />
+                <Row k="Congregação" v={detailsQuery.data.profile?.congregacao} />
+              </Section>
+              <Section title="Conta">
+                <Row k="E-mail" v={detailsQuery.data.auth?.email} />
+                <Row k="Telefone" v={detailsQuery.data.auth?.phone} />
+                <Row k="Provedor" v={detailsQuery.data.auth?.provider} />
+                <Row k="Criada em" v={fmtDate(detailsQuery.data.auth?.created_at)} />
+                <Row k="Último login" v={fmtDate(detailsQuery.data.auth?.last_sign_in_at)} />
+                <Row k="Confirmada" v={fmtDate(detailsQuery.data.auth?.confirmed_at)} />
+              </Section>
+              <Section title="Permissões">
+                <Row k="Roles" v={detailsQuery.data.roles.join(", ") || "—"} />
+              </Section>
+              {detailsQuery.data.member?.organization && (
+                <Section title="Organização">
+                  <Row k="Nome" v={detailsQuery.data.member.organization.name} />
+                  <Row k="Papel" v={detailsQuery.data.member.role} />
+                  <Row k="Plano" v={`${detailsQuery.data.member.organization.plan} (${detailsQuery.data.member.organization.plan_status})`} />
+                  <Row k="Trial até" v={fmtDate(detailsQuery.data.member.organization.trial_ends_at)} />
+                  <Row k="Cidade" v={detailsQuery.data.member.organization.cidade} />
+                  <Row k="Estado" v={detailsQuery.data.member.organization.estado} />
+                </Section>
+              )}
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewing(null)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-md border border-border p-3">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
+      <div className="space-y-1">{children}</div>
+    </div>
+  );
+}
+
+function Row({ k, v }: { k: string; v: any }) {
+  return (
+    <div className="flex items-start justify-between gap-3 text-xs">
+      <span className="text-muted-foreground">{k}</span>
+      <span className="text-right font-medium">{v || "—"}</span>
+    </div>
+  );
+}
+
+function fmtDate(s?: string | null) {
+  if (!s) return "";
+  try { return new Date(s).toLocaleString("pt-BR"); } catch { return s; }
+}
+
