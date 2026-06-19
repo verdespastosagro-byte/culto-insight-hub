@@ -50,13 +50,18 @@ const NAV_GROUPS: NavGroup[] = [
 
 const ALL_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 
+const ADMIN_ITEM: NavItem = { to: "/admin", label: "Administração", icon: ShieldAlert };
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const { profile, organization, plan, signOut, trialDaysLeft } = useAuth();
+  const { profile, organization, plan, signOut, trialDaysLeft, isAdmin } = useAuth();
   const { isTrialing, isExpired } = usePlanLimits();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  const groups: NavGroup[] = isAdmin
+    ? [...NAV_GROUPS, { label: "Plataforma", items: [ADMIN_ITEM] }]
+    : NAV_GROUPS;
 
   async function handleLogout() {
     await signOut();
