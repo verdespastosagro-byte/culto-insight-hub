@@ -294,3 +294,84 @@ function VisitanteForm({ cultoId, onSaved }: { cultoId: string; onSaved: () => v
     </form>
   );
 }
+
+function CultoEditForm({ culto, congs, onSaved }: { culto: any; congs: { id: string; nome: string }[]; onSaved: () => void }) {
+  const [data, setData] = useState(culto.data ?? "");
+  const [horario, setHorario] = useState((culto.horario ?? "").slice(0, 5));
+  const [tipo, setTipo] = useState(culto.tipo ?? "culto_oficial");
+  const [congId, setCongId] = useState(culto.congregacao_id ?? "");
+  const [obs, setObs] = useState(culto.observacoes ?? "");
+  const [saving, setSaving] = useState(false);
+  return (
+    <form onSubmit={async (e) => {
+      e.preventDefault();
+      setSaving(true);
+      const { error } = await supabase.from("cultos").update({
+        data,
+        horario: horario || null,
+        tipo: tipo as any,
+        congregacao_id: congId || null,
+        observacoes: obs || null,
+      }).eq("id", culto.id);
+      setSaving(false);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Culto atualizado"); onSaved();
+    }} className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div><Label>Data</Label><Input type="date" value={data} onChange={(e) => setData(e.target.value)} required /></div>
+        <div><Label>Horário</Label><Input type="time" value={horario} onChange={(e) => setHorario(e.target.value)} /></div>
+      </div>
+      <div><Label>Tipo</Label>
+        <Select value={tipo} onValueChange={setTipo}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>{Object.entries(TIPOS_REUNIAO).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <div><Label>Congregação</Label>
+        <Select value={congId} onValueChange={setCongId}>
+          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+          <SelectContent>{congs.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <div><Label>Observações</Label><Textarea value={obs} onChange={(e) => setObs(e.target.value)} /></div>
+      <DialogFooter><Button type="submit" disabled={saving}>{saving ? "Salvando..." : "Salvar alterações"}</Button></DialogFooter>
+    </form>
+  );
+}
+
+const FIELD_LABELS: Record<string, string> = {
+  data: "Data", horario: "Horário", tipo: "Tipo", congregacao_id: "Congregação",
+  cidade: "Cidade", participantes: "Participantes", observacoes: "Observações",
+};
+function formatVal(v: any): string {
+  if (v === null || v === undefined) return "—";
+  if (typeof v === "string") return v;
+  return JSON.stringify(v);
+}
+function AuditList({ items }: { items: any[] }) {
+  if (items.length === 0) return <p className="text-sm text-muted-foreground">Sem alterações registradas.</p>;
+  return (
+    <div className="max-h-[60vh] space-y-3 overflow-y-auto">
+      {items.map((a) => (
+        <div key={a.id} className="rounded-lg border border-border p-3 text-sm">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold capitalize">{a.action === "insert" ? "Criado" : a.action === "update" ? "Editado" : "Excluído"}</span>
+            <span className="text-xs text-muted-foreground">{new Date(a.changed_at).toLocaleString("pt-BR")}</span>
+          </div>
+          {a.action === "update" && a.changes && (
+            <ul className="mt-2 space-y-1 text-xs">
+              {Object.entries(a.changes as Record<string, { old: any; new: any }>).map(([k, diff]) => (
+                <li key={k}>
+                  <strong>{FIELD_LABELS[k] ?? k}:</strong>{" "}
+                  <span className="text-muted-foreground line-through">{formatVal(diff.old)}</span>
+                  {" → "}
+                  <span>{formatVal(diff.new)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
