@@ -234,20 +234,30 @@ function CongregacoesPage() {
 
     if (!editing) {
       // Dedupe: procura uma congregação existente pelo mesmo endereço (ou nome+cidade)
-      const existentes = data ?? [];
-      const igual = existentes.find((c) => {
-        if (payload.endereco && c.endereco && c.endereco.trim().toLowerCase() === payload.endereco.toLowerCase()) return true;
-        const mesmoNome = c.nome.trim().toLowerCase() === payload.nome.toLowerCase();
-        const mesmaCidade = (c.cidade ?? "").trim().toLowerCase() === (payload.cidade ?? "").toLowerCase();
-        return mesmoNome && mesmaCidade;
-      });
+      const igual = findDuplicada(data ?? [], payload);
       if (igual) {
         congId = igual.id;
-        toast.info("Congregação já cadastrada — vou apenas registrar sua visita.");
+        toast.info(`"${igual.nome}" já está cadastrada — vou apenas registrar sua visita.`);
       } else {
         const { data: ins, error } = await supabase.from("congregacoes").insert(payload).select("id").single();
-        if (error) { toast.error(error.message); return; }
-        congId = ins!.id as string;
+        if (error) {
+          // Caso o índice único do banco rejeite, faz fallback usando a duplicada
+          if (/duplicate|unique/i.test(error.message)) {
+            toast.info("Essa congregação já existe — registrando sua visita.");
+            const { data: existe } = await supabase
+              .from("congregacoes")
+              .select("id,nome")
+              .ilike("endereco", payload.endereco ?? "")
+              .limit(1)
+              .maybeSingle();
+            if (existe?.id) congId = existe.id;
+            else { toast.error(error.message); return; }
+          } else {
+            toast.error(error.message); return;
+          }
+        } else {
+          congId = ins!.id as string;
+        }
       }
     } else {
       const { error } = await supabase.from("congregacoes").update(payload).eq("id", editing.id);
