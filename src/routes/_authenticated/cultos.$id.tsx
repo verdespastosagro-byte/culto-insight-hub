@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ArrowLeft, Plus, Trash2, MessageSquareQuote, HandHelping, Pencil, History } from "lucide-react";
 import { TIPOS_REUNIAO, formatDate } from "@/lib/constants";
+import { ComentariosSection } from "@/components/ComentariosMural";
 
 export const Route = createFileRoute("/_authenticated/cultos/$id")({
   component: CultoDetail,
@@ -111,6 +112,15 @@ function CultoDetail() {
         onDelete={(rid) => del("atendimentos", rid, "culto-atend")}
         form={(close) => <AtendForm cultoId={id} onSaved={() => { close(); qc.invalidateQueries({ queryKey: ["culto-atend", id] }); }} />}
       />
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Comentários (visível para todo o sistema)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ComentariosSection alvoTipo="culto" alvoId={c.id} titulo="" />
+        </CardContent>
+      </Card>
     </div>
   );
 }
