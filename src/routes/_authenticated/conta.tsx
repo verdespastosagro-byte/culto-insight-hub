@@ -14,7 +14,7 @@ import {
   Camera,
   Eye,
   EyeOff,
-  MapPin,
+  EyeOff,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
