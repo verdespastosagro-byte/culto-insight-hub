@@ -7,10 +7,10 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Loader2, ImagePlus, Send, Trash2, X } from "lucide-react";
+import { Loader2, ImagePlus, Send, Trash2, X, Mic, Square } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,6 +30,8 @@ import { primeirosDoisNomes } from "@/lib/utils";
 
 const MAX_LEN = 2000;
 const MAX_FOTO_MB = 5;
+const MAX_AUDIO_MB = 10;
+const MAX_AUDIO_SEG = 180; // 3 minutos
 
 export const Route = createFileRoute("/_authenticated/feed")({
   component: FeedPage,
@@ -37,6 +39,27 @@ export const Route = createFileRoute("/_authenticated/feed")({
 
 function inicial(nome?: string | null) {
   return nome?.trim()?.[0]?.toUpperCase() ?? "?";
+}
+
+function fmtDur(sec: number) {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function pickMime(): { mime: string; ext: string } {
+  const candidates: Array<{ mime: string; ext: string }> = [
+    { mime: "audio/webm;codecs=opus", ext: "webm" },
+    { mime: "audio/webm", ext: "webm" },
+    { mime: "audio/mp4", ext: "m4a" },
+    { mime: "audio/ogg;codecs=opus", ext: "ogg" },
+  ];
+  if (typeof MediaRecorder !== "undefined") {
+    for (const c of candidates) {
+      if (MediaRecorder.isTypeSupported(c.mime)) return c;
+    }
+  }
+  return { mime: "audio/webm", ext: "webm" };
 }
 
 function FeedPage() {
@@ -58,12 +81,38 @@ function FeedPage() {
     placeholderData: keepPreviousData,
   });
 
-
   const [texto, setTexto] = useState("");
   const [foto, setFoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // ----- Áudio -----
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioExt, setAudioExt] = useState<string>("webm");
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [gravando, setGravando] = useState(false);
+  const [dur, setDur] = useState(0);
+  const recRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<number | null>(null);
+  const inicioRef = useRef<number>(0);
+
+  useEffect(() => {
+    return () => {
+      pararStream();
+      if (timerRef.current) window.clearInterval(timerRef.current);
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+      if (preview) URL.revokeObjectURL(preview);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function pararStream() {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+  }
 
   function pickFile(f: File | null) {
     if (preview) URL.revokeObjectURL(preview);
@@ -80,11 +129,86 @@ function FeedPage() {
     setPreview(URL.createObjectURL(f));
   }
 
+  function limparAudio() {
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    setAudioUrl(null);
+    setAudioBlob(null);
+    setDur(0);
+  }
+
+  async function iniciarGravacao() {
+    if (gravando) return;
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      toast.error("Seu navegador não permite gravar áudio.");
+      return;
+    }
+    if (audioUrl) limparAudio();
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      const { mime, ext } = pickMime();
+      const rec = new MediaRecorder(stream, { mimeType: mime });
+      chunksRef.current = [];
+      rec.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      rec.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: mime });
+        chunksRef.current = [];
+        pararStream();
+        setGravando(false);
+        if (timerRef.current) {
+          window.clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+        if (blob.size === 0) {
+          toast.error("Áudio vazio.");
+          return;
+        }
+        if (blob.size > MAX_AUDIO_MB * 1024 * 1024) {
+          toast.error(`Áudio muito grande (máx ${MAX_AUDIO_MB}MB).`);
+          return;
+        }
+        setAudioBlob(blob);
+        setAudioExt(ext);
+        setAudioUrl(URL.createObjectURL(blob));
+      };
+      recRef.current = rec;
+      inicioRef.current = Date.now();
+      setDur(0);
+      rec.start();
+      setGravando(true);
+      timerRef.current = window.setInterval(() => {
+        const d = Math.floor((Date.now() - inicioRef.current) / 1000);
+        setDur(d);
+        if (d >= MAX_AUDIO_SEG) {
+          pararGravacao();
+        }
+      }, 250);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Permissão de microfone negada.");
+      pararStream();
+    }
+  }
+
+  function pararGravacao() {
+    const rec = recRef.current;
+    if (rec && rec.state !== "inactive") rec.stop();
+    else {
+      pararStream();
+      setGravando(false);
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+  }
+
   async function publicar() {
     if (!user) return;
     const t = texto.trim();
-    if (!t && !foto) {
-      toast.error("Escreva algo ou anexe uma foto.");
+    if (!t && !foto && !audioBlob) {
+      toast.error("Escreva algo, anexe uma foto ou grave um áudio.");
       return;
     }
     setEnviando(true);
@@ -99,9 +223,21 @@ function FeedPage() {
         if (error) throw new Error(error.message);
         fotoPath = path;
       }
-      await fetchCriar({ data: { texto: t, foto_path: fotoPath } });
+
+      let audioPath: string | null = null;
+      if (audioBlob) {
+        const path = `${user.id}/${crypto.randomUUID()}.${audioExt}`;
+        const { error } = await supabase.storage
+          .from("posts-audios")
+          .upload(path, audioBlob, { contentType: audioBlob.type || "audio/webm", upsert: false });
+        if (error) throw new Error(error.message);
+        audioPath = path;
+      }
+
+      await fetchCriar({ data: { texto: t, foto_path: fotoPath, audio_path: audioPath } });
       setTexto("");
       pickFile(null);
+      limparAudio();
       if (fileRef.current) fileRef.current.value = "";
       await qc.invalidateQueries({ queryKey: key });
       toast.success("Publicado!");
@@ -123,6 +259,8 @@ function FeedPage() {
 
   const posts: FeedPostItem[] = q.data?.pages.flatMap((p) => p.items) ?? [];
 
+  const podePublicar = !enviando && !gravando && (!!texto.trim() || !!foto || !!audioBlob);
+
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       {/* Composer */}
@@ -133,13 +271,14 @@ function FeedPage() {
           </Avatar>
           <div className="min-w-0 flex-1">
             <Textarea
-              placeholder="No que você está pensando?"
+              placeholder="No que você está pensando? Compartilhe um testemunho ou peça oração."
               value={texto}
               onChange={(e) => setTexto(e.target.value.slice(0, MAX_LEN))}
               maxLength={MAX_LEN}
               rows={3}
               className="resize-none"
             />
+
             {preview && (
               <div className="relative mt-3 inline-block">
                 <img src={preview} alt="" className="max-h-64 rounded-lg border" />
@@ -153,8 +292,47 @@ function FeedPage() {
                 </button>
               </div>
             )}
-            <div className="mt-3 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
+
+            {/* Preview / estado de gravação de áudio */}
+            {gravando && (
+              <div className="mt-3 flex items-center gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-3">
+                <span className="relative flex h-3 w-3">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-destructive" />
+                </span>
+                <span className="text-sm font-medium">Gravando... {fmtDur(dur)}</span>
+                <span className="text-[10px] text-muted-foreground">máx {fmtDur(MAX_AUDIO_SEG)}</span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="destructive"
+                  className="ml-auto gap-1"
+                  onClick={pararGravacao}
+                >
+                  <Square className="h-3 w-3" /> Parar
+                </Button>
+              </div>
+            )}
+
+            {audioUrl && !gravando && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg border bg-muted/30 p-3">
+                <audio src={audioUrl} controls className="h-9 w-full" />
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  onClick={limparAudio}
+                  aria-label="Remover áudio"
+                  disabled={enviando}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <input
                   ref={fileRef}
                   type="file"
@@ -167,13 +345,36 @@ function FeedPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => fileRef.current?.click()}
-                  disabled={enviando}
+                  disabled={enviando || gravando}
                 >
                   <ImagePlus className="mr-2 h-4 w-4" /> Foto
                 </Button>
+
+                {gravando ? (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={pararGravacao}
+                  >
+                    <Square className="mr-2 h-4 w-4" /> Parar áudio
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={iniciarGravacao}
+                    disabled={enviando || !!audioBlob}
+                    title={audioBlob ? "Remova o áudio atual para gravar outro" : "Gravar áudio (testemunho ou pedido de oração)"}
+                  >
+                    <Mic className="mr-2 h-4 w-4" /> Áudio
+                  </Button>
+                )}
+
                 <span className="text-xs text-muted-foreground">{texto.length}/{MAX_LEN}</span>
               </div>
-              <Button onClick={publicar} disabled={enviando || (!texto.trim() && !foto)} size="sm">
+              <Button onClick={publicar} disabled={!podePublicar} size="sm">
                 {enviando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                 Publicar
               </Button>
@@ -290,6 +491,12 @@ function PostCard({
               alt=""
               className="mt-3 max-h-[480px] w-full rounded-lg border object-cover"
             />
+          )}
+          {post.audio_url && (
+            <div className="mt-3 flex items-center gap-2 rounded-lg border bg-muted/30 p-3">
+              <Mic className="h-4 w-4 shrink-0 text-primary" />
+              <audio src={post.audio_url} controls preload="metadata" className="h-9 w-full" />
+            </div>
           )}
 
           <div className="mt-4 border-t pt-3">
