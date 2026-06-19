@@ -29,6 +29,7 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/atendimentos", label: "Atendimentos", icon: HandHelping },
       { to: "/musicos", label: "Músicos", icon: Mic2 },
       { to: "/ccb-perto-de-mim", label: "CCB perto de mim", icon: MapPin },
+      { to: "/minhas-congregacoes", label: "Minhas congregações", icon: CheckCircle2 },
     ],
   },
   {
