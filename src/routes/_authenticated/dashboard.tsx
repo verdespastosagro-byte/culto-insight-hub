@@ -76,15 +76,9 @@ function Dashboard() {
     <div className="space-y-6">
       <InstallPWA className="mb-2" />
 
-      {/* Meu perfil (como aparece para os outros) */}
       <Card className="shadow-[var(--shadow-card)]">
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Eye className="h-4 w-4" /> Meu perfil
-            <span className="ml-auto text-xs font-normal text-muted-foreground">
-              como os outros me veem
-            </span>
-          </CardTitle>
+          <CardTitle className="text-base" />
         </CardHeader>
         <CardContent>
           {perfilQ.isLoading || !perfil ? (
@@ -154,12 +148,6 @@ function Dashboard() {
           )}
         </CardContent>
       </Card>
-
-      {/* Resumo do sistema */}
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Visão geral</h2>
-        <p className="text-sm text-muted-foreground">Resumo do sistema de gestão de cultos.</p>
-      </div>
 
       <div className="grid grid-cols-3 gap-3">
         {cards.map((c) => (
