@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   User,
   Lock,
@@ -13,6 +14,7 @@ import {
   Camera,
   Eye,
   EyeOff,
+  MapPin,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,7 +25,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { listarCidadesCcb, listarComunsPorCidade, definirMinhaComum } from "@/lib/social.functions";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/_authenticated/conta")({
   component: ContaPage,
