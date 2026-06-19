@@ -518,17 +518,50 @@ function CongregacoesPage() {
                       </button>
                     </div>
                   )}
-                  <Input
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => document.getElementById("input-foto-camera")?.click()}
+                    >
+                      <Camera className="h-4 w-4" /> Tirar foto
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => document.getElementById("input-foto-galeria")?.click()}
+                    >
+                      <Images className="h-4 w-4" /> Galeria
+                    </Button>
+                  </div>
+                  <input
+                    id="input-foto-camera"
                     type="file"
                     accept="image/*"
                     capture="environment"
+                    className="sr-only"
                     onChange={(e) => {
                       const f = e.target.files?.[0] ?? null;
                       setFotoFile(f);
                       setFotoPreview(f ? URL.createObjectURL(f) : null);
                     }}
                   />
-                  <p className="text-xs text-muted-foreground">Tire ou anexe uma foto da igreja que você visitou.</p>
+                  <input
+                    id="input-foto-galeria"
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0] ?? null;
+                      setFotoFile(f);
+                      setFotoPreview(f ? URL.createObjectURL(f) : null);
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">Tire uma foto ou escolha da galeria.</p>
                 </div>
 
                 <DialogFooter><Button type="submit" disabled={uploadingFoto}>{uploadingFoto ? "Enviando foto..." : "Salvar"}</Button></DialogFooter>
