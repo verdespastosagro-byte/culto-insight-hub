@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/cultos/")({
 
 function CultosList() {
   const qc = useQueryClient();
-  const { canEdit, isAdmin } = useAuth();
+  const { canEdit } = useAuth();
   const [open, setOpen] = useState(false);
   const [congregacaoId, setCongregacaoId] = useState("");
 
@@ -122,7 +122,7 @@ function CultosList() {
                     {TIPOS_REUNIAO[c.tipo]} · {c.congregacao?.nome ?? c.cidade ?? "—"} {c.participantes && `· ${c.participantes} pessoas`}
                   </p>
                 </Link>
-                {isAdmin && <Button size="icon" variant="ghost" onClick={() => handleDelete(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+                <Button size="icon" variant="ghost" onClick={() => handleDelete(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
               </CardContent>
             </Card>
           ))}
