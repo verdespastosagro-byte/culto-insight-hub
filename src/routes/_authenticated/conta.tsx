@@ -224,7 +224,7 @@ function ContaPage() {
     setProfileStatus(null);
     const { error } = await supabase
       .from("profiles")
-      .update({ nome: nome.trim(), cargo: cargo.trim() || null, congregacao: congregacao.trim() || null })
+      .update({ nome: nome.trim(), cargo: cargo.trim() || null })
       .eq("id", user.id);
     setSavingProfile(false);
     if (error) {
