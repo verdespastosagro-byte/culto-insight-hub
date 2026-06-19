@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import type { LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,10 @@ import {
   Lock,
   Eye,
   Building,
+  Sun,
+  CloudRain,
+  CloudLightning,
+  Snowflake,
 } from "lucide-react";
 import { InstallPWA } from "@/components/InstallPWA";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -32,11 +37,15 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
 });
 
-const EFEITO_OPCOES: { value: EfeitoFundo; label: string }[] = [
-  { value: "nenhum", label: "Nenhum" },
-  { value: "chuva", label: "Chuva" },
-  { value: "chuva_raio", label: "Chuva com raios" },
-  { value: "neve", label: "Neve" },
+const EFEITO_OPCOES: {
+  value: EfeitoFundo;
+  label: string;
+  icon: LucideIcon;
+}[] = [
+  { value: "nenhum", label: "Nenhum", icon: Sun },
+  { value: "chuva", label: "Chuva", icon: CloudRain },
+  { value: "chuva_raio", label: "Raios", icon: CloudLightning },
+  { value: "neve", label: "Neve", icon: Snowflake },
 ];
 
 function isEfeito(v: unknown): v is EfeitoFundo {
@@ -67,13 +76,14 @@ function Dashboard() {
   }, [user]);
 
   async function escolherEfeito(novo: EfeitoFundo) {
-    if (!user || novo === efeito) return;
+    if (!user) return;
+    const destino = efeito === novo ? "nenhum" : novo;
     const anterior = efeito;
-    setEfeito(novo);
+    setEfeito(destino);
     setSalvando(true);
     const { error } = await supabase
       .from("profiles")
-      .update({ fundo_animado: novo })
+      .update({ fundo_animado: destino })
       .eq("id", user.id);
     setSalvando(false);
     if (error) {
@@ -132,25 +142,35 @@ function Dashboard() {
       <div className="space-y-6">
         <InstallPWA className="mb-2" />
 
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-muted-foreground">Fundo animado:</span>
+        <div className="flex flex-wrap items-end gap-4">
           {EFEITO_OPCOES.map((op) => {
             const ativo = efeito === op.value;
+            const Icon = op.icon;
             return (
               <button
                 key={op.value}
                 type="button"
+                title={op.label}
                 onClick={() => escolherEfeito(op.value)}
                 disabled={salvando}
                 className={cn(
-                  "rounded-full border px-3 py-1 text-xs transition-colors",
-                  ativo
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-card hover:bg-accent",
+                  "flex flex-col items-center gap-1.5 transition-all duration-200",
                   salvando && "opacity-60",
                 )}
               >
-                {op.label}
+                <span
+                  className={cn(
+                    "flex h-14 w-14 items-center justify-center rounded-2xl text-xl transition-all duration-200",
+                    ativo
+                      ? "bg-primary text-primary-foreground shadow-lg"
+                      : "bg-card text-muted-foreground shadow-[var(--shadow-card)] hover:bg-accent",
+                  )}
+                >
+                  <Icon className="h-6 w-6" />
+                </span>
+                <span className="text-[10px] font-medium text-muted-foreground">
+                  {op.label}
+                </span>
               </button>
             );
           })}
