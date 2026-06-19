@@ -20,6 +20,7 @@ import { Route as AuthenticatedPalavrasRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedMusicosRouteImport } from './routes/_authenticated/musicos'
 import { Route as AuthenticatedMinhasCongregacoesRouteImport } from './routes/_authenticated/minhas-congregacoes'
 import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
+import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedContaRouteImport } from './routes/_authenticated/conta'
 import { Route as AuthenticatedCongregacoesRouteImport } from './routes/_authenticated/congregacoes'
@@ -88,6 +89,11 @@ const AuthenticatedMinhasCongregacoesRoute =
 const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
   id: '/insights',
   path: '/insights',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFeedRoute = AuthenticatedFeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/congregacoes': typeof AuthenticatedCongregacoesRoute
   '/conta': typeof AuthenticatedContaRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/feed': typeof AuthenticatedFeedRoute
   '/insights': typeof AuthenticatedInsightsRoute
   '/minhas-congregacoes': typeof AuthenticatedMinhasCongregacoesRoute
   '/musicos': typeof AuthenticatedMusicosRoute
@@ -209,6 +216,7 @@ export interface FileRoutesByTo {
   '/congregacoes': typeof AuthenticatedCongregacoesRoute
   '/conta': typeof AuthenticatedContaRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/feed': typeof AuthenticatedFeedRoute
   '/insights': typeof AuthenticatedInsightsRoute
   '/minhas-congregacoes': typeof AuthenticatedMinhasCongregacoesRoute
   '/musicos': typeof AuthenticatedMusicosRoute
@@ -237,6 +245,7 @@ export interface FileRoutesById {
   '/_authenticated/congregacoes': typeof AuthenticatedCongregacoesRoute
   '/_authenticated/conta': typeof AuthenticatedContaRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/insights': typeof AuthenticatedInsightsRoute
   '/_authenticated/minhas-congregacoes': typeof AuthenticatedMinhasCongregacoesRoute
   '/_authenticated/musicos': typeof AuthenticatedMusicosRoute
@@ -265,6 +274,7 @@ export interface FileRouteTypes {
     | '/congregacoes'
     | '/conta'
     | '/dashboard'
+    | '/feed'
     | '/insights'
     | '/minhas-congregacoes'
     | '/musicos'
@@ -291,6 +301,7 @@ export interface FileRouteTypes {
     | '/congregacoes'
     | '/conta'
     | '/dashboard'
+    | '/feed'
     | '/insights'
     | '/minhas-congregacoes'
     | '/musicos'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/_authenticated/congregacoes'
     | '/_authenticated/conta'
     | '/_authenticated/dashboard'
+    | '/_authenticated/feed'
     | '/_authenticated/insights'
     | '/_authenticated/minhas-congregacoes'
     | '/_authenticated/musicos'
@@ -418,6 +430,13 @@ declare module '@tanstack/react-router' {
       path: '/insights'
       fullPath: '/insights'
       preLoaderRoute: typeof AuthenticatedInsightsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/feed': {
+      id: '/_authenticated/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof AuthenticatedFeedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -529,6 +548,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCongregacoesRoute: typeof AuthenticatedCongregacoesRoute
   AuthenticatedContaRoute: typeof AuthenticatedContaRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
   AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
   AuthenticatedMinhasCongregacoesRoute: typeof AuthenticatedMinhasCongregacoesRoute
   AuthenticatedMusicosRoute: typeof AuthenticatedMusicosRoute
@@ -551,6 +571,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCongregacoesRoute: AuthenticatedCongregacoesRoute,
   AuthenticatedContaRoute: AuthenticatedContaRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedFeedRoute: AuthenticatedFeedRoute,
   AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,
   AuthenticatedMinhasCongregacoesRoute: AuthenticatedMinhasCongregacoesRoute,
   AuthenticatedMusicosRoute: AuthenticatedMusicosRoute,
