@@ -182,6 +182,10 @@ function AdminPage() {
         </CardContent>
       </Card>
 
+      <AdminPlansEditor />
+
+
+
       {/* Editar */}
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent>
