@@ -1027,11 +1027,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_check_in_owner: {
+        Args: { _check_in_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_check_in_owner_publico: {
+        Args: { _check_in_id: string }
+        Returns: boolean
+      }
       is_editor: { Args: { _user_id: string }; Returns: boolean }
       is_org_member: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      is_profile_publico: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "encarregado" | "cooperador" | "usuario"
