@@ -6,7 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BookOpen, Building2, MessageSquareQuote, Music2, Newspaper, ArrowRight } from "lucide-react";
 import { InstallPWA } from "@/components/InstallPWA";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { formatDate, TIPOS_REUNIAO } from "@/lib/constants";
 import { listarFeed } from "@/lib/social.functions";
 import { primeirosDoisNomes } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
