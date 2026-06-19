@@ -15,6 +15,10 @@ import {
   Lock,
   Eye,
   Building,
+  Sun,
+  CloudRain,
+  CloudLightning,
+  Snowflake,
 } from "lucide-react";
 import { InstallPWA } from "@/components/InstallPWA";
 import { createFileRoute, Link } from "@tanstack/react-router";
