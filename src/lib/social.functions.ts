@@ -17,7 +17,10 @@ export type Visitante = {
   nome: string;
   foto_url: string | null;
   data_culto: string;
+  euSigo?: boolean;
+  ehProprio?: boolean;
 };
+
 
 export type ComentarioItem = {
   id: string;
