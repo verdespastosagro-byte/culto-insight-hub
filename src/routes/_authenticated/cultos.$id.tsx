@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ArrowLeft, Plus, Trash2, MessageSquareQuote, HandHelping, Pencil, History } from "lucide-react";
 import { TIPOS_REUNIAO, formatDate } from "@/lib/constants";
+import { ComentariosSection } from "@/components/ComentariosMural";
 
 export const Route = createFileRoute("/_authenticated/cultos/$id")({
   component: CultoDetail,
