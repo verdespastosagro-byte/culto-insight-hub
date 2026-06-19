@@ -15,12 +15,10 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedVisitantesRouteImport } from './routes/_authenticated/visitantes'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedPalavrasRouteImport } from './routes/_authenticated/palavras'
 import { Route as AuthenticatedMusicosRouteImport } from './routes/_authenticated/musicos'
 import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
-import { Route as AuthenticatedHinosRouteImport } from './routes/_authenticated/hinos'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedContaRouteImport } from './routes/_authenticated/conta'
 import { Route as AuthenticatedCongregacoesRouteImport } from './routes/_authenticated/congregacoes'
@@ -62,11 +60,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedVisitantesRoute = AuthenticatedVisitantesRouteImport.update({
-  id: '/visitantes',
-  path: '/visitantes',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
@@ -85,11 +78,6 @@ const AuthenticatedMusicosRoute = AuthenticatedMusicosRouteImport.update({
 const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
   id: '/insights',
   path: '/insights',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedHinosRoute = AuthenticatedHinosRouteImport.update({
-  id: '/hinos',
-  path: '/hinos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -167,12 +155,10 @@ export interface FileRoutesByFullPath {
   '/congregacoes': typeof AuthenticatedCongregacoesRoute
   '/conta': typeof AuthenticatedContaRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/hinos': typeof AuthenticatedHinosRoute
   '/insights': typeof AuthenticatedInsightsRoute
   '/musicos': typeof AuthenticatedMusicosRoute
   '/palavras': typeof AuthenticatedPalavrasRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
-  '/visitantes': typeof AuthenticatedVisitantesRoute
   '/culto-inteligente/historico': typeof AuthenticatedCultoInteligenteHistoricoRoute
   '/cultos/$id': typeof AuthenticatedCultosIdRoute
   '/culto-inteligente/': typeof AuthenticatedCultoInteligenteIndexRoute
@@ -191,12 +177,10 @@ export interface FileRoutesByTo {
   '/congregacoes': typeof AuthenticatedCongregacoesRoute
   '/conta': typeof AuthenticatedContaRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/hinos': typeof AuthenticatedHinosRoute
   '/insights': typeof AuthenticatedInsightsRoute
   '/musicos': typeof AuthenticatedMusicosRoute
   '/palavras': typeof AuthenticatedPalavrasRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
-  '/visitantes': typeof AuthenticatedVisitantesRoute
   '/culto-inteligente/historico': typeof AuthenticatedCultoInteligenteHistoricoRoute
   '/cultos/$id': typeof AuthenticatedCultosIdRoute
   '/culto-inteligente': typeof AuthenticatedCultoInteligenteIndexRoute
@@ -217,12 +201,10 @@ export interface FileRoutesById {
   '/_authenticated/congregacoes': typeof AuthenticatedCongregacoesRoute
   '/_authenticated/conta': typeof AuthenticatedContaRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/hinos': typeof AuthenticatedHinosRoute
   '/_authenticated/insights': typeof AuthenticatedInsightsRoute
   '/_authenticated/musicos': typeof AuthenticatedMusicosRoute
   '/_authenticated/palavras': typeof AuthenticatedPalavrasRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
-  '/_authenticated/visitantes': typeof AuthenticatedVisitantesRoute
   '/_authenticated/culto-inteligente/historico': typeof AuthenticatedCultoInteligenteHistoricoRoute
   '/_authenticated/cultos/$id': typeof AuthenticatedCultosIdRoute
   '/_authenticated/culto-inteligente/': typeof AuthenticatedCultoInteligenteIndexRoute
@@ -243,12 +225,10 @@ export interface FileRouteTypes {
     | '/congregacoes'
     | '/conta'
     | '/dashboard'
-    | '/hinos'
     | '/insights'
     | '/musicos'
     | '/palavras'
     | '/relatorios'
-    | '/visitantes'
     | '/culto-inteligente/historico'
     | '/cultos/$id'
     | '/culto-inteligente/'
@@ -267,12 +247,10 @@ export interface FileRouteTypes {
     | '/congregacoes'
     | '/conta'
     | '/dashboard'
-    | '/hinos'
     | '/insights'
     | '/musicos'
     | '/palavras'
     | '/relatorios'
-    | '/visitantes'
     | '/culto-inteligente/historico'
     | '/cultos/$id'
     | '/culto-inteligente'
@@ -292,12 +270,10 @@ export interface FileRouteTypes {
     | '/_authenticated/congregacoes'
     | '/_authenticated/conta'
     | '/_authenticated/dashboard'
-    | '/_authenticated/hinos'
     | '/_authenticated/insights'
     | '/_authenticated/musicos'
     | '/_authenticated/palavras'
     | '/_authenticated/relatorios'
-    | '/_authenticated/visitantes'
     | '/_authenticated/culto-inteligente/historico'
     | '/_authenticated/cultos/$id'
     | '/_authenticated/culto-inteligente/'
@@ -357,13 +333,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/visitantes': {
-      id: '/_authenticated/visitantes'
-      path: '/visitantes'
-      fullPath: '/visitantes'
-      preLoaderRoute: typeof AuthenticatedVisitantesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/relatorios': {
       id: '/_authenticated/relatorios'
       path: '/relatorios'
@@ -390,13 +359,6 @@ declare module '@tanstack/react-router' {
       path: '/insights'
       fullPath: '/insights'
       preLoaderRoute: typeof AuthenticatedInsightsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/hinos': {
-      id: '/_authenticated/hinos'
-      path: '/hinos'
-      fullPath: '/hinos'
-      preLoaderRoute: typeof AuthenticatedHinosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -487,12 +449,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCongregacoesRoute: typeof AuthenticatedCongregacoesRoute
   AuthenticatedContaRoute: typeof AuthenticatedContaRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedHinosRoute: typeof AuthenticatedHinosRoute
   AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
   AuthenticatedMusicosRoute: typeof AuthenticatedMusicosRoute
   AuthenticatedPalavrasRoute: typeof AuthenticatedPalavrasRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
-  AuthenticatedVisitantesRoute: typeof AuthenticatedVisitantesRoute
   AuthenticatedCultoInteligenteHistoricoRoute: typeof AuthenticatedCultoInteligenteHistoricoRoute
   AuthenticatedCultosIdRoute: typeof AuthenticatedCultosIdRoute
   AuthenticatedCultoInteligenteIndexRoute: typeof AuthenticatedCultoInteligenteIndexRoute
@@ -507,12 +467,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCongregacoesRoute: AuthenticatedCongregacoesRoute,
   AuthenticatedContaRoute: AuthenticatedContaRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedHinosRoute: AuthenticatedHinosRoute,
   AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,
   AuthenticatedMusicosRoute: AuthenticatedMusicosRoute,
   AuthenticatedPalavrasRoute: AuthenticatedPalavrasRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
-  AuthenticatedVisitantesRoute: AuthenticatedVisitantesRoute,
   AuthenticatedCultoInteligenteHistoricoRoute:
     AuthenticatedCultoInteligenteHistoricoRoute,
   AuthenticatedCultosIdRoute: AuthenticatedCultosIdRoute,

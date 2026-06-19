@@ -11,8 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Trash2, Music2, MessageSquareQuote, HandHelping, UserPlus, Pencil, History } from "lucide-react";
-import { MOMENTOS_HINO, TIPOS_REUNIAO, FUNCOES_VISITANTE, formatDate } from "@/lib/constants";
+import { ArrowLeft, Plus, Trash2, MessageSquareQuote, HandHelping, Pencil, History } from "lucide-react";
+import { TIPOS_REUNIAO, formatDate } from "@/lib/constants";
 
 export const Route = createFileRoute("/_authenticated/cultos/$id")({
   component: CultoDetail,
@@ -30,10 +30,8 @@ function CultoDetail() {
       return data;
     },
   });
-  const hinos = useQuery({ queryKey: ["culto-hinos", id], queryFn: async () => (await supabase.from("hinos").select("*").eq("culto_id", id).order("created_at")).data ?? [] });
   const palavras = useQuery({ queryKey: ["culto-palavras", id], queryFn: async () => (await supabase.from("palavras").select("*").eq("culto_id", id)).data ?? [] });
   const atend = useQuery({ queryKey: ["culto-atend", id], queryFn: async () => (await supabase.from("atendimentos").select("*").eq("culto_id", id)).data ?? [] });
-  const vis = useQuery({ queryKey: ["culto-vis", id], queryFn: async () => (await supabase.from("visitantes").select("*").eq("culto_id", id)).data ?? [] });
   const congs = useQuery({ queryKey: ["congs-list"], queryFn: async () => (await supabase.from("congregacoes").select("id, nome").order("nome")).data ?? [] });
   const audit = useQuery({ queryKey: ["culto-audit", id], queryFn: async () => (await supabase.from("cultos_audit").select("*").eq("culto_id", id).order("changed_at", { ascending: false })).data ?? [] });
   const [editOpen, setEditOpen] = useState(false);
@@ -84,20 +82,6 @@ function CultoDetail() {
       </div>
 
       <Section
-        title="Hinos chamados" icon={Music2} canEdit={canEdit}
-        empty="Nenhum hino registrado."
-        items={hinos.data ?? []}
-        renderItem={(h: any) => (
-          <>
-            <p className="font-semibold">Hino {h.numero} <span className="ml-2 text-xs font-normal text-muted-foreground">{MOMENTOS_HINO[h.momento]}</span></p>
-            {h.titulo && <p className="text-xs text-muted-foreground">{h.titulo}</p>}
-          </>
-        )}
-        onDelete={(rid) => del("hinos", rid, "culto-hinos")}
-        form={(close) => <HinoForm cultoId={id} onSaved={() => { close(); qc.invalidateQueries({ queryKey: ["culto-hinos", id] }); }} />}
-      />
-
-      <Section
         title="Palavra" icon={MessageSquareQuote} canEdit={canEdit}
         empty="Nenhuma palavra registrada."
         items={palavras.data ?? []}
@@ -126,20 +110,6 @@ function CultoDetail() {
         )}
         onDelete={(rid) => del("atendimentos", rid, "culto-atend")}
         form={(close) => <AtendForm cultoId={id} onSaved={() => { close(); qc.invalidateQueries({ queryKey: ["culto-atend", id] }); }} />}
-      />
-
-      <Section
-        title="Visitantes" icon={UserPlus} canEdit={canEdit}
-        empty="Nenhum visitante registrado."
-        items={vis.data ?? []}
-        renderItem={(v: any) => (
-          <>
-            <p className="font-semibold">{v.nome} <span className="ml-2 text-xs font-normal text-muted-foreground">{FUNCOES_VISITANTE[v.funcao]}</span></p>
-            <p className="text-xs text-muted-foreground">{[v.congregacao_origem, v.cidade].filter(Boolean).join(" · ")}</p>
-          </>
-        )}
-        onDelete={(rid) => del("visitantes", rid, "culto-vis")}
-        form={(close) => <VisitanteForm cultoId={id} onSaved={() => { close(); qc.invalidateQueries({ queryKey: ["culto-vis", id] }); }} />}
       />
     </div>
   );
@@ -181,33 +151,6 @@ function Section({ title, icon: Icon, items, renderItem, onDelete, form, canEdit
   );
 }
 
-function HinoForm({ cultoId, onSaved }: { cultoId: string; onSaved: () => void }) {
-  return (
-    <form onSubmit={async (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.currentTarget);
-      const { error } = await supabase.from("hinos").insert({
-        culto_id: cultoId,
-        numero: Number(fd.get("numero")),
-        titulo: String(fd.get("titulo") || "") || null,
-        momento: String(fd.get("momento")) as any,
-      });
-      if (error) toast.error(error.message); else { toast.success("Hino adicionado"); onSaved(); }
-    }} className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
-        <div><Label>Número</Label><Input type="number" name="numero" required min={1} max={9999} /></div>
-        <div><Label>Momento</Label>
-          <Select name="momento" defaultValue="entrada">
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{Object.entries(MOMENTOS_HINO).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div><Label>Título (opcional)</Label><Input name="titulo" /></div>
-      <DialogFooter><Button type="submit">Adicionar</Button></DialogFooter>
-    </form>
-  );
-}
 
 function PalavraForm({ cultoId, onSaved }: { cultoId: string; onSaved: () => void }) {
   return (
@@ -265,35 +208,6 @@ function AtendForm({ cultoId, onSaved }: { cultoId: string; onSaved: () => void 
   );
 }
 
-function VisitanteForm({ cultoId, onSaved }: { cultoId: string; onSaved: () => void }) {
-  return (
-    <form onSubmit={async (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.currentTarget);
-      const { error } = await supabase.from("visitantes").insert({
-        culto_id: cultoId,
-        nome: String(fd.get("nome")).trim(),
-        funcao: String(fd.get("funcao")) as any,
-        congregacao_origem: String(fd.get("cong") || "") || null,
-        cidade: String(fd.get("cidade") || "") || null,
-      });
-      if (error) toast.error(error.message); else { toast.success("Salvo"); onSaved(); }
-    }} className="space-y-3">
-      <div><Label>Nome</Label><Input name="nome" required /></div>
-      <div><Label>Função</Label>
-        <Select name="funcao" defaultValue="irmao">
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>{Object.entries(FUNCOES_VISITANTE).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-        </Select>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div><Label>Congregação</Label><Input name="cong" /></div>
-        <div><Label>Cidade</Label><Input name="cidade" /></div>
-      </div>
-      <DialogFooter><Button type="submit">Salvar</Button></DialogFooter>
-    </form>
-  );
-}
 
 function CultoEditForm({ culto, congs, onSaved }: { culto: any; congs: { id: string; nome: string }[]; onSaved: () => void }) {
   const [data, setData] = useState(culto.data ?? "");
