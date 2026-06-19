@@ -865,6 +865,7 @@ export type Database = {
       }
       posts: {
         Row: {
+          audio_url: string | null
           created_at: string
           deleted_at: string | null
           foto_url: string | null
@@ -873,6 +874,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          audio_url?: string | null
           created_at?: string
           deleted_at?: string | null
           foto_url?: string | null
@@ -881,6 +883,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          audio_url?: string | null
           created_at?: string
           deleted_at?: string | null
           foto_url?: string | null
