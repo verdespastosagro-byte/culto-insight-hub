@@ -461,25 +461,31 @@ export const getPerfilPublico = createServerFn({ method: "POST" })
 
     const { data: postRows } = await supabaseAdmin
       .from("posts")
-      .select("id,texto,foto_url,created_at")
+      .select("id,texto,foto_url,audio_url,created_at")
       .eq("user_id", target)
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(30);
 
     const posts: PostItem[] = [];
-    for (const p of (postRows as Array<{ id: string; texto: string | null; foto_url: string | null; created_at: string }>) ?? []) {
-      let signed: string | null = null;
+    for (const p of (postRows as Array<{ id: string; texto: string | null; foto_url: string | null; audio_url: string | null; created_at: string }>) ?? []) {
+      let signedFoto: string | null = null;
       if (p.foto_url) {
         try {
           const { data: s } = await supabaseAdmin.storage.from("posts-fotos").createSignedUrl(p.foto_url, 60 * 60);
-          signed = s?.signedUrl ?? null;
-        } catch {
-          signed = null;
-        }
+          signedFoto = s?.signedUrl ?? null;
+        } catch { signedFoto = null; }
       }
-      posts.push({ id: p.id, texto: p.texto, foto_url: signed, created_at: p.created_at });
+      let signedAudio: string | null = null;
+      if (p.audio_url) {
+        try {
+          const { data: s } = await supabaseAdmin.storage.from("posts-audios").createSignedUrl(p.audio_url, 60 * 60);
+          signedAudio = s?.signedUrl ?? null;
+        } catch { signedAudio = null; }
+      }
+      posts.push({ id: p.id, texto: p.texto, foto_url: signedFoto, audio_url: signedAudio, created_at: p.created_at });
     }
+
 
     return {
       perfil: {
