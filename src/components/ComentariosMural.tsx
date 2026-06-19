@@ -157,8 +157,9 @@ export function ComentariosSection({ alvoTipo, alvoId, titulo = "Comentários" }
                     params={{ userId: c.user_id }}
                     className="truncate text-xs font-medium hover:underline"
                   >
-                    {c.autor_nome}
+                    {primeirosDoisNomes(c.autor_nome)}
                   </Link>
+
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-muted-foreground">
                       {formatDistanceToNow(new Date(c.created_at), { addSuffix: true, locale: ptBR })}
