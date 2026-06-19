@@ -128,7 +128,7 @@ export const listarVisitantesRecentesComum = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z.object({ id: z.coerce.number().int().positive(), limite: z.number().int().min(1).max(50).default(20) }).parse(d),
   )
-  .handler(async ({ data }): Promise<{ publicos: Visitante[]; totalPrivados: number }> => {
+  .handler(async ({ data, context }): Promise<{ publicos: Visitante[]; totalPrivados: number }> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: rows } = await supabaseAdmin
@@ -142,6 +142,18 @@ export const listarVisitantesRecentesComum = createServerFn({ method: "POST" })
     const publicSet = await loadPublicSet(supabaseAdmin, allUserIds);
     const profilesMap = await loadProfilesMap(supabaseAdmin, Array.from(publicSet));
 
+    // quem o usuário já segue, entre os públicos
+    const publicIds = Array.from(publicSet);
+    const seguindoSet = new Set<string>();
+    if (publicIds.length) {
+      const { data: fol } = await supabaseAdmin
+        .from("follows")
+        .select("following_id")
+        .eq("follower_id", context.userId)
+        .in("following_id", publicIds);
+      for (const f of (fol as Array<{ following_id: string }>) ?? []) seguindoSet.add(f.following_id);
+    }
+
     const publicos: Visitante[] = [];
     const seen = new Set<string>();
     for (const r of (rows as Array<{ user_id: string; data_culto: string }>) ?? []) {
@@ -154,6 +166,8 @@ export const listarVisitantesRecentesComum = createServerFn({ method: "POST" })
         nome: prof?.nome ?? "Irmão(ã)",
         foto_url: await signAvatar(supabaseAdmin, prof?.foto_url ?? null),
         data_culto: r.data_culto,
+        euSigo: seguindoSet.has(r.user_id),
+        ehProprio: r.user_id === context.userId,
       });
       if (publicos.length >= data.limite) break;
     }
@@ -161,6 +175,7 @@ export const listarVisitantesRecentesComum = createServerFn({ method: "POST" })
     const totalPrivados = Math.max(0, allUserIds.length - publicSet.size);
     return { publicos, totalPrivados };
   });
+
 
 // ---------- Detalhe de um check-in ----------
 export const getCheckInDetalhe = createServerFn({ method: "POST" })
