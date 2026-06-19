@@ -42,10 +42,15 @@ export type CheckInDetalhe = {
   autor_publico: boolean;
 };
 
-async function signAvatar(
-  admin: { storage: { from: (b: string) => { createSignedUrl: (p: string, t: number) => Promise<{ data: { signedUrl: string } | null }> } } },
-  path: string | null,
-): Promise<string | null> {
+type AdminClient = {
+  storage: {
+    from: (b: string) => {
+      createSignedUrl: (p: string, t: number) => Promise<{ data: { signedUrl: string } | null }>;
+    };
+  };
+};
+
+async function signAvatar(admin: AdminClient, path: string | null): Promise<string | null> {
   if (!path) return null;
   try {
     const { data } = await admin.storage.from("perfil-fotos").createSignedUrl(path, 60 * 60);
@@ -53,6 +58,38 @@ async function signAvatar(
   } catch {
     return null;
   }
+}
+
+async function loadProfilesMap(
+  admin: ReturnType<typeof Object> extends infer _ ? any : never, // eslint-disable-line @typescript-eslint/no-explicit-any
+  userIds: string[],
+): Promise<Map<string, { nome: string; foto_url: string | null }>> {
+  const map = new Map<string, { nome: string; foto_url: string | null }>();
+  if (!userIds.length) return map;
+  const { data } = await admin
+    .from("profiles")
+    .select("id,nome,foto_url")
+    .in("id", userIds);
+  for (const p of (data as Array<{ id: string; nome: string; foto_url: string | null }>) ?? []) {
+    map.set(p.id, { nome: p.nome ?? "Irmão(ã)", foto_url: p.foto_url ?? null });
+  }
+  return map;
+}
+
+async function loadPublicSet(
+  admin: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+  userIds: string[],
+): Promise<Set<string>> {
+  const set = new Set<string>();
+  if (!userIds.length) return set;
+  const { data } = await admin
+    .from("profile_privacy")
+    .select("user_id,perfil_publico")
+    .in("user_id", userIds);
+  for (const r of (data as Array<{ user_id: string; perfil_publico: boolean }>) ?? []) {
+    if (r.perfil_publico) set.add(r.user_id);
+  }
+  return set;
 }
 
 // ---------- Detalhe de comum ----------
@@ -93,39 +130,33 @@ export const listarVisitantesRecentesComum = createServerFn({ method: "POST" })
 
     const { data: rows } = await supabaseAdmin
       .from("check_ins")
-      .select("user_id,data_culto,created_at,profile_privacy!inner(perfil_publico),profiles!inner(nome,foto_url)")
+      .select("user_id,data_culto,created_at")
       .eq("congregacao_ccb_id", data.id)
-      .eq("profile_privacy.perfil_publico", true)
       .order("created_at", { ascending: false })
-      .limit(data.limite);
+      .limit(300);
 
-    const { count: totalAll } = await supabaseAdmin
-      .from("check_ins")
-      .select("user_id", { count: "exact", head: true })
-      .eq("congregacao_ccb_id", data.id);
+    const allUserIds = Array.from(new Set(((rows as Array<{ user_id: string }>) ?? []).map((r) => r.user_id)));
+    const publicSet = await loadPublicSet(supabaseAdmin, allUserIds);
+    const profilesMap = await loadProfilesMap(supabaseAdmin, Array.from(publicSet));
 
     const publicos: Visitante[] = [];
     const seen = new Set<string>();
-    for (const r of (rows as Array<{ user_id: string; data_culto: string; profiles: { nome: string; foto_url: string | null } }>) ?? []) {
+    for (const r of (rows as Array<{ user_id: string; data_culto: string }>) ?? []) {
+      if (!publicSet.has(r.user_id)) continue;
       if (seen.has(r.user_id)) continue;
       seen.add(r.user_id);
+      const prof = profilesMap.get(r.user_id);
       publicos.push({
         user_id: r.user_id,
-        nome: r.profiles?.nome ?? "Irmão(ã)",
-        foto_url: await signAvatar(supabaseAdmin, r.profiles?.foto_url ?? null),
+        nome: prof?.nome ?? "Irmão(ã)",
+        foto_url: await signAvatar(supabaseAdmin, prof?.foto_url ?? null),
         data_culto: r.data_culto,
       });
+      if (publicos.length >= data.limite) break;
     }
 
-    // contagem de usuários distintos no total
-    const { data: distintosRows } = await supabaseAdmin
-      .from("check_ins")
-      .select("user_id")
-      .eq("congregacao_ccb_id", data.id);
-    const distintos = new Set((distintosRows as Array<{ user_id: string }> | null)?.map((r) => r.user_id) ?? []);
-    const totalPrivados = Math.max(0, distintos.size - publicos.length);
-
-    return { publicos, totalPrivados: totalAll == null ? totalPrivados : totalPrivados };
+    const totalPrivados = Math.max(0, allUserIds.length - publicSet.size);
+    return { publicos, totalPrivados };
   });
 
 // ---------- Detalhe de um check-in ----------
@@ -144,45 +175,45 @@ export const getCheckInDetalhe = createServerFn({ method: "POST" })
 
     const isOwn = ci.user_id === context.userId;
 
-    // privacidade do autor
-    const { data: priv } = await supabaseAdmin
-      .from("profile_privacy")
-      .select("perfil_publico")
-      .eq("user_id", ci.user_id)
-      .maybeSingle();
-    const publico = !!priv?.perfil_publico;
+    const publicSet = await loadPublicSet(supabaseAdmin, [ci.user_id as string]);
+    const publico = publicSet.has(ci.user_id as string);
 
     if (!isOwn && !publico) {
       return { checkIn: null, companheiros: [], podeVer: false };
     }
 
-    const { data: prof } = await supabaseAdmin
-      .from("profiles")
-      .select("nome,foto_url")
-      .eq("id", ci.user_id)
-      .maybeSingle();
+    const profilesMap = await loadProfilesMap(supabaseAdmin, [ci.user_id as string]);
+    const prof = profilesMap.get(ci.user_id as string);
+
     const { data: comum } = await supabaseAdmin
       .from("congregacoes_ccb")
       .select("name,city,uf")
-      .eq("id", ci.congregacao_ccb_id)
+      .eq("id", ci.congregacao_ccb_id as number)
       .maybeSingle();
 
-    // companheiros públicos da mesma comum + mesma data (exclui o próprio autor)
+    // companheiros públicos da mesma comum + mesma data
     const { data: comp } = await supabaseAdmin
       .from("check_ins")
-      .select("user_id,data_culto,profile_privacy!inner(perfil_publico),profiles!inner(nome,foto_url)")
-      .eq("congregacao_ccb_id", ci.congregacao_ccb_id)
-      .eq("data_culto", ci.data_culto)
-      .eq("profile_privacy.perfil_publico", true)
-      .neq("user_id", ci.user_id)
-      .limit(50);
+      .select("user_id,data_culto")
+      .eq("congregacao_ccb_id", ci.congregacao_ccb_id as number)
+      .eq("data_culto", ci.data_culto as string)
+      .neq("user_id", ci.user_id as string)
+      .limit(100);
+
+    const compIds = Array.from(new Set(((comp as Array<{ user_id: string }>) ?? []).map((r) => r.user_id)));
+    const compPublic = await loadPublicSet(supabaseAdmin, compIds);
+    const compProfiles = await loadProfilesMap(supabaseAdmin, Array.from(compPublic));
 
     const companheiros: Visitante[] = [];
-    for (const r of (comp as Array<{ user_id: string; data_culto: string; profiles: { nome: string; foto_url: string | null } }>) ?? []) {
+    const seen = new Set<string>();
+    for (const r of (comp as Array<{ user_id: string; data_culto: string }>) ?? []) {
+      if (!compPublic.has(r.user_id) || seen.has(r.user_id)) continue;
+      seen.add(r.user_id);
+      const p = compProfiles.get(r.user_id);
       companheiros.push({
         user_id: r.user_id,
-        nome: r.profiles?.nome ?? "Irmão(ã)",
-        foto_url: await signAvatar(supabaseAdmin, r.profiles?.foto_url ?? null),
+        nome: p?.nome ?? "Irmão(ã)",
+        foto_url: await signAvatar(supabaseAdmin, p?.foto_url ?? null),
         data_culto: r.data_culto,
       });
     }
@@ -197,7 +228,7 @@ export const getCheckInDetalhe = createServerFn({ method: "POST" })
         congregacao_nome: (comum?.name as string) ?? "Congregação",
         congregacao_cidade: (comum?.city as string) ?? null,
         congregacao_uf: ((comum?.uf as string) ?? "").toUpperCase() || null,
-        autor_nome: (prof?.nome as string) ?? "Irmão(ã)",
+        autor_nome: prof?.nome ?? "Irmão(ã)",
         autor_foto_url: await signAvatar(supabaseAdmin, prof?.foto_url ?? null),
         autor_publico: publico,
       },
@@ -222,7 +253,7 @@ export const listarComentarios = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rows, error } = await supabaseAdmin
       .from("comentarios")
-      .select("id,user_id,texto,created_at,profiles!inner(nome,foto_url)")
+      .select("id,user_id,texto,created_at")
       .eq("tipo_alvo", data.tipo_alvo)
       .eq("alvo_id", data.alvo_id)
       .is("deleted_at", null)
@@ -232,15 +263,19 @@ export const listarComentarios = createServerFn({ method: "POST" })
       console.error("listarComentarios", error);
       return { items: [] };
     }
+    const list = (rows as Array<{ id: string; user_id: string; texto: string; created_at: string }>) ?? [];
+    const userIds = Array.from(new Set(list.map((r) => r.user_id)));
+    const profilesMap = await loadProfilesMap(supabaseAdmin, userIds);
     const items: ComentarioItem[] = [];
-    for (const r of (rows as Array<{ id: string; user_id: string; texto: string; created_at: string; profiles: { nome: string; foto_url: string | null } }>) ?? []) {
+    for (const r of list) {
+      const p = profilesMap.get(r.user_id);
       items.push({
         id: r.id,
         user_id: r.user_id,
         texto: r.texto,
         created_at: r.created_at,
-        autor_nome: r.profiles?.nome ?? "Irmão(ã)",
-        autor_foto_url: await signAvatar(supabaseAdmin, r.profiles?.foto_url ?? null),
+        autor_nome: p?.nome ?? "Irmão(ã)",
+        autor_foto_url: await signAvatar(supabaseAdmin, p?.foto_url ?? null),
       });
     }
     return { items };
