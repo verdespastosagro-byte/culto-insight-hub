@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Trash2, Music2, MessageSquareQuote, HandHelping, UserPlus } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Music2, MessageSquareQuote, HandHelping, UserPlus, Pencil, History } from "lucide-react";
 import { MOMENTOS_HINO, TIPOS_REUNIAO, FUNCOES_VISITANTE, formatDate } from "@/lib/constants";
 
 export const Route = createFileRoute("/_authenticated/cultos/$id")({
@@ -34,6 +34,10 @@ function CultoDetail() {
   const palavras = useQuery({ queryKey: ["culto-palavras", id], queryFn: async () => (await supabase.from("palavras").select("*").eq("culto_id", id)).data ?? [] });
   const atend = useQuery({ queryKey: ["culto-atend", id], queryFn: async () => (await supabase.from("atendimentos").select("*").eq("culto_id", id)).data ?? [] });
   const vis = useQuery({ queryKey: ["culto-vis", id], queryFn: async () => (await supabase.from("visitantes").select("*").eq("culto_id", id)).data ?? [] });
+  const congs = useQuery({ queryKey: ["congs-list"], queryFn: async () => (await supabase.from("congregacoes").select("id, nome").order("nome")).data ?? [] });
+  const audit = useQuery({ queryKey: ["culto-audit", id], queryFn: async () => (await supabase.from("cultos_audit").select("*").eq("culto_id", id).order("changed_at", { ascending: false })).data ?? [] });
+  const [editOpen, setEditOpen] = useState(false);
+  const [histOpen, setHistOpen] = useState(false);
 
   const c = culto.data as any;
 
@@ -50,10 +54,32 @@ function CultoDetail() {
     <div className="space-y-6">
       <div>
         <Link to="/cultos" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="mr-1 h-4 w-4" />Voltar</Link>
-        <h2 className="mt-2 text-2xl font-bold tracking-tight">Culto de {formatDate(c.data)}</h2>
-        <p className="text-sm text-muted-foreground">
-          {TIPOS_REUNIAO[c.tipo]} {c.horario && `· ${c.horario.slice(0,5)}`} · {c.congregacao?.nome ?? c.cidade ?? "—"}
-        </p>
+        <div className="mt-2 flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Culto de {formatDate(c.data)}</h2>
+            <p className="text-sm text-muted-foreground">
+              {TIPOS_REUNIAO[c.tipo]} {c.horario && `· ${c.horario.slice(0,5)}`} · {c.congregacao?.nome ?? c.cidade ?? "—"}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {canEdit && (
+              <Dialog open={editOpen} onOpenChange={setEditOpen}>
+                <DialogTrigger asChild><Button size="sm" variant="outline"><Pencil className="mr-1 h-4 w-4" />Editar</Button></DialogTrigger>
+                <DialogContent>
+                  <DialogHeader><DialogTitle>Editar culto</DialogTitle></DialogHeader>
+                  <CultoEditForm culto={c} congs={congs.data ?? []} onSaved={() => { setEditOpen(false); qc.invalidateQueries({ queryKey: ["culto", id] }); qc.invalidateQueries({ queryKey: ["culto-audit", id] }); qc.invalidateQueries({ queryKey: ["cultos"] }); }} />
+                </DialogContent>
+              </Dialog>
+            )}
+            <Dialog open={histOpen} onOpenChange={setHistOpen}>
+              <DialogTrigger asChild><Button size="sm" variant="outline"><History className="mr-1 h-4 w-4" />Histórico</Button></DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader><DialogTitle>Histórico de alterações</DialogTitle></DialogHeader>
+                <AuditList items={audit.data ?? []} />
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
         {c.observacoes && <p className="mt-2 rounded-lg border border-border bg-muted/40 p-3 text-sm">{c.observacoes}</p>}
       </div>
 
@@ -266,5 +292,86 @@ function VisitanteForm({ cultoId, onSaved }: { cultoId: string; onSaved: () => v
       </div>
       <DialogFooter><Button type="submit">Salvar</Button></DialogFooter>
     </form>
+  );
+}
+
+function CultoEditForm({ culto, congs, onSaved }: { culto: any; congs: { id: string; nome: string }[]; onSaved: () => void }) {
+  const [data, setData] = useState(culto.data ?? "");
+  const [horario, setHorario] = useState((culto.horario ?? "").slice(0, 5));
+  const [tipo, setTipo] = useState(culto.tipo ?? "culto_oficial");
+  const [congId, setCongId] = useState(culto.congregacao_id ?? "");
+  const [obs, setObs] = useState(culto.observacoes ?? "");
+  const [saving, setSaving] = useState(false);
+  return (
+    <form onSubmit={async (e) => {
+      e.preventDefault();
+      setSaving(true);
+      const { error } = await supabase.from("cultos").update({
+        data,
+        horario: horario || null,
+        tipo: tipo as any,
+        congregacao_id: congId || null,
+        observacoes: obs || null,
+      }).eq("id", culto.id);
+      setSaving(false);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Culto atualizado"); onSaved();
+    }} className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div><Label>Data</Label><Input type="date" value={data} onChange={(e) => setData(e.target.value)} required /></div>
+        <div><Label>Horário</Label><Input type="time" value={horario} onChange={(e) => setHorario(e.target.value)} /></div>
+      </div>
+      <div><Label>Tipo</Label>
+        <Select value={tipo} onValueChange={setTipo}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>{Object.entries(TIPOS_REUNIAO).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <div><Label>Congregação</Label>
+        <Select value={congId} onValueChange={setCongId}>
+          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+          <SelectContent>{congs.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <div><Label>Observações</Label><Textarea value={obs} onChange={(e) => setObs(e.target.value)} /></div>
+      <DialogFooter><Button type="submit" disabled={saving}>{saving ? "Salvando..." : "Salvar alterações"}</Button></DialogFooter>
+    </form>
+  );
+}
+
+const FIELD_LABELS: Record<string, string> = {
+  data: "Data", horario: "Horário", tipo: "Tipo", congregacao_id: "Congregação",
+  cidade: "Cidade", participantes: "Participantes", observacoes: "Observações",
+};
+function formatVal(v: any): string {
+  if (v === null || v === undefined) return "—";
+  if (typeof v === "string") return v;
+  return JSON.stringify(v);
+}
+function AuditList({ items }: { items: any[] }) {
+  if (items.length === 0) return <p className="text-sm text-muted-foreground">Sem alterações registradas.</p>;
+  return (
+    <div className="max-h-[60vh] space-y-3 overflow-y-auto">
+      {items.map((a) => (
+        <div key={a.id} className="rounded-lg border border-border p-3 text-sm">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold capitalize">{a.action === "insert" ? "Criado" : a.action === "update" ? "Editado" : "Excluído"}</span>
+            <span className="text-xs text-muted-foreground">{new Date(a.changed_at).toLocaleString("pt-BR")}</span>
+          </div>
+          {a.action === "update" && a.changes && (
+            <ul className="mt-2 space-y-1 text-xs">
+              {Object.entries(a.changes as Record<string, { old: any; new: any }>).map(([k, diff]) => (
+                <li key={k}>
+                  <strong>{FIELD_LABELS[k] ?? k}:</strong>{" "}
+                  <span className="text-muted-foreground line-through">{formatVal(diff.old)}</span>
+                  {" → "}
+                  <span>{formatVal(diff.new)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }

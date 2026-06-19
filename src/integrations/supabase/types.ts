@@ -276,6 +276,42 @@ export type Database = {
           },
         ]
       }
+      cultos_audit: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string | null
+          changes: Json
+          culto_id: string
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          organization_id: string | null
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by?: string | null
+          changes?: Json
+          culto_id: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          organization_id?: string | null
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          changes?: Json
+          culto_id?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          organization_id?: string | null
+        }
+        Relationships: []
+      }
       cultos_inteligentes: {
         Row: {
           audio_mime: string | null
