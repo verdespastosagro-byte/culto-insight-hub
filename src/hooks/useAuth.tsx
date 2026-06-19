@@ -121,9 +121,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const isAdmin = roles.includes("admin");
-  const canEdit = isAdmin || roles.includes("encarregado") || roles.includes("cooperador");
   const isOwner = orgRole === "owner";
   const canManageOrg = orgRole === "owner" || orgRole === "admin";
+  const canEdit =
+    isAdmin ||
+    roles.includes("encarregado") ||
+    roles.includes("cooperador") ||
+    canManageOrg ||
+    orgRole === "editor";
   const plan: OrgPlan = organization?.plan ?? "free";
   const planStatus: OrgPlanStatus = organization?.plan_status ?? "trialing";
   const trialDaysLeft = organization?.trial_ends_at
