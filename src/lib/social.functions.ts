@@ -366,8 +366,10 @@ export type PostItem = {
   id: string;
   texto: string | null;
   foto_url: string | null;
+  audio_url: string | null;
   created_at: string;
 };
+
 
 export type PerfilPublico = {
   user_id: string;
