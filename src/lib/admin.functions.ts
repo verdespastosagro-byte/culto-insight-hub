@@ -69,7 +69,7 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
       if (error) throw error;
     }
     if (data.nome !== undefined || data.email !== undefined) {
-      const upd: Record<string, any> = {};
+      const upd: { nome?: string; email?: string } = {};
       if (data.nome !== undefined) upd.nome = data.nome;
       if (data.email !== undefined) upd.email = data.email;
       const { error } = await supabaseAdmin.from("profiles").update(upd).eq("id", data.userId);
