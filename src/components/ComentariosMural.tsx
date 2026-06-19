@@ -137,13 +137,26 @@ export function ComentariosSection({ alvoTipo, alvoId, titulo = "Comentários" }
         <ul className="space-y-3">
           {q.data.map((c) => (
             <li key={c.id} className="flex gap-3">
-              <Avatar className="h-8 w-8 shrink-0">
-                {c.autor_foto_url ? <AvatarImage src={c.autor_foto_url} alt={c.autor_nome} /> : null}
-                <AvatarFallback className="text-xs">{inicial(c.autor_nome)}</AvatarFallback>
-              </Avatar>
+              <Link
+                to="/perfil/$userId"
+                params={{ userId: c.user_id }}
+                className="shrink-0"
+                aria-label={`Ver perfil de ${c.autor_nome}`}
+              >
+                <Avatar className="h-8 w-8">
+                  {c.autor_foto_url ? <AvatarImage src={c.autor_foto_url} alt={c.autor_nome} /> : null}
+                  <AvatarFallback className="text-xs">{inicial(c.autor_nome)}</AvatarFallback>
+                </Avatar>
+              </Link>
               <div className="min-w-0 flex-1 rounded-md bg-muted/50 p-2">
                 <div className="mb-0.5 flex items-center justify-between gap-2">
-                  <p className="truncate text-xs font-medium">{c.autor_nome}</p>
+                  <Link
+                    to="/perfil/$userId"
+                    params={{ userId: c.user_id }}
+                    className="truncate text-xs font-medium hover:underline"
+                  >
+                    {c.autor_nome}
+                  </Link>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-muted-foreground">
                       {formatDistanceToNow(new Date(c.created_at), { addSuffix: true, locale: ptBR })}
