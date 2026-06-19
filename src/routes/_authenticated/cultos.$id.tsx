@@ -112,6 +112,15 @@ function CultoDetail() {
         onDelete={(rid) => del("atendimentos", rid, "culto-atend")}
         form={(close) => <AtendForm cultoId={id} onSaved={() => { close(); qc.invalidateQueries({ queryKey: ["culto-atend", id] }); }} />}
       />
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Comentários (visível para todo o sistema)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ComentariosSection alvoTipo="culto" alvoId={c.id} titulo="" />
+        </CardContent>
+      </Card>
     </div>
   );
 }
