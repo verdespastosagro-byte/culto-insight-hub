@@ -371,6 +371,17 @@ export type PostItem = {
 };
 
 
+export type MinhaComum = {
+  id: number;
+  nome: string;
+  endereco: string | null;
+  bairro: string | null;
+  cidade: string | null;
+  uf: string | null;
+  lat: number | null;
+  lng: number | null;
+};
+
 export type PerfilPublico = {
   user_id: string;
   nome: string;
@@ -384,7 +395,9 @@ export type PerfilPublico = {
   euSigo: boolean;
   congregacoes: CongregacaoVisitada[];
   posts: PostItem[];
+  minhaComum: MinhaComum | null;
 };
+
 
 export const getPerfilPublico = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
