@@ -84,20 +84,6 @@ function CultoDetail() {
       </div>
 
       <Section
-        title="Hinos chamados" icon={Music2} canEdit={canEdit}
-        empty="Nenhum hino registrado."
-        items={hinos.data ?? []}
-        renderItem={(h: any) => (
-          <>
-            <p className="font-semibold">Hino {h.numero} <span className="ml-2 text-xs font-normal text-muted-foreground">{MOMENTOS_HINO[h.momento]}</span></p>
-            {h.titulo && <p className="text-xs text-muted-foreground">{h.titulo}</p>}
-          </>
-        )}
-        onDelete={(rid) => del("hinos", rid, "culto-hinos")}
-        form={(close) => <HinoForm cultoId={id} onSaved={() => { close(); qc.invalidateQueries({ queryKey: ["culto-hinos", id] }); }} />}
-      />
-
-      <Section
         title="Palavra" icon={MessageSquareQuote} canEdit={canEdit}
         empty="Nenhuma palavra registrada."
         items={palavras.data ?? []}
@@ -126,20 +112,6 @@ function CultoDetail() {
         )}
         onDelete={(rid) => del("atendimentos", rid, "culto-atend")}
         form={(close) => <AtendForm cultoId={id} onSaved={() => { close(); qc.invalidateQueries({ queryKey: ["culto-atend", id] }); }} />}
-      />
-
-      <Section
-        title="Visitantes" icon={UserPlus} canEdit={canEdit}
-        empty="Nenhum visitante registrado."
-        items={vis.data ?? []}
-        renderItem={(v: any) => (
-          <>
-            <p className="font-semibold">{v.nome} <span className="ml-2 text-xs font-normal text-muted-foreground">{FUNCOES_VISITANTE[v.funcao]}</span></p>
-            <p className="text-xs text-muted-foreground">{[v.congregacao_origem, v.cidade].filter(Boolean).join(" · ")}</p>
-          </>
-        )}
-        onDelete={(rid) => del("visitantes", rid, "culto-vis")}
-        form={(close) => <VisitanteForm cultoId={id} onSaved={() => { close(); qc.invalidateQueries({ queryKey: ["culto-vis", id] }); }} />}
       />
     </div>
   );
