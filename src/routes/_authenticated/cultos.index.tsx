@@ -50,14 +50,12 @@ function CultosList() {
       data: String(fd.get("data")),
       horario: String(fd.get("horario") || "") || null,
       tipo: String(fd.get("tipo")),
-      congregacao_id: String(fd.get("congregacao_id") || "") || null,
-      cidade: String(fd.get("cidade") || "") || null,
-      participantes: Number(fd.get("participantes")) || null,
+      congregacao_id: congregacaoId || null,
       observacoes: String(fd.get("observacoes") || "") || null,
     };
     const { error } = await supabase.from("cultos").insert(payload);
     if (error) { toast.error(error.message); return; }
-    toast.success("Culto registrado"); setOpen(false);
+    toast.success("Culto registrado"); setOpen(false); setCongregacaoId("");
     qc.invalidateQueries({ queryKey: ["cultos"] });
   }
 
