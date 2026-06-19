@@ -210,35 +210,6 @@ function AtendForm({ cultoId, onSaved }: { cultoId: string; onSaved: () => void 
   );
 }
 
-function VisitanteForm({ cultoId, onSaved }: { cultoId: string; onSaved: () => void }) {
-  return (
-    <form onSubmit={async (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.currentTarget);
-      const { error } = await supabase.from("visitantes").insert({
-        culto_id: cultoId,
-        nome: String(fd.get("nome")).trim(),
-        funcao: String(fd.get("funcao")) as any,
-        congregacao_origem: String(fd.get("cong") || "") || null,
-        cidade: String(fd.get("cidade") || "") || null,
-      });
-      if (error) toast.error(error.message); else { toast.success("Salvo"); onSaved(); }
-    }} className="space-y-3">
-      <div><Label>Nome</Label><Input name="nome" required /></div>
-      <div><Label>Função</Label>
-        <Select name="funcao" defaultValue="irmao">
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>{Object.entries(FUNCOES_VISITANTE).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-        </Select>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div><Label>Congregação</Label><Input name="cong" /></div>
-        <div><Label>Cidade</Label><Input name="cidade" /></div>
-      </div>
-      <DialogFooter><Button type="submit">Salvar</Button></DialogFooter>
-    </form>
-  );
-}
 
 function CultoEditForm({ culto, congs, onSaved }: { culto: any; congs: { id: string; nome: string }[]; onSaved: () => void }) {
   const [data, setData] = useState(culto.data ?? "");
