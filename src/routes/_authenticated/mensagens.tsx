@@ -82,6 +82,16 @@ function MensagensLayout() {
           <h1 className="text-lg font-bold tracking-tight">Mensagens</h1>
         </div>
 
+        <div className="relative mb-2">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Procurar seguidor…"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            className="h-9 rounded-lg pl-9 text-sm"
+          />
+        </div>
+
         <div className="mb-2 grid grid-cols-2 gap-1 rounded-lg glass p-1 text-xs font-medium">
           <button
             onClick={() => setTab("conversas")}
@@ -109,7 +119,40 @@ function MensagensLayout() {
         </div>
 
         <Card className="min-h-0 flex-1 overflow-y-auto p-1">
-          {q.isLoading ? (
+          {showSearchResults ? (
+            searchQ.isLoading ? (
+              <p className="p-4 text-sm text-muted-foreground">Buscando…</p>
+            ) : (searchQ.data ?? []).length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-sm text-muted-foreground">
+                <Search className="h-8 w-8 opacity-40" />
+                Nenhum seguidor encontrado.
+              </div>
+            ) : (
+              <ul className="flex flex-col">
+                {(searchQ.data ?? []).map((p) => (
+                  <li key={p.id}>
+                    <Link
+                      to="/mensagens/$userId"
+                      params={{ userId: p.id }}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-accent/60"
+                      activeProps={{ className: "bg-accent" }}
+                    >
+                      <Avatar className="h-10 w-10 shrink-0">
+                        {p.foto_url ? <AvatarImage src={p.foto_url} /> : null}
+                        <AvatarFallback>{p.nome?.[0]?.toUpperCase() ?? "?"}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{p.nome ?? "Usuário"}</p>
+                        <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+                          <UserPlus className="h-3 w-3" /> Toque para conversar
+                        </p>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )
+          ) : q.isLoading ? (
             <p className="p-4 text-sm text-muted-foreground">Carregando…</p>
           ) : list.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-sm text-muted-foreground">
