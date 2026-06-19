@@ -476,6 +476,24 @@ function CongregacoesPage() {
                   </div>
                 </div>
 
+                {!editing && (() => {
+                  const dup = findDuplicada(data ?? [], { nome, cidade, endereco });
+                  if (!dup) return null;
+                  const s = statsPorCong.get(dup.id);
+                  return (
+                    <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
+                      <p className="font-semibold text-amber-700 dark:text-amber-300">
+                        Essa congregação já está cadastrada.
+                      </p>
+                      <p className="mt-1 text-amber-700/90 dark:text-amber-200/90">
+                        <strong>{dup.nome}</strong>{dup.cidade ? ` — ${dup.cidade}/${dup.estado ?? ""}` : ""}
+                        {s ? ` • ${s.total} visita${s.total === 1 ? "" : "s"}` : ""}.
+                        Ao salvar, só vou registrar uma nova visita (sem duplicar).
+                      </p>
+                    </div>
+                  );
+                })()}
+
                 <div><Label>Nome</Label><Input value={nome} onChange={(e) => setNome(e.target.value)} required /></div>
                 <div><Label>Região / Bairro</Label><Input value={regiao} onChange={(e) => setRegiao(e.target.value)} /></div>
                 <div><Label>Endereço</Label><Input value={endereco} onChange={(e) => setEndereco(e.target.value)} /></div>
