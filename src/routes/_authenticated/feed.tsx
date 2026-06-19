@@ -122,7 +122,6 @@ function FeedPage() {
       <Card className="p-4">
         <div className="flex gap-3">
           <Avatar className="h-10 w-10 shrink-0">
-            {profile?.foto_url ? <AvatarImage src={profile.foto_url} alt={profile.nome} /> : null}
             <AvatarFallback>{inicial(profile?.nome)}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
