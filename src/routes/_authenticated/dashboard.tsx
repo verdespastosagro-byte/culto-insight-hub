@@ -142,9 +142,8 @@ function Dashboard() {
       <div className="space-y-6">
         <InstallPWA className="mb-2" />
 
-        {/* Barra do Dashboard */}
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-lg font-semibold">Dashboard</h1>
+        {/* Seletor de fundo animado */}
+        <div className="flex items-center justify-center gap-2">
           <div className="flex items-center gap-2">
             {EFEITO_OPCOES.map((op) => {
               const ativo = efeito === op.value;
