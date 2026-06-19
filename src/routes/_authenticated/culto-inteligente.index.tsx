@@ -362,77 +362,9 @@ function CultoInteligentePage() {
               </Field>
               <Field label="Cidade"><Input value={fCidade} onChange={(e) => setFCidade(e.target.value)} /></Field>
               <Field label="Participantes"><Input type="number" value={fParticipantes} onChange={(e) => setFParticipantes(e.target.value)} /></Field>
-              <Field label="Observações" full>
-                <Textarea rows={2} value={fObservacoes} onChange={(e) => setFObservacoes(e.target.value)} />
+              <Field label="Resumo do culto (inclui hinos, pregador, atendimentos e visitantes)" full>
+                <Textarea rows={14} value={fObservacoes} onChange={(e) => setFObservacoes(e.target.value)} />
               </Field>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Hinos chamados</CardTitle></CardHeader>
-            <CardContent className="space-y-2">
-              {fHinos.map((h, i) => (
-                <div key={i} className="flex gap-2">
-                  <Input className="w-28" type="number" placeholder="Nº" value={h.numero}
-                    onChange={(e) => setFHinos((arr) => arr.map((x, j) => j === i ? { ...x, numero: e.target.value } : x))} />
-                  <Input placeholder="Momento (entrada/encerramento...)" value={h.momento}
-                    onChange={(e) => setFHinos((arr) => arr.map((x, j) => j === i ? { ...x, momento: e.target.value } : x))} />
-                  <Button variant="ghost" size="icon" onClick={() => setFHinos((arr) => arr.filter((_, j) => j !== i))}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              <Button variant="outline" size="sm" onClick={() => setFHinos((a) => [...a, { numero: "", momento: "outro" }])}>
-                <Plus className="mr-1 h-4 w-4" />Adicionar hino
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Palavra</CardTitle></CardHeader>
-            <CardContent className="grid gap-3 md:grid-cols-2">
-              <Field label="Pregador"><Input value={fPalavra.nome_irmao} onChange={(e) => setFPalavra({ ...fPalavra, nome_irmao: e.target.value })} /></Field>
-              <Field label="Cargo"><Input value={fPalavra.cargo} onChange={(e) => setFPalavra({ ...fPalavra, cargo: e.target.value })} /></Field>
-              <Field label="Congregação origem"><Input value={fPalavra.congregacao_origem} onChange={(e) => setFPalavra({ ...fPalavra, congregacao_origem: e.target.value })} /></Field>
-              <Field label="Cidade origem"><Input value={fPalavra.cidade_origem} onChange={(e) => setFPalavra({ ...fPalavra, cidade_origem: e.target.value })} /></Field>
-              <Field label="Texto bíblico" full><Input value={fPalavra.texto_biblico} onChange={(e) => setFPalavra({ ...fPalavra, texto_biblico: e.target.value })} /></Field>
-              <Field label="Tema" full><Input value={fPalavra.tema} onChange={(e) => setFPalavra({ ...fPalavra, tema: e.target.value })} /></Field>
-              <Field label="Resumo" full><Textarea rows={4} value={fPalavra.resumo} onChange={(e) => setFPalavra({ ...fPalavra, resumo: e.target.value })} /></Field>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Atendimentos</CardTitle></CardHeader>
-            <CardContent className="space-y-2">
-              {fAtend.map((a, i) => (
-                <div key={i} className="grid gap-2 md:grid-cols-[1fr_1fr_1fr_1fr_auto]">
-                  <Input placeholder="Nome" value={a.nome} onChange={(e) => setFAtend((arr) => arr.map((x, j) => j === i ? { ...x, nome: e.target.value } : x))} />
-                  <Input placeholder="Cargo" value={a.cargo} onChange={(e) => setFAtend((arr) => arr.map((x, j) => j === i ? { ...x, cargo: e.target.value } : x))} />
-                  <Input placeholder="Congregação" value={a.congregacao_origem} onChange={(e) => setFAtend((arr) => arr.map((x, j) => j === i ? { ...x, congregacao_origem: e.target.value } : x))} />
-                  <Input placeholder="Cidade" value={a.cidade_origem} onChange={(e) => setFAtend((arr) => arr.map((x, j) => j === i ? { ...x, cidade_origem: e.target.value } : x))} />
-                  <Button variant="ghost" size="icon" onClick={() => setFAtend((arr) => arr.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
-                </div>
-              ))}
-              <Button variant="outline" size="sm" onClick={() => setFAtend((a) => [...a, { nome: "", cargo: "", congregacao_origem: "", cidade_origem: "" }])}>
-                <Plus className="mr-1 h-4 w-4" />Adicionar atendimento
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Visitantes</CardTitle></CardHeader>
-            <CardContent className="space-y-2">
-              {fVisit.map((v, i) => (
-                <div key={i} className="grid gap-2 md:grid-cols-[1fr_1fr_1fr_auto]">
-                  <Input placeholder="Nome" value={v.nome} onChange={(e) => setFVisit((arr) => arr.map((x, j) => j === i ? { ...x, nome: e.target.value } : x))} />
-                  <Input placeholder="Congregação" value={v.congregacao_origem} onChange={(e) => setFVisit((arr) => arr.map((x, j) => j === i ? { ...x, congregacao_origem: e.target.value } : x))} />
-                  <Input placeholder="Cidade" value={v.cidade_origem} onChange={(e) => setFVisit((arr) => arr.map((x, j) => j === i ? { ...x, cidade_origem: e.target.value } : x))} />
-                  <Button variant="ghost" size="icon" onClick={() => setFVisit((arr) => arr.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
-                </div>
-              ))}
-              <Button variant="outline" size="sm" onClick={() => setFVisit((a) => [...a, { nome: "", congregacao_origem: "", cidade_origem: "" }])}>
-                <Plus className="mr-1 h-4 w-4" />Adicionar visitante
-              </Button>
             </CardContent>
           </Card>
 
