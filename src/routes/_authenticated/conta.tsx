@@ -500,18 +500,10 @@ function ContaPage() {
               </Button>
             </div>
           </div>
-
-            </div>
-            <StatusLine status={profileStatus} />
-            <div className="flex justify-end">
-              <Button type="submit" disabled={savingProfile}>
-                {savingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Salvar alterações
-              </Button>
-            </div>
-          </form>
         </CardContent>
       </Card>
+
+
 
       {/* Privacidade */}
       <Card>
