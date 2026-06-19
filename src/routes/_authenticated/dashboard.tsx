@@ -36,11 +36,15 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
 });
 
-const EFEITO_OPCOES: { value: EfeitoFundo; label: string }[] = [
-  { value: "nenhum", label: "Nenhum" },
-  { value: "chuva", label: "Chuva" },
-  { value: "chuva_raio", label: "Chuva com raios" },
-  { value: "neve", label: "Neve" },
+const EFEITO_OPCOES: {
+  value: EfeitoFundo;
+  label: string;
+  icon: React.ElementType;
+}[] = [
+  { value: "nenhum", label: "Nenhum", icon: Sun },
+  { value: "chuva", label: "Chuva", icon: CloudRain },
+  { value: "chuva_raio", label: "Raios", icon: CloudLightning },
+  { value: "neve", label: "Neve", icon: Snowflake },
 ];
 
 function isEfeito(v: unknown): v is EfeitoFundo {
