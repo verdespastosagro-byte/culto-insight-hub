@@ -25,6 +25,8 @@ import {
 } from "@/lib/social.functions";
 import { ComentariosSection } from "@/components/ComentariosMural";
 import { toast } from "sonner";
+import { primeirosDoisNomes } from "@/lib/utils";
+
 
 const MAX_LEN = 2000;
 const MAX_FOTO_MB = 5;
