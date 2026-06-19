@@ -1011,6 +1011,10 @@ export type Database = {
         Returns: number
       }
       current_user_org_id: { Args: never; Returns: string }
+      dono_do_alvo_eh_publico: {
+        Args: { p_alvo_id: string; p_tipo: string }
+        Returns: boolean
+      }
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
       has_org_role: {
         Args: {
