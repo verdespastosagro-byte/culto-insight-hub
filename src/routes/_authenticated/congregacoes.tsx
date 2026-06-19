@@ -26,6 +26,29 @@ type Cong = { id: string; nome: string; cidade: string|null; estado: string|null
 type CultoRow = { id: string; data: string; tipo: string; congregacao_id: string | null };
 type Filtro = "todas" | "hoje" | "semana" | "rjm";
 
+function norm(s: string | null | undefined) {
+  return (s ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function findDuplicada(
+  existentes: Cong[],
+  p: { nome: string; cidade: string | null; endereco: string | null },
+) {
+  const enderecoN = norm(p.endereco);
+  const nomeN = norm(p.nome);
+  const cidadeN = norm(p.cidade);
+  return existentes.find((c) => {
+    if (enderecoN && norm(c.endereco) === enderecoN) return true;
+    if (nomeN && norm(c.nome) === nomeN && cidadeN && norm(c.cidade) === cidadeN) return true;
+    return false;
+  });
+}
+
 function CongregacoesPage() {
   const qc = useQueryClient();
   const { canEdit, isAdmin } = useAuth();
@@ -234,20 +257,30 @@ function CongregacoesPage() {
 
     if (!editing) {
       // Dedupe: procura uma congregação existente pelo mesmo endereço (ou nome+cidade)
-      const existentes = data ?? [];
-      const igual = existentes.find((c) => {
-        if (payload.endereco && c.endereco && c.endereco.trim().toLowerCase() === payload.endereco.toLowerCase()) return true;
-        const mesmoNome = c.nome.trim().toLowerCase() === payload.nome.toLowerCase();
-        const mesmaCidade = (c.cidade ?? "").trim().toLowerCase() === (payload.cidade ?? "").toLowerCase();
-        return mesmoNome && mesmaCidade;
-      });
+      const igual = findDuplicada(data ?? [], payload);
       if (igual) {
         congId = igual.id;
-        toast.info("Congregação já cadastrada — vou apenas registrar sua visita.");
+        toast.info(`"${igual.nome}" já está cadastrada — vou apenas registrar sua visita.`);
       } else {
         const { data: ins, error } = await supabase.from("congregacoes").insert(payload).select("id").single();
-        if (error) { toast.error(error.message); return; }
-        congId = ins!.id as string;
+        if (error) {
+          // Caso o índice único do banco rejeite, faz fallback usando a duplicada
+          if (/duplicate|unique/i.test(error.message)) {
+            toast.info("Essa congregação já existe — registrando sua visita.");
+            const { data: existe } = await supabase
+              .from("congregacoes")
+              .select("id,nome")
+              .ilike("endereco", payload.endereco ?? "")
+              .limit(1)
+              .maybeSingle();
+            if (existe?.id) congId = existe.id;
+            else { toast.error(error.message); return; }
+          } else {
+            toast.error(error.message); return;
+          }
+        } else {
+          congId = ins!.id as string;
+        }
       }
     } else {
       const { error } = await supabase.from("congregacoes").update(payload).eq("id", editing.id);
@@ -442,6 +475,24 @@ function CongregacoesPage() {
                     )}
                   </div>
                 </div>
+
+                {!editing && (() => {
+                  const dup = findDuplicada(data ?? [], { nome, cidade, endereco });
+                  if (!dup) return null;
+                  const s = statsPorCong.get(dup.id);
+                  return (
+                    <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
+                      <p className="font-semibold text-amber-700 dark:text-amber-300">
+                        Essa congregação já está cadastrada.
+                      </p>
+                      <p className="mt-1 text-amber-700/90 dark:text-amber-200/90">
+                        <strong>{dup.nome}</strong>{dup.cidade ? ` — ${dup.cidade}/${dup.estado ?? ""}` : ""}
+                        {s ? ` • ${s.total} visita${s.total === 1 ? "" : "s"}` : ""}.
+                        Ao salvar, só vou registrar uma nova visita (sem duplicar).
+                      </p>
+                    </div>
+                  );
+                })()}
 
                 <div><Label>Nome</Label><Input value={nome} onChange={(e) => setNome(e.target.value)} required /></div>
                 <div><Label>Região / Bairro</Label><Input value={regiao} onChange={(e) => setRegiao(e.target.value)} /></div>
