@@ -71,7 +71,7 @@ function Dashboard() {
         <p className="text-sm text-muted-foreground">Resumo do sistema de gestão de cultos.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {cards.map((c) => (
           <Card key={c.label} className="shadow-[var(--shadow-card)]">
             <CardContent className="p-4">
