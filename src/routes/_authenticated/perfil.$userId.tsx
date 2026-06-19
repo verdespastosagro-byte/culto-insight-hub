@@ -13,6 +13,7 @@ import {
   UserCheck,
   Building2,
   Image as ImageIcon,
+  MessageCircle,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -119,22 +120,29 @@ function PerfilPublicoPage() {
             </div>
           </div>
           {!ehProprio && (
-            <Button
-              onClick={() => mSeguir.mutate(!perfil.euSigo)}
-              disabled={mSeguir.isPending}
-              variant={perfil.euSigo ? "outline" : "default"}
-              size="sm"
-              className="gap-2"
-            >
-              {mSeguir.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : perfil.euSigo ? (
-                <UserCheck className="h-4 w-4" />
-              ) : (
-                <UserPlus className="h-4 w-4" />
-              )}
-              {perfil.euSigo ? "Seguindo" : "Seguir"}
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                onClick={() => mSeguir.mutate(!perfil.euSigo)}
+                disabled={mSeguir.isPending}
+                variant={perfil.euSigo ? "outline" : "default"}
+                size="sm"
+                className="gap-2"
+              >
+                {mSeguir.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : perfil.euSigo ? (
+                  <UserCheck className="h-4 w-4" />
+                ) : (
+                  <UserPlus className="h-4 w-4" />
+                )}
+                {perfil.euSigo ? "Seguindo" : "Seguir"}
+              </Button>
+              <Button asChild size="sm" variant="outline" className="gap-2">
+                <Link to="/mensagens/$userId" params={{ userId: perfil.user_id }}>
+                  <MessageCircle className="h-4 w-4" /> Mensagem
+                </Link>
+              </Button>
+            </div>
           )}
         </div>
       </Card>

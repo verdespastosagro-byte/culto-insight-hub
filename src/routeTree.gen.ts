@@ -19,6 +19,7 @@ import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authentic
 import { Route as AuthenticatedPalavrasRouteImport } from './routes/_authenticated/palavras'
 import { Route as AuthenticatedMusicosRouteImport } from './routes/_authenticated/musicos'
 import { Route as AuthenticatedMinhasCongregacoesRouteImport } from './routes/_authenticated/minhas-congregacoes'
+import { Route as AuthenticatedMensagensRouteImport } from './routes/_authenticated/mensagens'
 import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -31,6 +32,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedCultosIndexRouteImport } from './routes/_authenticated/cultos.index'
 import { Route as AuthenticatedCultoInteligenteIndexRouteImport } from './routes/_authenticated/culto-inteligente.index'
 import { Route as AuthenticatedPerfilUserIdRouteImport } from './routes/_authenticated/perfil.$userId'
+import { Route as AuthenticatedMensagensUserIdRouteImport } from './routes/_authenticated/mensagens.$userId'
 import { Route as AuthenticatedCultosIdRouteImport } from './routes/_authenticated/cultos.$id'
 import { Route as AuthenticatedCultoInteligenteHistoricoRouteImport } from './routes/_authenticated/culto-inteligente.historico'
 import { Route as AuthenticatedComumCongregacaoCcbIdRouteImport } from './routes/_authenticated/comum.$congregacaoCcbId'
@@ -86,6 +88,11 @@ const AuthenticatedMinhasCongregacoesRoute =
     path: '/minhas-congregacoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMensagensRoute = AuthenticatedMensagensRouteImport.update({
+  id: '/mensagens',
+  path: '/mensagens',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
   id: '/insights',
   path: '/insights',
@@ -152,6 +159,12 @@ const AuthenticatedPerfilUserIdRoute =
     path: '/perfil/$userId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMensagensUserIdRoute =
+  AuthenticatedMensagensUserIdRouteImport.update({
+    id: '/$userId',
+    path: '/$userId',
+    getParentRoute: () => AuthenticatedMensagensRoute,
+  } as any)
 const AuthenticatedCultosIdRoute = AuthenticatedCultosIdRouteImport.update({
   id: '/cultos/$id',
   path: '/cultos/$id',
@@ -191,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/insights': typeof AuthenticatedInsightsRoute
+  '/mensagens': typeof AuthenticatedMensagensRouteWithChildren
   '/minhas-congregacoes': typeof AuthenticatedMinhasCongregacoesRoute
   '/musicos': typeof AuthenticatedMusicosRoute
   '/palavras': typeof AuthenticatedPalavrasRoute
@@ -199,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/comum/$congregacaoCcbId': typeof AuthenticatedComumCongregacaoCcbIdRoute
   '/culto-inteligente/historico': typeof AuthenticatedCultoInteligenteHistoricoRoute
   '/cultos/$id': typeof AuthenticatedCultosIdRoute
+  '/mensagens/$userId': typeof AuthenticatedMensagensUserIdRoute
   '/perfil/$userId': typeof AuthenticatedPerfilUserIdRoute
   '/culto-inteligente/': typeof AuthenticatedCultoInteligenteIndexRoute
   '/cultos/': typeof AuthenticatedCultosIndexRoute
@@ -218,6 +233,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/insights': typeof AuthenticatedInsightsRoute
+  '/mensagens': typeof AuthenticatedMensagensRouteWithChildren
   '/minhas-congregacoes': typeof AuthenticatedMinhasCongregacoesRoute
   '/musicos': typeof AuthenticatedMusicosRoute
   '/palavras': typeof AuthenticatedPalavrasRoute
@@ -226,6 +242,7 @@ export interface FileRoutesByTo {
   '/comum/$congregacaoCcbId': typeof AuthenticatedComumCongregacaoCcbIdRoute
   '/culto-inteligente/historico': typeof AuthenticatedCultoInteligenteHistoricoRoute
   '/cultos/$id': typeof AuthenticatedCultosIdRoute
+  '/mensagens/$userId': typeof AuthenticatedMensagensUserIdRoute
   '/perfil/$userId': typeof AuthenticatedPerfilUserIdRoute
   '/culto-inteligente': typeof AuthenticatedCultoInteligenteIndexRoute
   '/cultos': typeof AuthenticatedCultosIndexRoute
@@ -247,6 +264,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/insights': typeof AuthenticatedInsightsRoute
+  '/_authenticated/mensagens': typeof AuthenticatedMensagensRouteWithChildren
   '/_authenticated/minhas-congregacoes': typeof AuthenticatedMinhasCongregacoesRoute
   '/_authenticated/musicos': typeof AuthenticatedMusicosRoute
   '/_authenticated/palavras': typeof AuthenticatedPalavrasRoute
@@ -255,6 +273,7 @@ export interface FileRoutesById {
   '/_authenticated/comum/$congregacaoCcbId': typeof AuthenticatedComumCongregacaoCcbIdRoute
   '/_authenticated/culto-inteligente/historico': typeof AuthenticatedCultoInteligenteHistoricoRoute
   '/_authenticated/cultos/$id': typeof AuthenticatedCultosIdRoute
+  '/_authenticated/mensagens/$userId': typeof AuthenticatedMensagensUserIdRoute
   '/_authenticated/perfil/$userId': typeof AuthenticatedPerfilUserIdRoute
   '/_authenticated/culto-inteligente/': typeof AuthenticatedCultoInteligenteIndexRoute
   '/_authenticated/cultos/': typeof AuthenticatedCultosIndexRoute
@@ -276,6 +295,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/feed'
     | '/insights'
+    | '/mensagens'
     | '/minhas-congregacoes'
     | '/musicos'
     | '/palavras'
@@ -284,6 +304,7 @@ export interface FileRouteTypes {
     | '/comum/$congregacaoCcbId'
     | '/culto-inteligente/historico'
     | '/cultos/$id'
+    | '/mensagens/$userId'
     | '/perfil/$userId'
     | '/culto-inteligente/'
     | '/cultos/'
@@ -303,6 +324,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/feed'
     | '/insights'
+    | '/mensagens'
     | '/minhas-congregacoes'
     | '/musicos'
     | '/palavras'
@@ -311,6 +333,7 @@ export interface FileRouteTypes {
     | '/comum/$congregacaoCcbId'
     | '/culto-inteligente/historico'
     | '/cultos/$id'
+    | '/mensagens/$userId'
     | '/perfil/$userId'
     | '/culto-inteligente'
     | '/cultos'
@@ -331,6 +354,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/feed'
     | '/_authenticated/insights'
+    | '/_authenticated/mensagens'
     | '/_authenticated/minhas-congregacoes'
     | '/_authenticated/musicos'
     | '/_authenticated/palavras'
@@ -339,6 +363,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comum/$congregacaoCcbId'
     | '/_authenticated/culto-inteligente/historico'
     | '/_authenticated/cultos/$id'
+    | '/_authenticated/mensagens/$userId'
     | '/_authenticated/perfil/$userId'
     | '/_authenticated/culto-inteligente/'
     | '/_authenticated/cultos/'
@@ -425,6 +450,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMinhasCongregacoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/mensagens': {
+      id: '/_authenticated/mensagens'
+      path: '/mensagens'
+      fullPath: '/mensagens'
+      preLoaderRoute: typeof AuthenticatedMensagensRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/insights': {
       id: '/_authenticated/insights'
       path: '/insights'
@@ -509,6 +541,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPerfilUserIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/mensagens/$userId': {
+      id: '/_authenticated/mensagens/$userId'
+      path: '/$userId'
+      fullPath: '/mensagens/$userId'
+      preLoaderRoute: typeof AuthenticatedMensagensUserIdRouteImport
+      parentRoute: typeof AuthenticatedMensagensRoute
+    }
     '/_authenticated/cultos/$id': {
       id: '/_authenticated/cultos/$id'
       path: '/cultos/$id'
@@ -540,6 +579,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedMensagensRouteChildren {
+  AuthenticatedMensagensUserIdRoute: typeof AuthenticatedMensagensUserIdRoute
+}
+
+const AuthenticatedMensagensRouteChildren: AuthenticatedMensagensRouteChildren =
+  {
+    AuthenticatedMensagensUserIdRoute: AuthenticatedMensagensUserIdRoute,
+  }
+
+const AuthenticatedMensagensRouteWithChildren =
+  AuthenticatedMensagensRoute._addFileChildren(
+    AuthenticatedMensagensRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAgendaRoute: typeof AuthenticatedAgendaRoute
@@ -550,6 +603,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
   AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
+  AuthenticatedMensagensRoute: typeof AuthenticatedMensagensRouteWithChildren
   AuthenticatedMinhasCongregacoesRoute: typeof AuthenticatedMinhasCongregacoesRoute
   AuthenticatedMusicosRoute: typeof AuthenticatedMusicosRoute
   AuthenticatedPalavrasRoute: typeof AuthenticatedPalavrasRoute
@@ -573,6 +627,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
   AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,
+  AuthenticatedMensagensRoute: AuthenticatedMensagensRouteWithChildren,
   AuthenticatedMinhasCongregacoesRoute: AuthenticatedMinhasCongregacoesRoute,
   AuthenticatedMusicosRoute: AuthenticatedMusicosRoute,
   AuthenticatedPalavrasRoute: AuthenticatedPalavrasRoute,

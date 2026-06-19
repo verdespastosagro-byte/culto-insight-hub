@@ -2,7 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { type ReactNode, useState } from "react";
 import {
   LayoutDashboard, Building2, BookOpen, Music2, MessageSquareQuote,
-  UserPlus, Calendar, BarChart3, Sparkles, LogOut, Menu, X, Radio, AlertTriangle, UserCircle, MapPin, ShieldAlert, CheckCircle2, Newspaper,
+  UserPlus, Calendar, BarChart3, Sparkles, LogOut, Menu, X, Radio, AlertTriangle, UserCircle, MapPin, ShieldAlert, CheckCircle2, Newspaper, MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,6 +29,7 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/ccb-perto-de-mim", label: "CCB perto de mim", icon: MapPin },
       { to: "/minhas-congregacoes", label: "Minhas congregações", icon: CheckCircle2 },
       { to: "/feed", label: "Feed", icon: Newspaper },
+      { to: "/mensagens", label: "Mensagens", icon: MessageCircle },
     ],
   },
   {
