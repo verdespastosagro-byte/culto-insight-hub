@@ -528,11 +528,13 @@ export type FeedPostItem = {
   user_id: string;
   texto: string | null;
   foto_url: string | null;
+  audio_url: string | null;
   created_at: string;
   autor_nome: string;
   autor_foto_url: string | null;
   is_own: boolean;
 };
+
 
 export const listarFeed = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
