@@ -1,20 +1,27 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
 } from "recharts";
-import { BookOpen, Building2, MessageSquareQuote, HandHelping, Music2, TrendingUp } from "lucide-react";
+import { BookOpen, Building2, MessageSquareQuote, HandHelping, Music2, TrendingUp, Newspaper, ArrowRight } from "lucide-react";
 import { InstallPWA } from "@/components/InstallPWA";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { formatDate, TIPOS_REUNIAO } from "@/lib/constants";
+import { listarFeed } from "@/lib/social.functions";
+import { primeirosDoisNomes } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
 });
 
 const COLORS = ["hsl(210 90% 56%)", "hsl(180 70% 50%)", "hsl(155 60% 50%)", "hsl(40 90% 60%)", "hsl(280 65% 60%)"];
+
 
 function Dashboard() {
   const stats = useQuery({
