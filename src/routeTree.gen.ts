@@ -27,6 +27,7 @@ import { Route as AuthenticatedCongregacoesRouteImport } from './routes/_authent
 import { Route as AuthenticatedCcbPertoDeMimRouteImport } from './routes/_authenticated/ccb-perto-de-mim'
 import { Route as AuthenticatedAtendimentosRouteImport } from './routes/_authenticated/atendimentos'
 import { Route as AuthenticatedAgendaRouteImport } from './routes/_authenticated/agenda'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedCultosIndexRouteImport } from './routes/_authenticated/cultos.index'
 import { Route as AuthenticatedCultoInteligenteIndexRouteImport } from './routes/_authenticated/culto-inteligente.index'
 import { Route as AuthenticatedCultosIdRouteImport } from './routes/_authenticated/cultos.$id'
@@ -124,6 +125,11 @@ const AuthenticatedAgendaRoute = AuthenticatedAgendaRouteImport.update({
   path: '/agenda',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCultosIndexRoute =
   AuthenticatedCultosIndexRouteImport.update({
     id: '/cultos/',
@@ -154,6 +160,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/agenda': typeof AuthenticatedAgendaRoute
   '/atendimentos': typeof AuthenticatedAtendimentosRoute
   '/ccb-perto-de-mim': typeof AuthenticatedCcbPertoDeMimRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/agenda': typeof AuthenticatedAgendaRoute
   '/atendimentos': typeof AuthenticatedAtendimentosRoute
   '/ccb-perto-de-mim': typeof AuthenticatedCcbPertoDeMimRoute
@@ -202,6 +210,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/agenda': typeof AuthenticatedAgendaRoute
   '/_authenticated/atendimentos': typeof AuthenticatedAtendimentosRoute
   '/_authenticated/ccb-perto-de-mim': typeof AuthenticatedCcbPertoDeMimRoute
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/pricing'
     | '/reset-password'
+    | '/admin'
     | '/agenda'
     | '/atendimentos'
     | '/ccb-perto-de-mim'
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/pricing'
     | '/reset-password'
+    | '/admin'
     | '/agenda'
     | '/atendimentos'
     | '/ccb-perto-de-mim'
@@ -274,6 +285,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/pricing'
     | '/reset-password'
+    | '/_authenticated/admin'
     | '/_authenticated/agenda'
     | '/_authenticated/atendimentos'
     | '/_authenticated/ccb-perto-de-mim'
@@ -429,6 +441,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAgendaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/cultos/': {
       id: '/_authenticated/cultos/'
       path: '/cultos'
@@ -461,6 +480,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAgendaRoute: typeof AuthenticatedAgendaRoute
   AuthenticatedAtendimentosRoute: typeof AuthenticatedAtendimentosRoute
   AuthenticatedCcbPertoDeMimRoute: typeof AuthenticatedCcbPertoDeMimRoute
@@ -480,6 +500,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAgendaRoute: AuthenticatedAgendaRoute,
   AuthenticatedAtendimentosRoute: AuthenticatedAtendimentosRoute,
   AuthenticatedCcbPertoDeMimRoute: AuthenticatedCcbPertoDeMimRoute,
