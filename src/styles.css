@@ -44,95 +44,152 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Inter Tight", "SF Pro Display", -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui, sans-serif;
 }
 
+/* ============================================================
+   Liquid Titanium — Apple iOS 26 inspired premium design system
+   Polished metal • oil-paint reflections • iridescent highlights
+   ============================================================ */
 :root {
-  --radius: 0.75rem;
+  --radius: 1.25rem;
 
-  --background: oklch(0.99 0.005 240);
-  --foreground: oklch(0.18 0.04 250);
+  /* Light "polished titanium" surface */
+  --background: oklch(0.975 0.004 250);
+  --foreground: oklch(0.18 0.02 260);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.04 250);
+  --card-foreground: oklch(0.18 0.02 260);
 
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.04 250);
+  --popover: oklch(0.99 0.003 250);
+  --popover-foreground: oklch(0.18 0.02 260);
 
-  --primary: oklch(0.62 0.18 230);
-  --primary-foreground: oklch(0.99 0 0);
-  --primary-glow: oklch(0.72 0.16 220);
+  /* Deep blue / graphite primary */
+  --primary: oklch(0.32 0.06 260);
+  --primary-foreground: oklch(0.985 0.003 250);
+  --primary-glow: oklch(0.62 0.12 250);
 
-  --secondary: oklch(0.96 0.012 240);
-  --secondary-foreground: oklch(0.22 0.04 250);
+  --secondary: oklch(0.955 0.006 250);
+  --secondary-foreground: oklch(0.22 0.03 260);
 
-  --muted: oklch(0.965 0.008 240);
-  --muted-foreground: oklch(0.5 0.02 250);
+  --muted: oklch(0.96 0.005 250);
+  --muted-foreground: oklch(0.5 0.015 260);
 
-  --accent: oklch(0.94 0.04 220);
-  --accent-foreground: oklch(0.25 0.08 240);
+  --accent: oklch(0.93 0.02 260);
+  --accent-foreground: oklch(0.25 0.05 260);
 
-  --destructive: oklch(0.62 0.22 27);
+  --destructive: oklch(0.6 0.21 25);
   --destructive-foreground: oklch(0.99 0 0);
 
-  --success: oklch(0.66 0.16 155);
-  --success-foreground: oklch(0.99 0 0);
+  --success: oklch(0.7 0.14 160);
+  --success-foreground: oklch(0.15 0.02 260);
 
-  --warning: oklch(0.78 0.16 75);
-  --warning-foreground: oklch(0.2 0.05 60);
+  --warning: oklch(0.8 0.14 80);
+  --warning-foreground: oklch(0.2 0.04 60);
 
-  --border: oklch(0.92 0.01 240);
-  --input: oklch(0.92 0.01 240);
-  --ring: oklch(0.62 0.18 230);
+  --border: oklch(0.9 0.005 250 / 0.7);
+  --input: oklch(0.92 0.005 250);
+  --ring: oklch(0.55 0.1 250);
 
-  --sidebar: oklch(0.985 0.005 240);
-  --sidebar-foreground: oklch(0.25 0.03 250);
-  --sidebar-accent: oklch(0.94 0.04 220);
-  --sidebar-accent-foreground: oklch(0.25 0.08 240);
-  --sidebar-border: oklch(0.92 0.01 240);
+  --sidebar: oklch(0.985 0.004 250);
+  --sidebar-foreground: oklch(0.22 0.02 260);
+  --sidebar-accent: oklch(0.94 0.015 260);
+  --sidebar-accent-foreground: oklch(0.22 0.04 260);
+  --sidebar-border: oklch(0.92 0.005 250 / 0.6);
 
-  --chart-1: oklch(0.62 0.18 230);
-  --chart-2: oklch(0.7 0.15 180);
-  --chart-3: oklch(0.66 0.16 155);
-  --chart-4: oklch(0.78 0.16 75);
-  --chart-5: oklch(0.62 0.22 320);
+  --chart-1: oklch(0.55 0.1 250);
+  --chart-2: oklch(0.7 0.08 220);
+  --chart-3: oklch(0.65 0.1 180);
+  --chart-4: oklch(0.7 0.12 300);
+  --chart-5: oklch(0.6 0.14 30);
 
-  --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-glow));
-  --gradient-soft: linear-gradient(180deg, oklch(0.98 0.01 230), oklch(0.96 0.02 220));
-  --shadow-card: 0 1px 2px oklch(0.2 0.04 250 / 0.04), 0 8px 24px oklch(0.2 0.04 250 / 0.05);
-  --shadow-elegant: 0 10px 30px -10px oklch(0.62 0.18 230 / 0.25);
+  /* Iridescent / liquid metal tokens */
+  --titanium-1: oklch(0.96 0.004 250);
+  --titanium-2: oklch(0.82 0.008 255);
+  --titanium-3: oklch(0.62 0.012 260);
+  --graphite:   oklch(0.28 0.012 260);
+  --abyss:      oklch(0.16 0.025 260);
+  --iridescent-1: oklch(0.78 0.09 220);
+  --iridescent-2: oklch(0.72 0.11 300);
+  --iridescent-3: oklch(0.82 0.08 160);
+
+  --gradient-primary: linear-gradient(135deg, var(--graphite) 0%, var(--abyss) 55%, oklch(0.22 0.05 250) 100%);
+  --gradient-titanium: linear-gradient(
+    135deg,
+    var(--titanium-1) 0%,
+    var(--titanium-2) 38%,
+    var(--titanium-3) 62%,
+    var(--titanium-2) 88%,
+    var(--titanium-1) 100%
+  );
+  --gradient-iridescent: conic-gradient(
+    from 210deg at 50% 50%,
+    var(--iridescent-1) 0deg,
+    var(--iridescent-2) 110deg,
+    var(--iridescent-3) 220deg,
+    var(--iridescent-1) 360deg
+  );
+  --gradient-oil: radial-gradient(
+      120% 80% at 20% 10%,
+      oklch(0.9 0.08 220 / 0.55), transparent 60%
+    ),
+    radial-gradient(100% 70% at 80% 20%, oklch(0.85 0.1 300 / 0.45), transparent 65%),
+    radial-gradient(120% 90% at 60% 100%, oklch(0.8 0.09 180 / 0.45), transparent 70%),
+    linear-gradient(135deg, var(--abyss), var(--graphite));
+  --gradient-soft: linear-gradient(180deg, oklch(0.985 0.004 250), oklch(0.95 0.008 255));
+
+  --shadow-card:
+    0 1px 0 oklch(1 0 0 / 0.6) inset,
+    0 1px 2px oklch(0.2 0.02 260 / 0.04),
+    0 12px 32px -12px oklch(0.2 0.02 260 / 0.12);
+  --shadow-elegant:
+    0 1px 0 oklch(1 0 0 / 0.4) inset,
+    0 20px 60px -20px oklch(0.2 0.04 260 / 0.35);
+  --shadow-glass:
+    inset 0 1px 0 oklch(1 0 0 / 0.55),
+    inset 0 -1px 0 oklch(0 0 0 / 0.06),
+    0 8px 32px -12px oklch(0.2 0.04 260 / 0.18);
 }
 
 .dark {
-  --background: oklch(0.16 0.03 250);
-  --foreground: oklch(0.98 0.01 240);
-  --card: oklch(0.21 0.035 250);
-  --card-foreground: oklch(0.98 0.01 240);
-  --popover: oklch(0.21 0.035 250);
-  --popover-foreground: oklch(0.98 0.01 240);
-  --primary: oklch(0.72 0.17 225);
-  --primary-foreground: oklch(0.15 0.03 250);
-  --primary-glow: oklch(0.78 0.15 215);
-  --secondary: oklch(0.26 0.03 250);
-  --secondary-foreground: oklch(0.98 0.01 240);
-  --muted: oklch(0.24 0.03 250);
-  --muted-foreground: oklch(0.7 0.02 240);
-  --accent: oklch(0.3 0.06 230);
-  --accent-foreground: oklch(0.95 0.02 230);
+  --background: oklch(0.14 0.02 260);
+  --foreground: oklch(0.97 0.005 250);
+  --card: oklch(0.2 0.022 260 / 0.7);
+  --card-foreground: oklch(0.97 0.005 250);
+  --popover: oklch(0.2 0.022 260);
+  --popover-foreground: oklch(0.97 0.005 250);
+  --primary: oklch(0.85 0.02 250);
+  --primary-foreground: oklch(0.16 0.02 260);
+  --primary-glow: oklch(0.72 0.1 240);
+  --secondary: oklch(0.24 0.022 260);
+  --secondary-foreground: oklch(0.97 0.005 250);
+  --muted: oklch(0.22 0.02 260);
+  --muted-foreground: oklch(0.72 0.012 250);
+  --accent: oklch(0.3 0.04 250);
+  --accent-foreground: oklch(0.96 0.01 240);
   --destructive: oklch(0.65 0.2 27);
   --destructive-foreground: oklch(0.98 0 0);
-  --success: oklch(0.7 0.16 155);
-  --success-foreground: oklch(0.15 0.03 250);
-  --warning: oklch(0.82 0.16 75);
-  --warning-foreground: oklch(0.2 0.05 60);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.72 0.17 225);
-  --sidebar: oklch(0.19 0.03 250);
-  --sidebar-foreground: oklch(0.95 0.01 240);
-  --sidebar-accent: oklch(0.28 0.05 240);
-  --sidebar-accent-foreground: oklch(0.98 0.01 240);
-  --sidebar-border: oklch(1 0 0 / 8%);
+  --success: oklch(0.72 0.14 160);
+  --success-foreground: oklch(0.15 0.02 260);
+  --warning: oklch(0.82 0.15 80);
+  --warning-foreground: oklch(0.18 0.04 60);
+  --border: oklch(1 0 0 / 0.08);
+  --input: oklch(1 0 0 / 0.12);
+  --ring: oklch(0.75 0.08 240);
+  --sidebar: oklch(0.17 0.022 260);
+  --sidebar-foreground: oklch(0.95 0.008 250);
+  --sidebar-accent: oklch(0.26 0.03 250);
+  --sidebar-accent-foreground: oklch(0.98 0.005 250);
+  --sidebar-border: oklch(1 0 0 / 0.06);
+
+  --titanium-1: oklch(0.42 0.012 260);
+  --titanium-2: oklch(0.3 0.012 260);
+  --titanium-3: oklch(0.2 0.018 260);
+
+  --gradient-soft: linear-gradient(180deg, oklch(0.18 0.02 260), oklch(0.14 0.02 260));
+  --shadow-card:
+    0 1px 0 oklch(1 0 0 / 0.06) inset,
+    0 12px 32px -12px oklch(0 0 0 / 0.5);
 }
 
 @layer base {
@@ -143,10 +200,105 @@
   html, body {
     font-family: var(--font-display);
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    letter-spacing: -0.011em;
   }
 
   body {
-    background-color: var(--color-background);
     color: var(--color-foreground);
+    background-color: var(--color-background);
+    background-image:
+      radial-gradient(60% 40% at 15% 0%, oklch(0.78 0.08 230 / 0.18), transparent 60%),
+      radial-gradient(50% 40% at 100% 10%, oklch(0.78 0.09 300 / 0.14), transparent 65%),
+      radial-gradient(70% 50% at 50% 110%, oklch(0.82 0.07 200 / 0.16), transparent 70%);
+    background-attachment: fixed;
   }
+
+  h1, h2, h3, h4 {
+    letter-spacing: -0.022em;
+    font-weight: 600;
+  }
+}
+
+/* =========================================================
+   Liquid-metal utilities — apply via className
+   ========================================================= */
+@utility glass {
+  background: color-mix(in oklab, var(--card) 70%, transparent);
+  backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid color-mix(in oklab, var(--foreground) 8%, transparent);
+  box-shadow: var(--shadow-glass);
+}
+
+@utility glass-strong {
+  background: color-mix(in oklab, var(--card) 85%, transparent);
+  backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid color-mix(in oklab, var(--foreground) 10%, transparent);
+  box-shadow: var(--shadow-glass);
+}
+
+@utility titanium-surface {
+  background: var(--gradient-titanium);
+  color: var(--graphite);
+  border: 1px solid oklch(1 0 0 / 0.35);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.7),
+    inset 0 -1px 0 oklch(0 0 0 / 0.08),
+    0 10px 30px -12px oklch(0.2 0.02 260 / 0.25);
+}
+
+@utility liquid-metal {
+  background: var(--gradient-oil);
+  color: oklch(0.98 0.005 250);
+  border: 1px solid oklch(1 0 0 / 0.12);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.18),
+    0 20px 60px -20px oklch(0 0 0 / 0.55);
+}
+
+@utility iridescent-ring {
+  position: relative;
+  isolation: isolate;
+}
+
+@utility text-iridescent {
+  background: linear-gradient(
+    100deg,
+    var(--iridescent-1) 0%,
+    var(--iridescent-2) 35%,
+    var(--iridescent-3) 65%,
+    var(--iridescent-1) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: iridescent-shift 8s ease-in-out infinite;
+}
+
+@utility text-titanium {
+  background: linear-gradient(180deg, var(--titanium-1) 0%, var(--titanium-3) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes iridescent-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+@keyframes liquid-float {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(0, -8px, 0) scale(1.02); }
+}
+
+@keyframes shimmer-sweep {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
 }
