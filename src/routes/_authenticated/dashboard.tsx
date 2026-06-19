@@ -23,13 +23,67 @@ import { useAuth } from "@/hooks/useAuth";
 import { primeirosDoisNomes } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { FundoAnimado, type EfeitoFundo } from "@/components/FundoAnimado";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
 });
 
+const EFEITO_OPCOES: { value: EfeitoFundo; label: string }[] = [
+  { value: "nenhum", label: "Nenhum" },
+  { value: "chuva", label: "Chuva" },
+  { value: "chuva_raio", label: "Chuva com raios" },
+  { value: "neve", label: "Neve" },
+];
+
+function isEfeito(v: unknown): v is EfeitoFundo {
+  return v === "nenhum" || v === "chuva" || v === "chuva_raio" || v === "neve";
+}
+
 function Dashboard() {
   const { user } = useAuth();
+
+  const [efeito, setEfeito] = useState<EfeitoFundo>("nenhum");
+  const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancel = false;
+    supabase
+      .from("profiles")
+      .select("fundo_animado")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancel) return;
+        if (data && isEfeito(data.fundo_animado)) setEfeito(data.fundo_animado);
+      });
+    return () => {
+      cancel = true;
+    };
+  }, [user]);
+
+  async function escolherEfeito(novo: EfeitoFundo) {
+    if (!user || novo === efeito) return;
+    const anterior = efeito;
+    setEfeito(novo);
+    setSalvando(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ fundo_animado: novo })
+      .eq("id", user.id);
+    setSalvando(false);
+    if (error) {
+      setEfeito(anterior);
+      toast.error("Não foi possível salvar a preferência");
+    } else {
+      toast.success("Preferência salva");
+    }
+  }
+
 
   const fetchPerfil = useServerFn(getPerfilPublico);
   const perfilQ = useQuery({
@@ -73,8 +127,36 @@ function Dashboard() {
   const perfil = perfilQ.data;
 
   return (
-    <div className="space-y-6">
-      <InstallPWA className="mb-2" />
+    <>
+      <FundoAnimado efeito={efeito} />
+      <div className="space-y-6">
+        <InstallPWA className="mb-2" />
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted-foreground">Fundo animado:</span>
+          {EFEITO_OPCOES.map((op) => {
+            const ativo = efeito === op.value;
+            return (
+              <button
+                key={op.value}
+                type="button"
+                onClick={() => escolherEfeito(op.value)}
+                disabled={salvando}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-xs transition-colors",
+                  ativo
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card hover:bg-accent",
+                  salvando && "opacity-60",
+                )}
+              >
+                {op.label}
+              </button>
+            );
+          })}
+        </div>
+
+
 
       <Card className="shadow-[var(--shadow-card)]">
         <CardHeader className="pb-3">
@@ -274,6 +356,7 @@ function Dashboard() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </>
   );
 }

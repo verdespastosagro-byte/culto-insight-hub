@@ -987,6 +987,7 @@ export type Database = {
           created_at: string
           email: string | null
           foto_url: string | null
+          fundo_animado: string | null
           id: string
           nome: string
           onboarding_completed: boolean
@@ -999,6 +1000,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           foto_url?: string | null
+          fundo_animado?: string | null
           id: string
           nome: string
           onboarding_completed?: boolean
@@ -1011,6 +1013,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           foto_url?: string | null
+          fundo_animado?: string | null
           id?: string
           nome?: string
           onboarding_completed?: boolean
