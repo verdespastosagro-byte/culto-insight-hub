@@ -62,24 +62,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
-        setTimeout(() => loadAll(s.user.id), 0);
+        setLoading(true);
+        setTimeout(() => {
+          loadAll(s.user.id).finally(() => setLoading(false));
+        }, 0);
       } else {
         setProfile(null);
         setRoles([]);
         setOrganization(null);
         setOrgRole(null);
+        setLoading(false);
       }
     });
 
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setUser(data.session?.user ?? null);
-      if (data.session?.user) loadAll(data.session.user.id);
-      setLoading(false);
+      if (data.session?.user) {
+        loadAll(data.session.user.id).finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
     });
 
     return () => sub.subscription.unsubscribe();
   }, []);
+
 
   async function loadAll(uid: string) {
     const [{ data: p }, { data: r }, { data: m }] = await Promise.all([
