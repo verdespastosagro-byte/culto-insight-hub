@@ -187,7 +187,7 @@ export function ComentariosSection({ alvoTipo, alvoId, titulo = "Comentários" }
 
 // Compatibilidade com o nome usado na Fase 4
 export function ComentariosMural(props: {
-  tipo_alvo: "check_in" | "congregacao_ccb";
+  tipo_alvo: "check_in" | "congregacao_ccb" | "post" | "culto";
   alvo_id: string;
   titulo?: string;
 }) {
