@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mic, Square, Loader2, Sparkles, Plus, Trash2, History, MapPin } from "lucide-react";
+import { Mic, Square, Loader2, Sparkles, History, MapPin } from "lucide-react";
 import { TIPOS_REUNIAO } from "@/lib/constants";
 import { iniciarCulto, processarCulto, salvarCultoConfirmado, type ExtracaoCulto } from "@/lib/culto-inteligente.functions";
 
@@ -185,19 +185,33 @@ function CultoInteligentePage() {
     setFCongregacaoId(congMatch?.id ?? "");
     setFCidade(ex?.cidade_mencionada ?? coords?.cidade ?? congMatch?.cidade ?? "");
     setFParticipantes("");
-    setFObservacoes(ex?.observacoes_ia ?? "");
-    setFHinos((ex?.hinos_chamados ?? []).filter((h) => h.numero != null).map((h) => ({ numero: String(h.numero ?? ""), momento: h.momento ?? "outro" })));
-    setFPalavra({
-      nome_irmao: ex?.pregador?.nome ?? "",
-      cargo: ex?.pregador?.cargo ?? "",
-      congregacao_origem: ex?.pregador?.congregacao_origem ?? "",
-      cidade_origem: "",
-      texto_biblico: ex?.palavra?.texto_biblico ?? "",
-      tema: ex?.palavra?.tema ?? "",
-      resumo: ex?.palavra?.resumo ?? "",
-    });
-    setFAtend((ex?.atendimentos ?? []).map((a) => ({ nome: a.nome, cargo: a.cargo ?? "", congregacao_origem: a.congregacao_origem ?? "", cidade_origem: "" })));
-    setFVisit((ex?.visitantes_mencionados ?? []).map((v) => ({ nome: v.nome, congregacao_origem: v.congregacao_origem ?? "", cidade_origem: v.cidade_origem ?? "" })));
+
+    // Monta um resumo completo do culto direto nas observações (inclui hinos)
+    const partes: string[] = [];
+    if (ex?.palavra?.resumo) partes.push(`Resumo: ${ex.palavra.resumo}`);
+    if (ex?.palavra?.tema) partes.push(`Tema: ${ex.palavra.tema}`);
+    if (ex?.palavra?.texto_biblico) partes.push(`Texto bíblico: ${ex.palavra.texto_biblico}`);
+    if (ex?.pregador?.nome) {
+      const p = [ex.pregador.nome, ex.pregador.cargo, ex.pregador.congregacao_origem].filter(Boolean).join(" — ");
+      partes.push(`Pregador: ${p}`);
+    }
+    const hinos = (ex?.hinos_chamados ?? []).filter((h) => h.numero != null);
+    if (hinos.length) {
+      partes.push("Hinos: " + hinos.map((h) => h.momento ? `${h.numero} (${h.momento})` : `${h.numero}`).join(", "));
+    }
+    if (ex?.atendimentos?.length) {
+      partes.push("Atendimentos: " + ex.atendimentos.map((a) => a.nome).join(", "));
+    }
+    if (ex?.visitantes_mencionados?.length) {
+      partes.push("Visitantes: " + ex.visitantes_mencionados.map((v) => v.nome).join(", "));
+    }
+    if (ex?.observacoes_ia) partes.push(ex.observacoes_ia);
+    setFObservacoes(partes.join("\n\n"));
+
+    setFHinos([]);
+    setFPalavra({ nome_irmao: "", cargo: "", congregacao_origem: "", cidade_origem: "", texto_biblico: "", tema: "", resumo: "" });
+    setFAtend([]);
+    setFVisit([]);
   }
 
   async function handleSalvar() {
@@ -348,77 +362,9 @@ function CultoInteligentePage() {
               </Field>
               <Field label="Cidade"><Input value={fCidade} onChange={(e) => setFCidade(e.target.value)} /></Field>
               <Field label="Participantes"><Input type="number" value={fParticipantes} onChange={(e) => setFParticipantes(e.target.value)} /></Field>
-              <Field label="Observações" full>
-                <Textarea rows={2} value={fObservacoes} onChange={(e) => setFObservacoes(e.target.value)} />
+              <Field label="Resumo do culto (inclui hinos, pregador, atendimentos e visitantes)" full>
+                <Textarea rows={14} value={fObservacoes} onChange={(e) => setFObservacoes(e.target.value)} />
               </Field>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Hinos chamados</CardTitle></CardHeader>
-            <CardContent className="space-y-2">
-              {fHinos.map((h, i) => (
-                <div key={i} className="flex gap-2">
-                  <Input className="w-28" type="number" placeholder="Nº" value={h.numero}
-                    onChange={(e) => setFHinos((arr) => arr.map((x, j) => j === i ? { ...x, numero: e.target.value } : x))} />
-                  <Input placeholder="Momento (entrada/encerramento...)" value={h.momento}
-                    onChange={(e) => setFHinos((arr) => arr.map((x, j) => j === i ? { ...x, momento: e.target.value } : x))} />
-                  <Button variant="ghost" size="icon" onClick={() => setFHinos((arr) => arr.filter((_, j) => j !== i))}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              <Button variant="outline" size="sm" onClick={() => setFHinos((a) => [...a, { numero: "", momento: "outro" }])}>
-                <Plus className="mr-1 h-4 w-4" />Adicionar hino
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Palavra</CardTitle></CardHeader>
-            <CardContent className="grid gap-3 md:grid-cols-2">
-              <Field label="Pregador"><Input value={fPalavra.nome_irmao} onChange={(e) => setFPalavra({ ...fPalavra, nome_irmao: e.target.value })} /></Field>
-              <Field label="Cargo"><Input value={fPalavra.cargo} onChange={(e) => setFPalavra({ ...fPalavra, cargo: e.target.value })} /></Field>
-              <Field label="Congregação origem"><Input value={fPalavra.congregacao_origem} onChange={(e) => setFPalavra({ ...fPalavra, congregacao_origem: e.target.value })} /></Field>
-              <Field label="Cidade origem"><Input value={fPalavra.cidade_origem} onChange={(e) => setFPalavra({ ...fPalavra, cidade_origem: e.target.value })} /></Field>
-              <Field label="Texto bíblico" full><Input value={fPalavra.texto_biblico} onChange={(e) => setFPalavra({ ...fPalavra, texto_biblico: e.target.value })} /></Field>
-              <Field label="Tema" full><Input value={fPalavra.tema} onChange={(e) => setFPalavra({ ...fPalavra, tema: e.target.value })} /></Field>
-              <Field label="Resumo" full><Textarea rows={4} value={fPalavra.resumo} onChange={(e) => setFPalavra({ ...fPalavra, resumo: e.target.value })} /></Field>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Atendimentos</CardTitle></CardHeader>
-            <CardContent className="space-y-2">
-              {fAtend.map((a, i) => (
-                <div key={i} className="grid gap-2 md:grid-cols-[1fr_1fr_1fr_1fr_auto]">
-                  <Input placeholder="Nome" value={a.nome} onChange={(e) => setFAtend((arr) => arr.map((x, j) => j === i ? { ...x, nome: e.target.value } : x))} />
-                  <Input placeholder="Cargo" value={a.cargo} onChange={(e) => setFAtend((arr) => arr.map((x, j) => j === i ? { ...x, cargo: e.target.value } : x))} />
-                  <Input placeholder="Congregação" value={a.congregacao_origem} onChange={(e) => setFAtend((arr) => arr.map((x, j) => j === i ? { ...x, congregacao_origem: e.target.value } : x))} />
-                  <Input placeholder="Cidade" value={a.cidade_origem} onChange={(e) => setFAtend((arr) => arr.map((x, j) => j === i ? { ...x, cidade_origem: e.target.value } : x))} />
-                  <Button variant="ghost" size="icon" onClick={() => setFAtend((arr) => arr.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
-                </div>
-              ))}
-              <Button variant="outline" size="sm" onClick={() => setFAtend((a) => [...a, { nome: "", cargo: "", congregacao_origem: "", cidade_origem: "" }])}>
-                <Plus className="mr-1 h-4 w-4" />Adicionar atendimento
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Visitantes</CardTitle></CardHeader>
-            <CardContent className="space-y-2">
-              {fVisit.map((v, i) => (
-                <div key={i} className="grid gap-2 md:grid-cols-[1fr_1fr_1fr_auto]">
-                  <Input placeholder="Nome" value={v.nome} onChange={(e) => setFVisit((arr) => arr.map((x, j) => j === i ? { ...x, nome: e.target.value } : x))} />
-                  <Input placeholder="Congregação" value={v.congregacao_origem} onChange={(e) => setFVisit((arr) => arr.map((x, j) => j === i ? { ...x, congregacao_origem: e.target.value } : x))} />
-                  <Input placeholder="Cidade" value={v.cidade_origem} onChange={(e) => setFVisit((arr) => arr.map((x, j) => j === i ? { ...x, cidade_origem: e.target.value } : x))} />
-                  <Button variant="ghost" size="icon" onClick={() => setFVisit((arr) => arr.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
-                </div>
-              ))}
-              <Button variant="outline" size="sm" onClick={() => setFVisit((a) => [...a, { nome: "", congregacao_origem: "", cidade_origem: "" }])}>
-                <Plus className="mr-1 h-4 w-4" />Adicionar visitante
-              </Button>
             </CardContent>
           </Card>
 
