@@ -87,7 +87,7 @@ function CheckInDetalhePage() {
                 params={{ userId: ci.user_id }}
                 className="font-semibold hover:underline"
               >
-                {ci.autor_nome}
+                {primeirosDoisNomes(ci.autor_nome)}
               </Link>{" "}
               esteve em
             </p>
@@ -115,40 +115,14 @@ function CheckInDetalhePage() {
         </div>
       </Card>
 
-      {/* Companheiros do culto */}
-      <Card className="p-4">
-        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-          <Users className="h-4 w-4" /> Quem mais esteve nesse culto
-          {q.data.companheiros.length > 0 && (
-            <Badge variant="secondary" className="text-[10px]">{q.data.companheiros.length}</Badge>
-          )}
-        </h2>
-        {q.data.companheiros.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
-            Nenhuma outra pessoa com perfil público registrou presença neste culto.
-          </p>
-        ) : (
-          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {q.data.companheiros.map((v) => (
-              <li key={v.user_id}>
-                <Link
-                  to="/perfil/$userId"
-                  params={{ userId: v.user_id }}
-                  className="flex items-center gap-2 rounded-md border bg-card p-2 transition-colors hover:bg-accent"
-                >
-                  <Avatar className="h-8 w-8">
-                    {v.foto_url ? <AvatarImage src={v.foto_url} alt={v.nome} /> : null}
-                    <AvatarFallback className="text-xs">
-                      {v.nome?.[0]?.toUpperCase() ?? "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <p className="truncate text-xs font-medium">{v.nome}</p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+      {/* Companheiros do culto — carrossel estilo Netflix */}
+      <QuemEsteveAquiCarousel
+        titulo="Quem mais esteve nesse culto"
+        visitantes={q.data.companheiros}
+        vazioMsg="Nenhuma outra pessoa com perfil público registrou presença neste culto."
+        invalidateKey={["check-in-detalhe", checkInId]}
+      />
+
 
       {/* Comentários do check-in */}
       <ComentariosMural tipo_alvo="check_in" alvo_id={ci.id} titulo="Comentários deste culto" />
