@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, Search, Pencil, Ban, CheckCircle2, Trash2, ShieldAlert } from "lucide-react";
+import { Loader2, Search, Pencil, Ban, CheckCircle2, Trash2, ShieldAlert, Eye, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,10 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { adminListUsers, adminUpdateUser, adminSetBan, adminDeleteUser, adminSetPlan } from "@/lib/admin.functions";
+import {
+  adminListUsers, adminUpdateUser, adminSetBan, adminDeleteUser, adminSetPlan,
+  adminSetRole, adminGetUserDetails,
+} from "@/lib/admin.functions";
 import { AdminPlansEditor } from "@/components/admin/AdminPlansEditor";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -27,6 +30,14 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 type AdminUser = Awaited<ReturnType<typeof adminListUsers>>[number];
+type AppRole = "admin" | "encarregado" | "cooperador" | "usuario";
+
+const ROLE_LABEL: Record<AppRole, string> = {
+  admin: "Admin (acesso total)",
+  encarregado: "Encarregado",
+  cooperador: "Cooperador",
+  usuario: "Usuário",
+};
 
 function AdminPage() {
   const { isAdmin, loading, user } = useAuth();
@@ -35,6 +46,7 @@ function AdminPage() {
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<AdminUser | null>(null);
   const [deleting, setDeleting] = useState<AdminUser | null>(null);
+  const [viewing, setViewing] = useState<AdminUser | null>(null);
 
   useEffect(() => {
     if (!loading && !isAdmin) navigate({ to: "/dashboard" });
@@ -45,6 +57,8 @@ function AdminPage() {
   const ban = useServerFn(adminSetBan);
   const del = useServerFn(adminDeleteUser);
   const setPlan = useServerFn(adminSetPlan);
+  const setRole = useServerFn(adminSetRole);
+  const getDetails = useServerFn(adminGetUserDetails);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-users"],
@@ -73,6 +87,11 @@ function AdminPage() {
     onSuccess: () => { toast.success("Plano atualizado"); qc.invalidateQueries({ queryKey: ["admin-users"] }); },
     onError: (e: any) => toast.error(e?.message ?? "Erro"),
   });
+  const mRole = useMutation({
+    mutationFn: (v: { userId: string; role: AppRole }) => setRole({ data: v }),
+    onSuccess: () => { toast.success("Permissão atualizada"); qc.invalidateQueries({ queryKey: ["admin-users"] }); },
+    onError: (e: any) => toast.error(e?.message ?? "Erro"),
+  });
   const mBan = useMutation({
     mutationFn: (v: { userId: string; ban: boolean }) => ban({ data: v }),
     onSuccess: () => { toast.success("Status atualizado"); qc.invalidateQueries({ queryKey: ["admin-users"] }); },
@@ -84,9 +103,16 @@ function AdminPage() {
     onError: (e: any) => toast.error(e?.message ?? "Erro"),
   });
 
+  const detailsQuery = useQuery({
+    queryKey: ["admin-user-details", viewing?.id],
+    queryFn: () => getDetails({ data: { userId: viewing!.id } }),
+    enabled: !!viewing,
+  });
+
   if (loading || !isAdmin) {
     return <div className="grid h-64 place-items-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
+
 
   return (
     <div className="space-y-6">
