@@ -34,17 +34,6 @@ function Dashboard() {
     },
   });
 
-  const recentes = useQuery({
-    queryKey: ["dash-recentes"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("cultos")
-        .select("id, data, tipo, cidade, congregacao:congregacoes(nome)")
-        .order("data", { ascending: false })
-        .limit(5);
-      return data ?? [];
-    },
-  });
 
   const fetchFeed = useServerFn(listarFeed);
   const feed = useQuery({
