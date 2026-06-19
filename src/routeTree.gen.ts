@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedPalavrasRouteImport } from './routes/_authenticated/palavras'
 import { Route as AuthenticatedMusicosRouteImport } from './routes/_authenticated/musicos'
+import { Route as AuthenticatedMinhasCongregacoesRouteImport } from './routes/_authenticated/minhas-congregacoes'
 import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedContaRouteImport } from './routes/_authenticated/conta'
@@ -75,6 +76,12 @@ const AuthenticatedMusicosRoute = AuthenticatedMusicosRouteImport.update({
   path: '/musicos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMinhasCongregacoesRoute =
+  AuthenticatedMinhasCongregacoesRouteImport.update({
+    id: '/minhas-congregacoes',
+    path: '/minhas-congregacoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
   id: '/insights',
   path: '/insights',
@@ -156,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/conta': typeof AuthenticatedContaRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/insights': typeof AuthenticatedInsightsRoute
+  '/minhas-congregacoes': typeof AuthenticatedMinhasCongregacoesRoute
   '/musicos': typeof AuthenticatedMusicosRoute
   '/palavras': typeof AuthenticatedPalavrasRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
@@ -178,6 +186,7 @@ export interface FileRoutesByTo {
   '/conta': typeof AuthenticatedContaRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/insights': typeof AuthenticatedInsightsRoute
+  '/minhas-congregacoes': typeof AuthenticatedMinhasCongregacoesRoute
   '/musicos': typeof AuthenticatedMusicosRoute
   '/palavras': typeof AuthenticatedPalavrasRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
@@ -202,6 +211,7 @@ export interface FileRoutesById {
   '/_authenticated/conta': typeof AuthenticatedContaRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/insights': typeof AuthenticatedInsightsRoute
+  '/_authenticated/minhas-congregacoes': typeof AuthenticatedMinhasCongregacoesRoute
   '/_authenticated/musicos': typeof AuthenticatedMusicosRoute
   '/_authenticated/palavras': typeof AuthenticatedPalavrasRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
@@ -226,6 +236,7 @@ export interface FileRouteTypes {
     | '/conta'
     | '/dashboard'
     | '/insights'
+    | '/minhas-congregacoes'
     | '/musicos'
     | '/palavras'
     | '/relatorios'
@@ -248,6 +259,7 @@ export interface FileRouteTypes {
     | '/conta'
     | '/dashboard'
     | '/insights'
+    | '/minhas-congregacoes'
     | '/musicos'
     | '/palavras'
     | '/relatorios'
@@ -271,6 +283,7 @@ export interface FileRouteTypes {
     | '/_authenticated/conta'
     | '/_authenticated/dashboard'
     | '/_authenticated/insights'
+    | '/_authenticated/minhas-congregacoes'
     | '/_authenticated/musicos'
     | '/_authenticated/palavras'
     | '/_authenticated/relatorios'
@@ -352,6 +365,13 @@ declare module '@tanstack/react-router' {
       path: '/musicos'
       fullPath: '/musicos'
       preLoaderRoute: typeof AuthenticatedMusicosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/minhas-congregacoes': {
+      id: '/_authenticated/minhas-congregacoes'
+      path: '/minhas-congregacoes'
+      fullPath: '/minhas-congregacoes'
+      preLoaderRoute: typeof AuthenticatedMinhasCongregacoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/insights': {
@@ -450,6 +470,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedContaRoute: typeof AuthenticatedContaRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
+  AuthenticatedMinhasCongregacoesRoute: typeof AuthenticatedMinhasCongregacoesRoute
   AuthenticatedMusicosRoute: typeof AuthenticatedMusicosRoute
   AuthenticatedPalavrasRoute: typeof AuthenticatedPalavrasRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
@@ -468,6 +489,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedContaRoute: AuthenticatedContaRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,
+  AuthenticatedMinhasCongregacoesRoute: AuthenticatedMinhasCongregacoesRoute,
   AuthenticatedMusicosRoute: AuthenticatedMusicosRoute,
   AuthenticatedPalavrasRoute: AuthenticatedPalavrasRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
