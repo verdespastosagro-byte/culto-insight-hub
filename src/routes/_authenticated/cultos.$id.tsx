@@ -30,10 +30,8 @@ function CultoDetail() {
       return data;
     },
   });
-  const hinos = useQuery({ queryKey: ["culto-hinos", id], queryFn: async () => (await supabase.from("hinos").select("*").eq("culto_id", id).order("created_at")).data ?? [] });
   const palavras = useQuery({ queryKey: ["culto-palavras", id], queryFn: async () => (await supabase.from("palavras").select("*").eq("culto_id", id)).data ?? [] });
   const atend = useQuery({ queryKey: ["culto-atend", id], queryFn: async () => (await supabase.from("atendimentos").select("*").eq("culto_id", id)).data ?? [] });
-  const vis = useQuery({ queryKey: ["culto-vis", id], queryFn: async () => (await supabase.from("visitantes").select("*").eq("culto_id", id)).data ?? [] });
   const congs = useQuery({ queryKey: ["congs-list"], queryFn: async () => (await supabase.from("congregacoes").select("id, nome").order("nome")).data ?? [] });
   const audit = useQuery({ queryKey: ["culto-audit", id], queryFn: async () => (await supabase.from("cultos_audit").select("*").eq("culto_id", id).order("changed_at", { ascending: false })).data ?? [] });
   const [editOpen, setEditOpen] = useState(false);
