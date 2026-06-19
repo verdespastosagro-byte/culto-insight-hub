@@ -244,11 +244,20 @@ function PerfilPublicoPage() {
                         />
                       </div>
                     )}
-                    {!p.texto && !p.foto_url && (
+                    {p.audio_url && (
+                      <audio
+                        src={p.audio_url}
+                        controls
+                        preload="metadata"
+                        className="mt-2 h-9 w-full"
+                      />
+                    )}
+                    {!p.texto && !p.foto_url && !p.audio_url && (
                       <p className="flex items-center gap-1 text-xs text-muted-foreground">
                         <ImageIcon className="h-3 w-3" /> Post sem conteúdo
                       </p>
                     )}
+
                   </li>
                 ))}
               </ul>
