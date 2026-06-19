@@ -23,7 +23,7 @@ export function FundoAnimado({ efeito }: Props) {
   return (
     <div
       aria-hidden
-      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
+      className="pointer-events-none fixed inset-0 z-50 overflow-hidden"
       style={{ animationPlayState: visivel ? "running" : "paused" }}
     >
       {(efeito === "chuva" || efeito === "chuva_raio") && (
