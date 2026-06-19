@@ -1,12 +1,26 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
-import { User, Lock, Building2, Crown, Mail, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  User,
+  Lock,
+  Building2,
+  Crown,
+  Mail,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  Camera,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlanLimits, PLAN_LABELS } from "@/hooks/usePlanLimits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -31,6 +45,105 @@ function ContaPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
   const [passwordStatus, setPasswordStatus] = useState<Status>(null);
+
+  // ====== Foto de perfil ======
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+  const [fotoStatus, setFotoStatus] = useState<Status>(null);
+  const [fotoPath, setFotoPath] = useState<string | null>((profile as any)?.foto_url ?? null);
+
+  useEffect(() => {
+    setFotoPath((profile as any)?.foto_url ?? null);
+  }, [profile]);
+
+  const { data: fotoUrl } = useQuery({
+    queryKey: ["perfil-foto", fotoPath],
+    enabled: !!fotoPath,
+    queryFn: async () => {
+      if (!fotoPath) return null;
+      const { data } = await supabase.storage
+        .from("perfil-fotos")
+        .createSignedUrl(fotoPath, 60 * 60);
+      return data?.signedUrl ?? null;
+    },
+    staleTime: 50 * 60 * 1000,
+  });
+
+  async function handleFotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !user) return;
+    if (!file.type.startsWith("image/")) {
+      setFotoStatus({ type: "err", msg: "Selecione uma imagem (jpg, png, webp)." });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setFotoStatus({ type: "err", msg: "A imagem deve ter no máximo 5 MB." });
+      return;
+    }
+    setUploadingFoto(true);
+    setFotoStatus(null);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${user.id}/${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("perfil-fotos")
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (upErr) {
+      setUploadingFoto(false);
+      setFotoStatus({ type: "err", msg: `Foto não enviada: ${upErr.message}` });
+      return;
+    }
+    const { error: updErr } = await supabase
+      .from("profiles")
+      .update({ foto_url: path } as any)
+      .eq("id", user.id);
+    setUploadingFoto(false);
+    if (updErr) {
+      setFotoStatus({ type: "err", msg: updErr.message });
+      return;
+    }
+    setFotoPath(path);
+    setFotoStatus({ type: "ok", msg: "Foto de perfil atualizada." });
+    await refreshOrg();
+  }
+
+  // ====== Privacidade ======
+  const [savingPrivacy, setSavingPrivacy] = useState(false);
+  const [privacyStatus, setPrivacyStatus] = useState<Status>(null);
+  const { data: privacy, refetch: refetchPrivacy } = useQuery({
+    queryKey: ["profile-privacy", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from("profile_privacy")
+        .select("user_id, perfil_publico")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data ?? { user_id: user.id, perfil_publico: false };
+    },
+  });
+  const perfilPublico = privacy?.perfil_publico ?? false;
+
+  async function handleTogglePrivacy(value: boolean) {
+    if (!user) return;
+    setSavingPrivacy(true);
+    setPrivacyStatus(null);
+    const { error } = await supabase
+      .from("profile_privacy")
+      .upsert({ user_id: user.id, perfil_publico: value }, { onConflict: "user_id" });
+    setSavingPrivacy(false);
+    if (error) {
+      setPrivacyStatus({ type: "err", msg: error.message });
+    } else {
+      setPrivacyStatus({
+        type: "ok",
+        msg: value ? "Seu perfil agora é público." : "Seu perfil agora é fechado.",
+      });
+      await refetchPrivacy();
+    }
+  }
 
   async function handleSaveProfile(e: FormEvent) {
     e.preventDefault();
@@ -87,6 +200,14 @@ function ContaPage() {
     viewer: "Visualizador",
   };
 
+  const iniciais = (nome || profile?.nome || user?.email || "?")
+    .split(" ")
+    .map((s) => s[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6">
       <div>
@@ -100,10 +221,51 @@ function ContaPage() {
           <CardTitle className="flex items-center gap-2 text-base">
             <User className="h-4 w-4" /> Dados pessoais
           </CardTitle>
-          <CardDescription>Atualize seu nome e função na congregação.</CardDescription>
+          <CardDescription>Atualize seu nome, foto e função na congregação.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSaveProfile} className="space-y-4">
+            {/* Foto */}
+            <div className="flex items-center gap-4">
+              <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border bg-muted">
+                {fotoUrl ? (
+                  <img src={fotoUrl} alt="Foto de perfil" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-lg font-semibold text-muted-foreground">
+                    {iniciais}
+                  </div>
+                )}
+                {uploadingFoto && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                    <Loader2 className="h-5 w-5 animate-spin text-white" />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-1">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFotoChange}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploadingFoto}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Camera className="mr-2 h-4 w-4" />
+                  {fotoPath ? "Trocar foto" : "Enviar foto"}
+                </Button>
+                <p className="text-xs text-muted-foreground">JPG, PNG ou WEBP, até 5 MB.</p>
+              </div>
+            </div>
+            <StatusLine status={fotoStatus} />
+
+            <Separator />
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="email">E-mail</Label>
@@ -145,6 +307,43 @@ function ContaPage() {
               </Button>
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      {/* Privacidade */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            {perfilPublico ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+            Privacidade do perfil
+          </CardTitle>
+          <CardDescription>
+            Você decide se outros irmãos podem ver suas visitas a outras comuns.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-start justify-between gap-4 rounded-lg border p-4">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">
+                {perfilPublico ? "Perfil público" : "Perfil fechado"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {perfilPublico
+                  ? "Outras pessoas autenticadas no app podem ver em quais congregações você fez check-in, quantas comuns diferentes você já visitou, e podem comentar nos seus check-ins."
+                  : "Ninguém vê seus check-ins, suas congregações visitadas nem pode comentar nos seus check-ins. Você continua vendo tudo normalmente."}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {savingPrivacy && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              <Switch
+                checked={perfilPublico}
+                disabled={savingPrivacy || !user}
+                onCheckedChange={handleTogglePrivacy}
+                aria-label="Alternar perfil público"
+              />
+            </div>
+          </div>
+          <StatusLine status={privacyStatus} />
         </CardContent>
       </Card>
 
