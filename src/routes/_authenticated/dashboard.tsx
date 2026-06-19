@@ -23,10 +23,25 @@ import { useAuth } from "@/hooks/useAuth";
 import { primeirosDoisNomes } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { FundoAnimado, type EfeitoFundo } from "@/components/FundoAnimado";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
 });
+
+const EFEITO_OPCOES: { value: EfeitoFundo; label: string }[] = [
+  { value: "nenhum", label: "Nenhum" },
+  { value: "chuva", label: "Chuva" },
+  { value: "chuva_raio", label: "Chuva com raios" },
+  { value: "neve", label: "Neve" },
+];
+
+function isEfeito(v: unknown): v is EfeitoFundo {
+  return v === "nenhum" || v === "chuva" || v === "chuva_raio" || v === "neve";
+}
 
 function Dashboard() {
   const { user } = useAuth();
