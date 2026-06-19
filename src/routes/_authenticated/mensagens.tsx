@@ -24,12 +24,26 @@ function MensagensLayout() {
   const matchRoute = useMatchRoute();
   const onDetail = matchRoute({ to: "/mensagens/$userId" });
   const [tab, setTab] = useState<"conversas" | "solicitacoes">("conversas");
+  const [searchText, setSearchText] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchText.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchText]);
 
   const q = useQuery({
     queryKey: ["conversations", meId],
     queryFn: () => listConversations(meId!),
     enabled: !!meId,
     staleTime: 15_000,
+  });
+
+  const searchQ = useQuery({
+    queryKey: ["search-followers", meId, debouncedSearch],
+    queryFn: () => searchFollowers(meId!, debouncedSearch),
+    enabled: !!meId && debouncedSearch.length >= 2,
+    staleTime: 30_000,
   });
 
   // realtime invalidate
@@ -58,6 +72,7 @@ function MensagensLayout() {
   );
 
   const list = tab === "conversas" ? aceitas : solicitacoes;
+  const showSearchResults = debouncedSearch.length >= 2;
 
   return (
     <div className="mx-auto grid h-[calc(100vh-8rem)] max-w-5xl grid-cols-1 gap-4 md:grid-cols-[320px_1fr]">
