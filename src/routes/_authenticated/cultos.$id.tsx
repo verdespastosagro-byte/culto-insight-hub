@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Trash2, Music2, MessageSquareQuote, HandHelping, UserPlus } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Music2, MessageSquareQuote, HandHelping, UserPlus, Pencil, History } from "lucide-react";
 import { MOMENTOS_HINO, TIPOS_REUNIAO, FUNCOES_VISITANTE, formatDate } from "@/lib/constants";
 
 export const Route = createFileRoute("/_authenticated/cultos/$id")({
