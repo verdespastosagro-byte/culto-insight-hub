@@ -3,10 +3,23 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BookOpen, Building2, MessageSquareQuote, Music2, Newspaper, ArrowRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  BookOpen,
+  Building2,
+  MessageSquareQuote,
+  Newspaper,
+  ArrowRight,
+  MapPin,
+  Users,
+  Lock,
+  Eye,
+  Building,
+} from "lucide-react";
 import { InstallPWA } from "@/components/InstallPWA";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { listarFeed } from "@/lib/social.functions";
+import { getPerfilPublico, listarFeed } from "@/lib/social.functions";
+import { useAuth } from "@/hooks/useAuth";
 import { primeirosDoisNomes } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -16,24 +29,32 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Dashboard() {
+  const { user } = useAuth();
+
+  const fetchPerfil = useServerFn(getPerfilPublico);
+  const perfilQ = useQuery({
+    queryKey: ["dash-meu-perfil", user?.id],
+    enabled: !!user,
+    queryFn: async () =>
+      (await fetchPerfil({ data: { userId: user!.id } })).perfil,
+    staleTime: 5 * 60_000,
+  });
+
   const stats = useQuery({
     queryKey: ["dash-stats"],
     queryFn: async () => {
-      const [cultos, palavras, congregacoes, hinos] = await Promise.all([
+      const [cultos, palavras, congregacoes] = await Promise.all([
         supabase.from("cultos").select("*", { count: "exact", head: true }),
         supabase.from("palavras").select("*", { count: "exact", head: true }),
         supabase.from("congregacoes").select("*", { count: "exact", head: true }),
-        supabase.from("hinos").select("*", { count: "exact", head: true }),
       ]);
       return {
         cultos: cultos.count ?? 0,
         palavras: palavras.count ?? 0,
         congregacoes: congregacoes.count ?? 0,
-        hinos: hinos.count ?? 0,
       };
     },
   });
-
 
   const fetchFeed = useServerFn(listarFeed);
   const feed = useQuery({
@@ -46,20 +67,101 @@ function Dashboard() {
   const cards = [
     { label: "Cultos registrados", value: stats.data?.cultos ?? 0, icon: BookOpen, color: "text-primary" },
     { label: "Congregações", value: stats.data?.congregacoes ?? 0, icon: Building2, color: "text-[color:var(--chart-2)]" },
-    { label: "Hinos chamados", value: stats.data?.hinos ?? 0, icon: Music2, color: "text-[color:var(--chart-3)]" },
     { label: "Palavras", value: stats.data?.palavras ?? 0, icon: MessageSquareQuote, color: "text-[color:var(--chart-4)]" },
   ];
 
+  const perfil = perfilQ.data;
 
   return (
     <div className="space-y-6">
       <InstallPWA className="mb-2" />
+
+      {/* Meu perfil (como aparece para os outros) */}
+      <Card className="shadow-[var(--shadow-card)]">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Eye className="h-4 w-4" /> Meu perfil
+            <span className="ml-auto text-xs font-normal text-muted-foreground">
+              como os outros me veem
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {perfilQ.isLoading || !perfil ? (
+            <p className="text-sm text-muted-foreground">Carregando…</p>
+          ) : (
+            <Link
+              to="/perfil/$userId"
+              params={{ userId: perfil.user_id }}
+              className="flex items-start gap-4 rounded-lg p-2 -m-2 transition-colors hover:bg-accent"
+            >
+              <Avatar className="h-16 w-16">
+                {perfil.foto_url ? (
+                  <AvatarImage src={perfil.foto_url} alt={perfil.nome} className="object-cover" />
+                ) : null}
+                <AvatarFallback className="text-lg">
+                  {perfil.nome?.[0]?.toUpperCase() ?? "?"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-base font-semibold">{perfil.nome}</p>
+                {perfil.cargo && (
+                  <p className="truncate text-xs text-muted-foreground">{perfil.cargo}</p>
+                )}
+                {perfil.minhaComum ? (
+                  <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                    <Building className="h-3 w-3" />
+                    <span className="truncate">
+                      {perfil.minhaComum.nome}
+                      {perfil.minhaComum.cidade
+                        ? ` — ${perfil.minhaComum.cidade}${perfil.minhaComum.uf ? "/" + perfil.minhaComum.uf : ""}`
+                        : ""}
+                    </span>
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Você ainda não definiu sua comum.{" "}
+                    <Link to="/conta" className="text-primary hover:underline">
+                      Definir
+                    </Link>
+                  </p>
+                )}
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+                  <span>
+                    <strong>{perfil.seguidores}</strong>{" "}
+                    <span className="text-muted-foreground">
+                      {perfil.seguidores === 1 ? "seguidor" : "seguidores"}
+                    </span>
+                  </span>
+                  <span>
+                    <strong>{perfil.seguindo}</strong>{" "}
+                    <span className="text-muted-foreground">seguindo</span>
+                  </span>
+                  {perfil.totalCongregacoes != null && (
+                    <span className="text-muted-foreground">
+                      {perfil.totalCongregacoes} {perfil.totalCongregacoes === 1 ? "comum visitada" : "comuns visitadas"}
+                    </span>
+                  )}
+                  {!perfil.publico && (
+                    <Badge variant="outline" className="gap-1 text-[10px]">
+                      <Lock className="h-3 w-3" /> Privado
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+            </Link>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Resumo do sistema */}
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Visão geral</h2>
         <p className="text-sm text-muted-foreground">Resumo do sistema de gestão de cultos.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-3 gap-3">
         {cards.map((c) => (
           <Card key={c.label} className="shadow-[var(--shadow-card)]">
             <CardContent className="p-4">
@@ -71,11 +173,46 @@ function Dashboard() {
         ))}
       </div>
 
+      {/* Atalhos rápidos */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Link
+          to="/feed"
+          className="group flex items-center gap-4 rounded-lg border bg-card p-4 shadow-[var(--shadow-card)] transition-colors hover:bg-accent"
+        >
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Newspaper className="h-6 w-6" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">Feed da comunidade</p>
+            <p className="text-xs text-muted-foreground">
+              Veja e compartilhe publicações dos irmãos.
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+        </Link>
+
+        <Link
+          to="/minhas-congregacoes"
+          className="group flex items-center gap-4 rounded-lg border bg-card p-4 shadow-[var(--shadow-card)] transition-colors hover:bg-accent"
+        >
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <MapPin className="h-6 w-6" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">Minhas congregações</p>
+            <p className="text-xs text-muted-foreground">
+              Suas visitas, check-ins e histórico.
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+        </Link>
+      </div>
+
       {/* Mini-feed estilo Instagram */}
       <Card className="shadow-[var(--shadow-card)]">
         <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Newspaper className="h-4 w-4" /> Feed da comunidade
+            <Users className="h-4 w-4" /> Últimas do feed
           </CardTitle>
           <Link
             to="/feed"
@@ -141,7 +278,6 @@ function Dashboard() {
                           className="mt-2 h-9 w-full"
                         />
                       )}
-
                     </div>
                   </div>
                 </li>
@@ -150,9 +286,6 @@ function Dashboard() {
           )}
         </CardContent>
       </Card>
-
-
-
     </div>
   );
 }
