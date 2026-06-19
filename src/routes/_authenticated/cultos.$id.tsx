@@ -54,8 +54,6 @@ function CultoDetail() {
     <div className="space-y-6">
       <div>
         <Link to="/cultos" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="mr-1 h-4 w-4" />Voltar</Link>
-      <div>
-        <Link to="/cultos" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="mr-1 h-4 w-4" />Voltar</Link>
         <div className="mt-2 flex flex-wrap items-start justify-between gap-2">
           <div>
             <h2 className="text-2xl font-bold tracking-tight">Culto de {formatDate(c.data)}</h2>
