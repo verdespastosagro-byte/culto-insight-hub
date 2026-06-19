@@ -129,3 +129,31 @@ export async function isMutualFollow(meId: string, otherId: string) {
     );
   return (data ?? []).length >= 2;
 }
+
+export async function searchFollowers(meId: string, query: string) {
+  const q = query.trim();
+  if (!q || q.length < 2) return [];
+
+  const [{ data: following }, { data: followers }] = await Promise.all([
+    supabase.from("follows").select("following_id").eq("follower_id", meId),
+    supabase.from("follows").select("follower_id").eq("following_id", meId),
+  ]);
+
+  const ids = Array.from(
+    new Set([
+      ...(following?.map((f) => f.following_id) ?? []),
+      ...(followers?.map((f) => f.follower_id) ?? []),
+    ]),
+  );
+
+  if (ids.length === 0) return [];
+
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, nome, foto_url")
+    .in("id", ids)
+    .ilike("nome", `%${q}%`)
+    .limit(10);
+
+  return (profiles ?? []) as { id: string; nome: string | null; foto_url: string | null }[];
+}
