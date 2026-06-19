@@ -151,6 +151,11 @@ function PerfilPublicoPage() {
         </div>
       </Card>
 
+      {/* Comum do perfil (sempre visível, mesmo se privado) */}
+      {perfil.minhaComum && <MinhaComumCard comum={perfil.minhaComum} />}
+
+
+
       {!podeVerConteudo ? (
         <Card className="p-6 text-center">
           <Lock className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
