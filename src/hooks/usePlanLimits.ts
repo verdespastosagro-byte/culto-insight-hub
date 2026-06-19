@@ -36,7 +36,10 @@ export function usePlanLimits() {
   const effective: OrgPlan = planStatus === "trialing" && trialDaysLeft > 0 ? "pro" : plan;
   const limits = LIMITS[effective];
 
+  const expired = planStatus === "expired" || (planStatus === "trialing" && trialDaysLeft === 0);
+
   function hasFeature(f: PlanFeature) {
+    if (expired) return false;
     return PLAN_RANK[effective] >= PLAN_RANK[FEATURE_MIN_PLAN[f]];
   }
 
