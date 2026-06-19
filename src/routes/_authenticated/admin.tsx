@@ -159,6 +159,21 @@ function AdminPage() {
                       )}
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
+                      <Select
+                        value={(u.roles[0] as AppRole) ?? "usuario"}
+                        onValueChange={(v) => mRole.mutate({ userId: u.id, role: v as AppRole })}
+                        disabled={isMe}
+                      >
+                        <SelectTrigger className="h-8 w-[140px] text-xs">
+                          <ShieldCheck className="mr-1 h-3 w-3" />
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(Object.keys(ROLE_LABEL) as AppRole[]).map((r) => (
+                            <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       {u.organization && (
                         <Select
                           value={u.organization.plan}
@@ -178,7 +193,10 @@ function AdminPage() {
                           </SelectContent>
                         </Select>
                       )}
-                      <Button size="sm" variant="outline" onClick={() => setEditing(u)}>
+                      <Button size="sm" variant="outline" onClick={() => setViewing(u)} title="Ver detalhes">
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditing(u)} title="Editar">
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
                       <Button
@@ -186,6 +204,7 @@ function AdminPage() {
                         variant="outline"
                         disabled={isMe || mBan.isPending}
                         onClick={() => mBan.mutate({ userId: u.id, ban: !isBanned })}
+                        title={isBanned ? "Desbloquear" : "Bloquear"}
                       >
                         {isBanned ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Ban className="h-3.5 w-3.5" />}
                       </Button>
@@ -195,10 +214,12 @@ function AdminPage() {
                         className="text-destructive hover:text-destructive"
                         disabled={isMe}
                         onClick={() => setDeleting(u)}
+                        title="Excluir"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
+
                   </div>
                 );
               })}
