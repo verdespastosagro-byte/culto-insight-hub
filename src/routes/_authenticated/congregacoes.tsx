@@ -47,6 +47,10 @@ function CongregacoesPage() {
   const [regiao, setRegiao] = useState("");
   const [endereco, setEndereco] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const [fotoExistente, setFotoExistente] = useState<string | null>(null);
+  const [uploadingFoto, setUploadingFoto] = useState(false);
 
   // Visita: data + horário escolhido
   const [dataVisita, setDataVisita] = useState<string>(() => new Date().toISOString().slice(0, 10));
