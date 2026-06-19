@@ -254,6 +254,26 @@ function CongregacoesPage() {
       if (error) { toast.error(error.message); return; }
     }
 
+    // Upload de foto (opcional)
+    if (congId && fotoFile) {
+      setUploadingFoto(true);
+      const ext = fotoFile.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${congId}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("congregacoes-fotos")
+        .upload(path, fotoFile, { upsert: true, contentType: fotoFile.type });
+      setUploadingFoto(false);
+      if (upErr) {
+        toast.error(`Foto não enviada: ${upErr.message}`);
+      } else {
+        const { error: updErr } = await supabase
+          .from("congregacoes")
+          .update({ foto_url: path })
+          .eq("id", congId);
+        if (updErr) toast.error(updErr.message);
+      }
+    }
+
     // Se um horário foi escolhido, registra a visita como um culto
     if (!editing && congId && horarioVisita && dataVisita) {
       const isRjm = /RJM/i.test(horarioVisita);
