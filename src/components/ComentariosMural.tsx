@@ -21,7 +21,7 @@ function inicial(nome: string) {
 }
 
 export type ComentariosSectionProps = {
-  alvoTipo: "check_in" | "congregacao_ccb";
+  alvoTipo: "check_in" | "congregacao_ccb" | "post" | "culto";
   alvoId: string;
   titulo?: string;
 };
