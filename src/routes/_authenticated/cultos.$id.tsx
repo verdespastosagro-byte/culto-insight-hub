@@ -54,10 +54,34 @@ function CultoDetail() {
     <div className="space-y-6">
       <div>
         <Link to="/cultos" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="mr-1 h-4 w-4" />Voltar</Link>
-        <h2 className="mt-2 text-2xl font-bold tracking-tight">Culto de {formatDate(c.data)}</h2>
-        <p className="text-sm text-muted-foreground">
-          {TIPOS_REUNIAO[c.tipo]} {c.horario && `· ${c.horario.slice(0,5)}`} · {c.congregacao?.nome ?? c.cidade ?? "—"}
-        </p>
+      <div>
+        <Link to="/cultos" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="mr-1 h-4 w-4" />Voltar</Link>
+        <div className="mt-2 flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Culto de {formatDate(c.data)}</h2>
+            <p className="text-sm text-muted-foreground">
+              {TIPOS_REUNIAO[c.tipo]} {c.horario && `· ${c.horario.slice(0,5)}`} · {c.congregacao?.nome ?? c.cidade ?? "—"}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {canEdit && (
+              <Dialog open={editOpen} onOpenChange={setEditOpen}>
+                <DialogTrigger asChild><Button size="sm" variant="outline"><Pencil className="mr-1 h-4 w-4" />Editar</Button></DialogTrigger>
+                <DialogContent>
+                  <DialogHeader><DialogTitle>Editar culto</DialogTitle></DialogHeader>
+                  <CultoEditForm culto={c} congs={congs.data ?? []} onSaved={() => { setEditOpen(false); qc.invalidateQueries({ queryKey: ["culto", id] }); qc.invalidateQueries({ queryKey: ["culto-audit", id] }); qc.invalidateQueries({ queryKey: ["cultos"] }); }} />
+                </DialogContent>
+              </Dialog>
+            )}
+            <Dialog open={histOpen} onOpenChange={setHistOpen}>
+              <DialogTrigger asChild><Button size="sm" variant="outline"><History className="mr-1 h-4 w-4" />Histórico</Button></DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader><DialogTitle>Histórico de alterações</DialogTitle></DialogHeader>
+                <AuditList items={audit.data ?? []} />
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
         {c.observacoes && <p className="mt-2 rounded-lg border border-border bg-muted/40 p-3 text-sm">{c.observacoes}</p>}
       </div>
 
