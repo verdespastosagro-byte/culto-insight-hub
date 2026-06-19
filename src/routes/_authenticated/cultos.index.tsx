@@ -92,7 +92,7 @@ function CultosList() {
                   </Select>
                 </div>
                 <div><Label>Congregação</Label>
-                  <Select name="congregacao_id">
+                  <Select value={congregacaoId} onValueChange={setCongregacaoId}>
                     <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                     <SelectContent>
                       {(congs ?? []).map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
