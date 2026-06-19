@@ -127,8 +127,36 @@ function Dashboard() {
   const perfil = perfilQ.data;
 
   return (
-    <div className="space-y-6">
-      <InstallPWA className="mb-2" />
+    <>
+      <FundoAnimado efeito={efeito} />
+      <div className="space-y-6">
+        <InstallPWA className="mb-2" />
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted-foreground">Fundo animado:</span>
+          {EFEITO_OPCOES.map((op) => {
+            const ativo = efeito === op.value;
+            return (
+              <button
+                key={op.value}
+                type="button"
+                onClick={() => escolherEfeito(op.value)}
+                disabled={salvando}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-xs transition-colors",
+                  ativo
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card hover:bg-accent",
+                  salvando && "opacity-60",
+                )}
+              >
+                {op.label}
+              </button>
+            );
+          })}
+        </div>
+
+
 
       <Card className="shadow-[var(--shadow-card)]">
         <CardHeader className="pb-3">
