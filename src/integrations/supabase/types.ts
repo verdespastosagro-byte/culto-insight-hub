@@ -523,6 +523,24 @@ export type Database = {
           },
         ]
       }
+      follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+        }
+        Relationships: []
+      }
       hinos: {
         Row: {
           created_at: string
@@ -845,6 +863,33 @@ export type Database = {
         }
         Relationships: []
       }
+      posts: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          foto_url: string | null
+          id: string
+          texto: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          foto_url?: string | null
+          id?: string
+          texto?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          foto_url?: string | null
+          id?: string
+          texto?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profile_privacy: {
         Row: {
           perfil_publico: boolean
@@ -999,6 +1044,10 @@ export type Database = {
       can_manage_org:
         | { Args: { _user_id: string }; Returns: boolean }
         | { Args: { _org_id: string; _user_id: string }; Returns: boolean }
+      contar_congregacoes_pessoa: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
       contar_visitantes_culto: {
         Args: { p_congregacao_ccb_id: number; p_data: string }
         Returns: {
@@ -1044,7 +1093,31 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      is_post_owner: {
+        Args: { _post_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_post_owner_publico: { Args: { _post_id: string }; Returns: boolean }
       is_profile_publico: { Args: { _user_id: string }; Returns: boolean }
+      minhas_congregacoes_visitadas: {
+        Args: { p_user_id: string }
+        Returns: {
+          cidade: string
+          congregacao_ccb_id: number
+          nome: string
+          primeira_visita: string
+          qtd_visitas: number
+          uf: string
+          ultima_visita: string
+        }[]
+      }
+      quem_congregou_junto: {
+        Args: { p_congregacao_ccb_id: number; p_data: string }
+        Returns: {
+          publicos: Json
+          total_geral: number
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "encarregado" | "cooperador" | "usuario"
