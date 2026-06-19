@@ -26,6 +26,29 @@ type Cong = { id: string; nome: string; cidade: string|null; estado: string|null
 type CultoRow = { id: string; data: string; tipo: string; congregacao_id: string | null };
 type Filtro = "todas" | "hoje" | "semana" | "rjm";
 
+function norm(s: string | null | undefined) {
+  return (s ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function findDuplicada(
+  existentes: Cong[],
+  p: { nome: string; cidade: string | null; endereco: string | null },
+) {
+  const enderecoN = norm(p.endereco);
+  const nomeN = norm(p.nome);
+  const cidadeN = norm(p.cidade);
+  return existentes.find((c) => {
+    if (enderecoN && norm(c.endereco) === enderecoN) return true;
+    if (nomeN && norm(c.nome) === nomeN && cidadeN && norm(c.cidade) === cidadeN) return true;
+    return false;
+  });
+}
+
 function CongregacoesPage() {
   const qc = useQueryClient();
   const { canEdit, isAdmin } = useAuth();
