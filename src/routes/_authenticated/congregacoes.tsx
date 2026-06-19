@@ -447,7 +447,41 @@ function CongregacoesPage() {
                 <div><Label>Região / Bairro</Label><Input value={regiao} onChange={(e) => setRegiao(e.target.value)} /></div>
                 <div><Label>Endereço</Label><Input value={endereco} onChange={(e) => setEndereco(e.target.value)} /></div>
                 <div><Label>Observações</Label><Textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} /></div>
-                <DialogFooter><Button type="submit">Salvar</Button></DialogFooter>
+
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2"><Camera className="h-4 w-4" /> Foto da congregação</Label>
+                  {(fotoPreview || fotoExistente) && (
+                    <div className="relative inline-block">
+                      {fotoPreview ? (
+                        <img src={fotoPreview} alt="Prévia" className="h-32 w-32 rounded-md object-cover border" />
+                      ) : (
+                        <CongFoto path={fotoExistente!} className="h-32 w-32 rounded-md object-cover border" />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => { setFotoFile(null); setFotoPreview(null); setFotoExistente(null); }}
+                        className="absolute -right-2 -top-2 rounded-full bg-destructive p-1 text-destructive-foreground shadow"
+                        aria-label="Remover foto"
+                      >
+                        <XIcon className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0] ?? null;
+                      setFotoFile(f);
+                      setFotoPreview(f ? URL.createObjectURL(f) : null);
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">Tire ou anexe uma foto da igreja que você visitou.</p>
+                </div>
+
+                <DialogFooter><Button type="submit" disabled={uploadingFoto}>{uploadingFoto ? "Enviando foto..." : "Salvar"}</Button></DialogFooter>
+
 
               </form>
             </DialogContent>
