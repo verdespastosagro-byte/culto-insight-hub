@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Building2, Plus, Pencil, Trash2, Search, Loader2, MapPin } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Search, Loader2, MapPin, Camera, X as XIcon } from "lucide-react";
 import { listarCongregacoesPorCidade, buscarCidadesUf, type CongregacaoCidade, type CidadeOpcao } from "@/lib/ccb.functions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/congregacoes")({
   component: CongregacoesPage,
 });
 
-type Cong = { id: string; nome: string; cidade: string|null; estado: string|null; regiao: string|null; endereco: string|null; observacoes: string|null };
+type Cong = { id: string; nome: string; cidade: string|null; estado: string|null; regiao: string|null; endereco: string|null; observacoes: string|null; foto_url: string|null };
 type CultoRow = { id: string; data: string; tipo: string; congregacao_id: string | null };
 type Filtro = "todas" | "hoje" | "semana" | "rjm";
 
@@ -47,6 +47,10 @@ function CongregacoesPage() {
   const [regiao, setRegiao] = useState("");
   const [endereco, setEndereco] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const [fotoExistente, setFotoExistente] = useState<string | null>(null);
+  const [uploadingFoto, setUploadingFoto] = useState(false);
 
   // Visita: data + horário escolhido
   const [dataVisita, setDataVisita] = useState<string>(() => new Date().toISOString().slice(0, 10));
@@ -66,6 +70,9 @@ function CongregacoesPage() {
     setRegiao(editing?.regiao ?? "");
     setEndereco(editing?.endereco ?? "");
     setObservacoes(editing?.observacoes ?? "");
+    setFotoFile(null);
+    setFotoPreview(null);
+    setFotoExistente(editing?.foto_url ?? null);
     setSugestoes([]);
     setErroSug(null);
     setHorarioVisita("");
@@ -247,6 +254,26 @@ function CongregacoesPage() {
       if (error) { toast.error(error.message); return; }
     }
 
+    // Upload de foto (opcional)
+    if (congId && fotoFile) {
+      setUploadingFoto(true);
+      const ext = fotoFile.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${congId}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("congregacoes-fotos")
+        .upload(path, fotoFile, { upsert: true, contentType: fotoFile.type });
+      setUploadingFoto(false);
+      if (upErr) {
+        toast.error(`Foto não enviada: ${upErr.message}`);
+      } else {
+        const { error: updErr } = await supabase
+          .from("congregacoes")
+          .update({ foto_url: path })
+          .eq("id", congId);
+        if (updErr) toast.error(updErr.message);
+      }
+    }
+
     // Se um horário foi escolhido, registra a visita como um culto
     if (!editing && congId && horarioVisita && dataVisita) {
       const isRjm = /RJM/i.test(horarioVisita);
@@ -420,7 +447,41 @@ function CongregacoesPage() {
                 <div><Label>Região / Bairro</Label><Input value={regiao} onChange={(e) => setRegiao(e.target.value)} /></div>
                 <div><Label>Endereço</Label><Input value={endereco} onChange={(e) => setEndereco(e.target.value)} /></div>
                 <div><Label>Observações</Label><Textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} /></div>
-                <DialogFooter><Button type="submit">Salvar</Button></DialogFooter>
+
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2"><Camera className="h-4 w-4" /> Foto da congregação</Label>
+                  {(fotoPreview || fotoExistente) && (
+                    <div className="relative inline-block">
+                      {fotoPreview ? (
+                        <img src={fotoPreview} alt="Prévia" className="h-32 w-32 rounded-md object-cover border" />
+                      ) : (
+                        <CongFoto path={fotoExistente!} className="h-32 w-32 rounded-md object-cover border" />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => { setFotoFile(null); setFotoPreview(null); setFotoExistente(null); }}
+                        className="absolute -right-2 -top-2 rounded-full bg-destructive p-1 text-destructive-foreground shadow"
+                        aria-label="Remover foto"
+                      >
+                        <XIcon className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0] ?? null;
+                      setFotoFile(f);
+                      setFotoPreview(f ? URL.createObjectURL(f) : null);
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">Tire ou anexe uma foto da igreja que você visitou.</p>
+                </div>
+
+                <DialogFooter><Button type="submit" disabled={uploadingFoto}>{uploadingFoto ? "Enviando foto..." : "Salvar"}</Button></DialogFooter>
+
 
               </form>
             </DialogContent>
@@ -469,7 +530,10 @@ function CongregacoesPage() {
           {filtered.map((c) => {
             const s = statsPorCong.get(c.id);
             return (
-              <Card key={c.id} className="shadow-[var(--shadow-card)]">
+              <Card key={c.id} className="overflow-hidden shadow-[var(--shadow-card)]">
+                {c.foto_url && (
+                  <CongFoto path={c.foto_url} className="h-36 w-full object-cover" />
+                )}
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -509,4 +573,19 @@ function CongregacoesPage() {
       )}
     </div>
   );
+}
+
+function CongFoto({ path, className }: { path: string; className?: string }) {
+  const { data: url } = useQuery({
+    queryKey: ["cong-foto", path],
+    queryFn: async () => {
+      const { data } = await supabase.storage
+        .from("congregacoes-fotos")
+        .createSignedUrl(path, 60 * 60);
+      return data?.signedUrl ?? null;
+    },
+    staleTime: 50 * 60 * 1000,
+  });
+  if (!url) return <div className={cn("bg-muted animate-pulse", className)} />;
+  return <img src={url} alt="Foto da congregação" className={className} loading="lazy" />;
 }
