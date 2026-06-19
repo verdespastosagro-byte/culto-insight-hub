@@ -22,7 +22,8 @@ export const Route = createFileRoute("/_authenticated/cultos/$id")({
 function CultoDetail() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
-  const { canEdit } = useAuth();
+  const { organizationId } = useAuth();
+  const canEdit = !!organizationId;
 
   const culto = useQuery({
     queryKey: ["culto", id],

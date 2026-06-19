@@ -20,7 +20,8 @@ export const Route = createFileRoute("/_authenticated/cultos/")({
 
 function CultosList() {
   const qc = useQueryClient();
-  const { canEdit } = useAuth();
+  const { organizationId } = useAuth();
+  const canEdit = !!organizationId;
   const [open, setOpen] = useState(false);
   const [congregacaoId, setCongregacaoId] = useState("");
 
