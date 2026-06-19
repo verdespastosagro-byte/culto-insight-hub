@@ -54,6 +54,15 @@
 :root {
   --radius: 1.25rem;
 
+  /* Motion tokens — cinematic, calm, intentional */
+  --ease-cinematic: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-micro: 200ms;
+  --dur-base: 600ms;
+  --dur-slow: 900ms;
+
+
+
   /* Light "polished titanium" surface */
   --background: oklch(0.975 0.004 250);
   --foreground: oklch(0.18 0.02 260);
@@ -217,8 +226,21 @@
   h1, h2, h3, h4 {
     letter-spacing: -0.022em;
     font-weight: 600;
+    font-feature-settings: "ss01", "cv11", "cv02";
+  }
+  h1 { font-size: clamp(2rem, 1.4rem + 3vw, 3.75rem); line-height: 1.05; }
+  h2 { font-size: clamp(1.5rem, 1.15rem + 1.6vw, 2.5rem); line-height: 1.1; }
+  h3 { font-size: clamp(1.15rem, 1rem + 0.8vw, 1.75rem); line-height: 1.2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
 }
+
 
 /* =========================================================
    Liquid-metal utilities — apply via className
@@ -288,6 +310,28 @@
   overflow: hidden;
 }
 
+@utility motion-rise {
+  animation: fade-rise var(--dur-base) var(--ease-cinematic) both;
+}
+
+@utility motion-blur-in {
+  animation: reveal-blur var(--dur-slow) var(--ease-cinematic) both;
+}
+
+@utility hover-lift {
+  transition: transform var(--dur-micro) var(--ease-soft),
+              box-shadow var(--dur-micro) var(--ease-soft);
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-elegant);
+  }
+}
+
+@utility pressable {
+  transition: transform var(--dur-micro) var(--ease-soft);
+  &:active { transform: scale(0.98); }
+}
+
 @keyframes iridescent-shift {
   0%, 100% { background-position: 0% 50%; }
   50%      { background-position: 100% 50%; }
@@ -302,3 +346,14 @@
   0%   { transform: translateX(-120%); }
   100% { transform: translateX(120%); }
 }
+
+@keyframes fade-rise {
+  from { opacity: 0; transform: translate3d(0, 16px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes reveal-blur {
+  from { opacity: 0; filter: blur(12px); transform: translate3d(0, 8px, 0); }
+  to   { opacity: 1; filter: blur(0);    transform: translate3d(0, 0, 0); }
+}
+
