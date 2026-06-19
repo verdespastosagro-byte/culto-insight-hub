@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mic, Square, Loader2, Sparkles, Plus, Trash2, History, MapPin } from "lucide-react";
+import { Mic, Square, Loader2, Sparkles, History, MapPin } from "lucide-react";
 import { TIPOS_REUNIAO } from "@/lib/constants";
 import { iniciarCulto, processarCulto, salvarCultoConfirmado, type ExtracaoCulto } from "@/lib/culto-inteligente.functions";
 
