@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
+
 import { useRef, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -23,6 +25,8 @@ import {
 } from "@/lib/social.functions";
 import { ComentariosSection } from "@/components/ComentariosMural";
 import { toast } from "sonner";
+import { primeirosDoisNomes } from "@/lib/utils";
+
 
 const MAX_LEN = 2000;
 const MAX_FOTO_MB = 5;
@@ -50,7 +54,10 @@ function FeedPage() {
     queryFn: async ({ pageParam }) =>
       fetchFeed({ data: { cursor: pageParam, limite: 15 } }),
     getNextPageParam: (last) => last.nextCursor ?? undefined,
+    staleTime: 2 * 60_000,
+    placeholderData: keepPreviousData,
   });
+
 
   const [texto, setTexto] = useState("");
   const [foto, setFoto] = useState<File | null>(null);
@@ -243,8 +250,9 @@ function PostCard({
                 params={{ userId: post.user_id }}
                 className="block truncate text-sm font-semibold hover:underline"
               >
-                {post.autor_nome}
+                {primeirosDoisNomes(post.autor_nome)}
               </Link>
+
               <p className="text-xs text-muted-foreground">
                 {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: ptBR })}
               </p>

@@ -13,6 +13,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { listarComentarios, criarComentario, excluirComentario } from "@/lib/social.functions";
 import { toast } from "sonner";
+import { primeirosDoisNomes } from "@/lib/utils";
+
 
 const MAX_LEN = 1000;
 
@@ -155,8 +157,9 @@ export function ComentariosSection({ alvoTipo, alvoId, titulo = "Comentários" }
                     params={{ userId: c.user_id }}
                     className="truncate text-xs font-medium hover:underline"
                   >
-                    {c.autor_nome}
+                    {primeirosDoisNomes(c.autor_nome)}
                   </Link>
+
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-muted-foreground">
                       {formatDistanceToNow(new Date(c.created_at), { addSuffix: true, locale: ptBR })}

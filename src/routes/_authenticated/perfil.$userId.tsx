@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -38,7 +38,10 @@ function PerfilPublicoPage() {
   const q = useQuery({
     queryKey: key,
     queryFn: async () => (await fetchPerfil({ data: { userId } })).perfil,
+    staleTime: 5 * 60_000,
+    placeholderData: keepPreviousData,
   });
+
 
   const mSeguir = useMutation({
     mutationFn: async (seguir: boolean) => fetchSeguir({ data: { userId, seguir } }),
