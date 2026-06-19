@@ -815,6 +815,24 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_privacy: {
+        Row: {
+          perfil_publico: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          perfil_publico?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          perfil_publico?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           cargo: string | null
