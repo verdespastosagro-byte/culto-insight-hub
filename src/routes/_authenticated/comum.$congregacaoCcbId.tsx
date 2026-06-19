@@ -90,49 +90,29 @@ function ComumDetalhePage() {
         </div>
       </Card>
 
-      {/* Visitantes recentes */}
-      <Card className="p-4">
-        <h2 className="mb-3 text-sm font-semibold">Quem esteve aqui</h2>
-        {visQ.isLoading ? (
+      {/* Visitantes recentes — carrossel estilo Netflix */}
+      {visQ.isLoading ? (
+        <Card className="p-4">
           <div className="flex justify-center py-4">
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           </div>
-        ) : (
-          <>
-            {visQ.data?.publicos.length ? (
-              <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {visQ.data.publicos.map((v) => (
-                  <li key={v.user_id} className="flex items-center gap-2 rounded-md border bg-card p-2">
-                    <Avatar className="h-8 w-8">
-                      {v.foto_url ? <AvatarImage src={v.foto_url} alt={v.nome} /> : null}
-                      <AvatarFallback className="text-xs">
-                        {v.nome?.[0]?.toUpperCase() ?? "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-medium">{v.nome}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {format(new Date(v.data_culto + "T12:00:00"), "dd/MM/yy", { locale: ptBR })}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                Ninguém com perfil público registrou check-in aqui ainda.
-              </p>
-            )}
-            {visQ.data && visQ.data.totalPrivados > 0 && (
-              <p className="mt-3 text-xs text-muted-foreground">
-                +{visQ.data.totalPrivados}{" "}
-                {visQ.data.totalPrivados === 1 ? "pessoa" : "pessoas"} com perfil privado também{" "}
-                {visQ.data.totalPrivados === 1 ? "esteve" : "estiveram"} aqui.
-              </p>
-            )}
-          </>
-        )}
-      </Card>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          <QuemEsteveAquiCarousel
+            visitantes={visQ.data?.publicos ?? []}
+            invalidateKey={["comum-visitantes", idNum]}
+          />
+          {visQ.data && visQ.data.totalPrivados > 0 && (
+            <p className="px-1 text-xs text-muted-foreground">
+              +{visQ.data.totalPrivados}{" "}
+              {visQ.data.totalPrivados === 1 ? "pessoa" : "pessoas"} com perfil privado também{" "}
+              {visQ.data.totalPrivados === 1 ? "esteve" : "estiveram"} aqui.
+            </p>
+          )}
+        </div>
+      )}
+
 
       {/* Mural fixo da congregação */}
       <ComentariosMural
