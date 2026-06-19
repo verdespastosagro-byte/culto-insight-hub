@@ -142,7 +142,7 @@ function Dashboard() {
       <div className="space-y-6">
         <InstallPWA className="mb-2" />
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-2">
           {EFEITO_OPCOES.map((op) => {
             const ativo = efeito === op.value;
             const Icon = op.icon;
@@ -154,14 +154,14 @@ function Dashboard() {
                 onClick={() => escolherEfeito(op.value)}
                 disabled={salvando}
                 className={cn(
-                  "flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-200",
+                  "flex h-7 w-7 items-center justify-center rounded-lg transition-all duration-200",
                   ativo
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "bg-card text-muted-foreground shadow-[var(--shadow-card)] hover:bg-accent",
                   salvando && "opacity-60",
                 )}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-3.5 w-3.5" />
               </button>
             );
           })}
