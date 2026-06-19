@@ -137,7 +137,15 @@ export function AppShell({ children }: { children: ReactNode }) {
             onClick={() => setOpen(false)}
             className="flex items-center gap-2 rounded-md -m-1 p-1 hover:bg-sidebar-accent/60"
           >
-            <UserCircle className="h-8 w-8 text-muted-foreground shrink-0" />
+            {profile?.foto_url ? (
+              <img
+                src={profile.foto_url}
+                alt=""
+                className="h-8 w-8 rounded-full object-cover border border-sidebar-border shrink-0"
+              />
+            ) : (
+              <UserCircle className="h-8 w-8 text-muted-foreground shrink-0" />
+            )}
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{profile?.nome ?? "Usuário"}</p>
               <p className="truncate text-[10px] text-muted-foreground">Minha conta</p>
