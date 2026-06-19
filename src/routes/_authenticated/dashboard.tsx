@@ -153,26 +153,6 @@ function Dashboard() {
 
 
 
-      <Card className="shadow-[var(--shadow-card)]">
-        <CardHeader><CardTitle className="text-base">Últimos cultos</CardTitle></CardHeader>
-        <CardContent>
-          {(recentes.data ?? []).length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum culto registrado ainda. <Link to="/cultos" className="text-primary underline">Adicionar o primeiro</Link>.</p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {(recentes.data ?? []).map((c: any) => (
-                <li key={c.id} className="flex items-center justify-between py-3">
-                  <div>
-                    <p className="font-medium">{formatDate(c.data)} — {TIPOS_REUNIAO[c.tipo] ?? c.tipo}</p>
-                    <p className="text-xs text-muted-foreground">{c.congregacao?.nome ?? c.cidade ?? "—"}</p>
-                  </div>
-                  <Link to="/cultos/$id" params={{ id: c.id }} className="text-sm text-primary hover:underline">Abrir</Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }
