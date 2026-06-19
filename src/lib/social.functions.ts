@@ -557,7 +557,7 @@ export const listarFeed = createServerFn({ method: "POST" })
 
     let q = supabaseAdmin
       .from("posts")
-      .select("id,user_id,texto,foto_url,created_at")
+      .select("id,user_id,texto,foto_url,audio_url,created_at")
       .is("deleted_at", null)
       .in("user_id", Array.from(visibleIds))
       .order("created_at", { ascending: false })
@@ -571,7 +571,7 @@ export const listarFeed = createServerFn({ method: "POST" })
       return { items: [], nextCursor: null };
     }
 
-    const list = (rows as Array<{ id: string; user_id: string; texto: string | null; foto_url: string | null; created_at: string }>) ?? [];
+    const list = (rows as Array<{ id: string; user_id: string; texto: string | null; foto_url: string | null; audio_url: string | null; created_at: string }>) ?? [];
     const hasMore = list.length > data.limite;
     const slice = hasMore ? list.slice(0, data.limite) : list;
     const nextCursor = hasMore ? slice[slice.length - 1].created_at : null;
@@ -582,20 +582,26 @@ export const listarFeed = createServerFn({ method: "POST" })
     const items: FeedPostItem[] = [];
     for (const r of slice) {
       const p = profilesMap.get(r.user_id);
-      let signed: string | null = null;
+      let signedFoto: string | null = null;
       if (r.foto_url) {
         try {
           const { data: s } = await supabaseAdmin.storage.from("posts-fotos").createSignedUrl(r.foto_url, 60 * 60);
-          signed = s?.signedUrl ?? null;
-        } catch {
-          signed = null;
-        }
+          signedFoto = s?.signedUrl ?? null;
+        } catch { signedFoto = null; }
+      }
+      let signedAudio: string | null = null;
+      if (r.audio_url) {
+        try {
+          const { data: s } = await supabaseAdmin.storage.from("posts-audios").createSignedUrl(r.audio_url, 60 * 60);
+          signedAudio = s?.signedUrl ?? null;
+        } catch { signedAudio = null; }
       }
       items.push({
         id: r.id,
         user_id: r.user_id,
         texto: r.texto,
-        foto_url: signed,
+        foto_url: signedFoto,
+        audio_url: signedAudio,
         created_at: r.created_at,
         autor_nome: p?.nome ?? "Irmão(ã)",
         autor_foto_url: await signAvatar(supabaseAdmin, p?.foto_url ?? null),
@@ -611,23 +617,29 @@ export const criarPost = createServerFn({ method: "POST" })
     z.object({
       texto: z.string().trim().max(2000).optional().default(""),
       foto_path: z.string().trim().max(300).optional().nullable(),
+      audio_path: z.string().trim().max(300).optional().nullable(),
     }).parse(d),
   )
   .handler(async ({ data, context }): Promise<{ id: string }> => {
     const texto = (data.texto ?? "").trim();
     const foto = data.foto_path?.trim() || null;
-    if (!texto && !foto) throw new Error("Escreva algo ou anexe uma foto.");
+    const audio = data.audio_path?.trim() || null;
+    if (!texto && !foto && !audio) throw new Error("Escreva algo, anexe uma foto ou grave um áudio.");
     if (foto && !foto.startsWith(`${context.userId}/`)) {
       throw new Error("Caminho de foto inválido.");
     }
+    if (audio && !audio.startsWith(`${context.userId}/`)) {
+      throw new Error("Caminho de áudio inválido.");
+    }
     const { data: row, error } = await context.supabase
       .from("posts")
-      .insert({ user_id: context.userId, texto: texto || null, foto_url: foto })
+      .insert({ user_id: context.userId, texto: texto || null, foto_url: foto, audio_url: audio })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
     return { id: row.id as string };
   });
+
 
 export const excluirPost = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
