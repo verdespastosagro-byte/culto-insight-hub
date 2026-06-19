@@ -13,6 +13,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { listarComentarios, criarComentario, excluirComentario } from "@/lib/social.functions";
 import { toast } from "sonner";
+import { primeirosDoisNomes } from "@/lib/utils";
+
 
 const MAX_LEN = 1000;
 
