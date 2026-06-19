@@ -360,16 +360,147 @@ function ContaPage() {
                   maxLength={120}
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="congregacao">Congregação</Label>
-                <Input
-                  id="congregacao"
-                  value={congregacao}
-                  onChange={(e) => setCongregacao(e.target.value)}
-                  placeholder="Nome da congregação onde serve"
-                  maxLength={160}
-                />
-              </div>
+            </div>
+            <StatusLine status={profileStatus} />
+            <div className="flex justify-end">
+              <Button type="submit" disabled={savingProfile}>
+                {savingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Salvar alterações
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Minha Comum (CCB) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Building2 className="h-4 w-4" /> Minha Comum
+          </CardTitle>
+          <CardDescription>
+            Selecione a cidade e depois a comum (congregação CCB) à qual você pertence. Ela aparecerá no seu perfil público.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="cidade-busca">Cidade</Label>
+              <Input
+                id="cidade-busca"
+                value={cidadeBusca}
+                onChange={(e) => {
+                  setCidadeBusca(e.target.value);
+                }}
+                placeholder="Digite ao menos 2 letras"
+                maxLength={120}
+              />
+              {cidadesQ.data && cidadesQ.data.length > 0 && (
+                <Select
+                  value={cidadeAtual && ufAtual ? `${cidadeAtual}__${ufAtual}` : ""}
+                  onValueChange={(v) => {
+                    const [c, u] = v.split("__");
+                    setCidadeAtual(c);
+                    setUfAtual(u);
+                    setComumSelecionada(null);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Escolha a cidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cidadesQ.data.map((c) => (
+                      <SelectItem key={`${c.cidade}__${c.uf}`} value={`${c.cidade}__${c.uf}`}>
+                        {c.cidade} / {c.uf}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {cidadesQ.isLoading && (
+                <p className="text-xs text-muted-foreground">Buscando cidades…</p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="comum-select">Comum</Label>
+              <Select
+                value={comumSelecionada ? String(comumSelecionada) : ""}
+                onValueChange={(v) => setComumSelecionada(v ? Number(v) : null)}
+                disabled={!cidadeAtual || !ufAtual || comunsQ.isLoading}
+              >
+                <SelectTrigger id="comum-select">
+                  <SelectValue
+                    placeholder={
+                      !cidadeAtual
+                        ? "Escolha a cidade primeiro"
+                        : comunsQ.isLoading
+                          ? "Carregando comuns…"
+                          : "Selecione a comum"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {(comunsQ.data ?? []).map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>
+                      {c.nome}
+                      {c.bairro ? ` — ${c.bairro}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {comunsQ.data && comunsQ.data.length === 0 && cidadeAtual && (
+                <p className="text-xs text-muted-foreground">
+                  Nenhuma comum encontrada nessa cidade.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <StatusLine status={comumStatus} />
+
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-xs text-muted-foreground">
+              {comumSelecionada
+                ? "Confirme para salvar."
+                : "Você ainda não definiu uma comum."}
+            </div>
+            <div className="flex gap-2">
+              {comumIdAtual && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={savingComum}
+                  onClick={async () => {
+                    setComumSelecionada(null);
+                    setSavingComum(true);
+                    try {
+                      await fetchDefinirComum({ data: { congregacao_ccb_id: null } });
+                      setComumStatus({ type: "ok", msg: "Comum removida do perfil." });
+                      await refreshOrg();
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "Erro");
+                    } finally {
+                      setSavingComum(false);
+                    }
+                  }}
+                >
+                  Remover
+                </Button>
+              )}
+              <Button
+                type="button"
+                size="sm"
+                disabled={savingComum || !comumSelecionada || comumSelecionada === comumIdAtual}
+                onClick={handleSalvarComum}
+              >
+                {savingComum && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Salvar comum
+              </Button>
+            </div>
+          </div>
+
             </div>
             <StatusLine status={profileStatus} />
             <div className="flex justify-end">
