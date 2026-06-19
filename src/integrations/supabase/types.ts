@@ -702,6 +702,48 @@ export type Database = {
           },
         ]
       }
+      plan_configs: {
+        Row: {
+          created_at: string
+          cta_label: string
+          description: string
+          features: Json
+          highlight: boolean
+          label: string
+          period_label: string
+          plan: string
+          price_label: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cta_label?: string
+          description?: string
+          features?: Json
+          highlight?: boolean
+          label: string
+          period_label?: string
+          plan: string
+          price_label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cta_label?: string
+          description?: string
+          features?: Json
+          highlight?: boolean
+          label?: string
+          period_label?: string
+          plan?: string
+          price_label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           cargo: string | null

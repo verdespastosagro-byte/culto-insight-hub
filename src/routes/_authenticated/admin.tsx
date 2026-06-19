@@ -18,9 +18,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  adminListUsers, adminUpdateUser, adminSetBan, adminDeleteUser, adminSetPlan,
-} from "@/lib/admin.functions";
+import { adminListUsers, adminUpdateUser, adminSetBan, adminDeleteUser, adminSetPlan } from "@/lib/admin.functions";
+import { AdminPlansEditor } from "@/components/admin/AdminPlansEditor";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Administração — Culto Insight Hub" }] }),
@@ -182,6 +181,10 @@ function AdminPage() {
           )}
         </CardContent>
       </Card>
+
+      <AdminPlansEditor />
+
+
 
       {/* Editar */}
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
