@@ -1,72 +1,339 @@
 name: Android Play Store
 
+
+
 on:
+
   push:
+  
     branches: [main]
+    
   workflow_dispatch:
+  
+
 
 permissions:
+
   contents: read
+  
+
 
 jobs:
+
   build-android:
+  
     runs-on: ubuntu-latest
+    
     steps:
+    
       - name: Checkout
+      
         uses: actions/checkout@v4
+        
+
+
       - name: Setup Node
+      
         uses: actions/setup-node@v4
+        
         with:
+        
           node-version: 22
+          
           cache: npm
+          
+
+
       - name: Setup Java
+      
         uses: actions/setup-java@v4
+        
         with:
+        
           distribution: temurin
+          
           java-version: '21'
+          
+
+
       - name: Install dependencies
+      
         run: npm install --legacy-peer-deps --no-audit --no-fund
+        
+
+
+      - name: Build web assets for Capacitor
+      
+        run: |
+        
+          npm run build
+          
+          rm -rf www
+          
+          mkdir -p www
+          
+          cp -R .output/public/. www/
+          
+          ENTRY=$(find www/assets -maxdepth 1 -type f -name 'index-*.js' -printf '%s %p\n' | sort -nr | head -n1 | cut -d' ' -f2-)
+          
+          test -n "$ENTRY"
+          
+          ENTRY_NAME=$(basename "$ENTRY")
+          
+          cat > www/index.html <<EOF
+          
+          <!doctype html>
+          
+          <html lang="pt-BR">
+          
+            <head>
+            
+              <meta charset="UTF-8" />
+              
+              <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+              
+              <meta name="theme-color" content="#0f172a" />
+              
+              <title>Deuteronômio 28</title>
+              
+              <link rel="manifest" href="/manifest.webmanifest" />
+              
+              <link rel="icon" href="/favicon.ico" />
+              
+            </head>
+            
+            <body>
+            
+              <div id="root"></div>
+              
+              <script type="module" src="/assets/$ENTRY_NAME"></script>
+              
+            </body>
+            
+          </html>
+          
+          EOF
+          
+          test -s www/index.html
+          
+
+
       - name: Create Android platform
+      
         run: npx cap add android
+        
+
+
       - name: Sync Capacitor
+      
         run: npx cap sync android
+        
+
+
       - name: Prepare version
+      
         id: version
+        
         shell: bash
+        
         run: |
+        
           VERSION_CODE=$((100000 + GITHUB_RUN_NUMBER))
+          
           VERSION_NAME="1.0.${GITHUB_RUN_NUMBER}"
+          
           echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+          
           echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          
           sed -i "s/versionCode [0-9][0-9]*/versionCode ${VERSION_CODE}/" android/app/build.gradle
-          sed -i "s/versionName .*/versionName '${VERSION_NAME}'/" android/app/build.gradle
+          
+          sed -i "s/versionName \"[^\"]*\"/versionName \"${VERSION_NAME}\"/" android/app/build.gradle
+          
+
+
       - name: Decode upload keystore
+      
         env:
+        
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          
         run: |
+        
           test -n "$ANDROID_KEYSTORE_BASE64"
+          
           echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/upload-keystore.jks
+          
+
+
       - name: Build signed AAB
+      
         working-directory: android
+        
         env:
+        
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          
         run: |
+        
           test -n "$ANDROID_KEYSTORE_PASSWORD"
+          
           test -n "$ANDROID_KEY_ALIAS"
+          
           test -n "$ANDROID_KEY_PASSWORD"
+          
           test -s upload-keystore.jks
+          
           KEYSTORE_FILE="$(realpath upload-keystore.jks)"
-          test -f "$KEYSTORE_FILE"
+          
           echo "Keystore disponível em: $KEYSTORE_FILE"
+          
           ./gradlew bundleRelease \
+          
             -Pandroid.injected.signing.store.file="$KEYSTORE_FILE" \
+            
             -Pandroid.injected.signing.store.password="$ANDROID_KEYSTORE_PASSWORD" \
+            
             -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" \
+            
             -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD"
+            
+
+
       - name: Upload AAB artifact
+      
         uses: actions/upload-artifact@v4
+        
         with:
+        
           name: culto-ccb-${{ steps.version.outputs.version_name }}
+          
           path: android/app/build/outputs/bundle/release/app-release.aab
+          
+
+
+      # Ative somente depois de configurar GOOGLE_PLAY_SERVICE_ACCOUNT_JSON
+      
+      # e concluir o primeiro envio/revisão manual no Play Console.
+      
+      # - name: Publish to closed testing
+      
+      #   uses: r0adkll/upload-google-play@v1
+      
+      #   with:
+      
+      #     serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+      
+      #     packageName: com.ccbcultos.integrado
+      
+      #     releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+      
+      #     track: internal
+      
+      #     status: completed
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
