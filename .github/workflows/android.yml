@@ -32,6 +32,11 @@ jobs:
           rm -rf www
           mkdir -p www
           cp -R .output/public/. www/
+          for ENTRY_FILE in www/assets/index-*.js; do
+            if [ -f "$ENTRY_FILE" ]; then
+              sed -i 's/YR\.hydrateRoot(document,/YR.createRoot(document.getElementById("root")).render(/' "$ENTRY_FILE"
+            fi
+          done
           if [ ! -s www/index.html ]; then
             ENTRY=$(find www/assets -maxdepth 1 -type f -name 'index-*.js' -printf '%s %p\n' | sort -nr | head -n1 | cut -d' ' -f2-)
             test -n "$ENTRY"
