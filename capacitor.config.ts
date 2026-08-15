@@ -8,25 +8,13 @@ const config: CapacitorConfig = {
   
   appName: 'Deuteronômio 28',
   
-  webDir: 'www',
-  
-  server: {
-    
-    url: 'https://preview--culto-insight-hub.lovable.app',
-    
-    cleartext: false
-      
-  }
+  webDir: 'www'
     
 };
 
 
 
 export default config;
-
-
-
-
 
 
 
