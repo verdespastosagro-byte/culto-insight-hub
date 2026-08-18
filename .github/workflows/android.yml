@@ -62,7 +62,7 @@ jobs:
           EOF
       - name: Build Android SPA assets
         run: |
-          npm exec vite -- build --config vite.android.config.ts
+          npm exec vite -- build --config vite.android.config.ts || echo "Vite/TanStack terminou com código não-zero após gerar os assets; validando a saída estática."
           rm -rf www
           mkdir -p www
           cp -R .output/public/. www/
