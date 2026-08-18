@@ -30,7 +30,7 @@ jobs:
         run: |
           cp src/start.ts src/start.ts.original
           cp src/android-entry.tsx src/start.ts
-          cat > android.html <<'EOF'
+          cat > index.html <<'EOF'
           <!doctype html>
           <html lang="pt-BR">
             <head>
@@ -56,7 +56,7 @@ jobs:
             build: {
               outDir: "android-dist",
               emptyOutDir: true,
-              rollupOptions: { input: "android.html" },
+              rollupOptions: { input: "index.html" },
             },
           });
           EOF
