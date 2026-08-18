@@ -65,7 +65,26 @@ jobs:
           npm exec vite -- build --config vite.android.config.ts || echo "Vite/TanStack terminou com código não-zero após gerar os assets; validando a saída estática."
           rm -rf www
           mkdir -p www
-          cp -R android-dist/. www/
+          cp -R .output/public/. www/
+          if [ ! -s www/index.html ]; then
+            ENTRY=$(grep -l "createRoot" www/assets/*.js | head -n 1 || true)
+            test -n "$ENTRY"
+            ENTRY_NAME=$(basename "$ENTRY")
+            cat > www/index.html <<EOF
+          <!doctype html>
+          <html lang="pt-BR">
+            <head>
+              <meta charset="UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+              <title>Deuteronômio 28</title>
+            </head>
+            <body>
+              <div id="root"></div>
+              <script type="module" src="./assets/$ENTRY_NAME"></script>
+            </body>
+          </html>
+          EOF
+          fi
           test -s www/index.html
       - name: Sync Capacitor Android
         run: npx cap sync android
