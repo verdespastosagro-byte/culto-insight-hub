@@ -26,57 +26,54 @@ jobs:
           java-version: '21'
       - name: Install dependencies
         run: npm install --legacy-peer-deps --no-audit --no-fund
-      - name: Build web assets for Capacitor
+      - name: Create Android SPA entry files
         run: |
-          npm run build
+          cat > android.html <<'EOF'
+          <!doctype html>
+          <html lang="pt-BR">
+            <head>
+              <meta charset="UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+              <meta name="theme-color" content="#0f172a" />
+              <title>Deuteronômio 28</title>
+            </head>
+            <body>
+              <div id="root"></div>
+              <script type="module" src="/src/android-entry.tsx"></script>
+            </body>
+          </html>
+          EOF
+          cat > vite.android.config.ts <<'EOF'
+          import { defineConfig } from "vite";
+          import react from "@vitejs/plugin-react";
+          import tsconfigPaths from "vite-tsconfig-paths";
+          import tailwindcss from "@tailwindcss/vite";
+          export default defineConfig({
+            base: "./",
+            plugins: [react(), tsconfigPaths(), tailwindcss()],
+            build: { outDir: "android-dist", emptyOutDir: true, rollupOptions: { input: "android.html" } },
+          });
+          EOF
+      - name: Build Android SPA assets
+        run: |
+          npm exec vite -- build --config vite.android.config.ts
           rm -rf www
           mkdir -p www
-          cp -R .output/public/. www/
-          for ENTRY_FILE in www/assets/index-*.js; do
-            if [ -f "$ENTRY_FILE" ]; then
-              sed -i 's/YR\.hydrateRoot(document,/YR.createRoot(document.getElementById("root")).render(/' "$ENTRY_FILE"
-            fi
-          done
-          if [ ! -s www/index.html ]; then
-            ENTRY=$(find www/assets -maxdepth 1 -type f -name 'index-*.js' -printf '%s %p\n' | sort -nr | head -n1 | cut -d' ' -f2-)
-            test -n "$ENTRY"
-            ENTRY_NAME=$(basename "$ENTRY")
-            cat > www/index.html <<EOF
-          <!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/><title>Deuteronômio 28</title></head><body><div id="root"></div><script type="module" src="./assets/$ENTRY_NAME"></script></body></html>
-          EOF
-          fi
+          cp -R android-dist/. www/
           test -s www/index.html
-          grep -q '<script' www/index.html
-      - name: Create Android platform
-        run: npx cap add android
-      - name: Sync Capacitor
+          grep -q 'android-entry' www/index.html
+      - name: Sync Capacitor Android
         run: npx cap sync android
-      - name: Prepare version
-        id: version
-        shell: bash
-        run: |
-          VERSION_CODE=$((100000 + GITHUB_RUN_NUMBER))
-          VERSION_NAME="1.0.${GITHUB_RUN_NUMBER}"
-          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
-          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
-          sed -i "s/versionCode [0-9]*/versionCode ${VERSION_CODE}/" android/app/build.gradle
-          sed -i "s/versionName \"[^\"]*\"/versionName \"${VERSION_NAME}\"/" android/app/build.gradle
-      - name: Decode upload keystore
+      - name: Prepare signing key
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
-          test -n "$ANDROID_KEYSTORE_BASE64"
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/upload-keystore.jks
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.keystore"
       - name: Build signed AAB
         working-directory: android
-        env:
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: ./gradlew bundleRelease -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/android/upload-keystore.jks" -Pandroid.injected.signing.store.password="$ANDROID_KEYSTORE_PASSWORD" -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD"
+        run: ./gradlew bundleRelease -Pandroid.injected.signing.store.file="$RUNNER_TEMP/release.keystore" -Pandroid.injected.signing.store.password="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" -Pandroid.injected.signing.key.alias="${{ secrets.ANDROID_KEY_ALIAS }}" -Pandroid.injected.signing.key.password="${{ secrets.ANDROID_KEY_PASSWORD }}"
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: culto-ccb-${{ steps.version.outputs.version_name }}
+          name: culto-ccb-${{ github.run_number }}
           path: android/app/build/outputs/bundle/release/app-release.aab
-          if-no-files-found: error
