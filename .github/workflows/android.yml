@@ -28,6 +28,8 @@ jobs:
         run: npm install --legacy-peer-deps --no-audit --no-fund
       - name: Create Android SPA entry files
         run: |
+          cp src/start.ts src/start.ts.original
+          cp src/android-entry.tsx src/start.ts
           cat > android.html <<'EOF'
           <!doctype html>
           <html lang="pt-BR">
@@ -39,7 +41,7 @@ jobs:
             </head>
             <body>
               <div id="root"></div>
-              <script type="module" src="/src/android-entry.tsx"></script>
+              <script type="module" src="/src/start.ts"></script>
             </body>
           </html>
           EOF
@@ -65,7 +67,6 @@ jobs:
           mkdir -p www
           cp -R .output/public/. www/
           test -s www/index.html
-          grep -q 'android-entry' www/index.html
       - name: Sync Capacitor Android
         run: npx cap sync android
       - name: Prepare signing key
