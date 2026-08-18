@@ -86,6 +86,8 @@ jobs:
           EOF
           fi
           test -s www/index.html
+      - name: Add Capacitor Android platform
+        run: npx cap add android
       - name: Sync Capacitor Android
         run: npx cap sync android
       - name: Prepare signing key
