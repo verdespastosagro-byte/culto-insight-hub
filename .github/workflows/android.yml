@@ -33,16 +33,16 @@ jobs:
           cat > index.html <<'EOF'
           <!doctype html>
           <html lang="pt-BR">
-            <head>
-              <meta charset="UTF-8" />
-              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-              <meta name="theme-color" content="#0f172a" />
-              <title>Deuteronômio 28</title>
-            </head>
-            <body>
-              <div id="root"></div>
-              <script type="module" src="/src/start.ts"></script>
-            </body>
+          <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <meta name="theme-color" content="#0f172a" />
+            <title>Deuteronômio 28</title>
+          </head>
+          <body>
+            <div id="root"></div>
+            <script type="module" src="/src/start.ts"></script>
+          </body>
           </html>
           EOF
           cat > vite.android.config.ts <<'EOF'
@@ -73,21 +73,34 @@ jobs:
             cat > www/index.html <<EOF
           <!doctype html>
           <html lang="pt-BR">
-            <head>
-              <meta charset="UTF-8" />
-              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-              <title>Deuteronômio 28</title>
-            </head>
-            <body>
-              <div id="root"></div>
-              <script type="module" src="./assets/$ENTRY_NAME"></script>
-            </body>
+          <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>Deuteronômio 28</title>
+          </head>
+          <body>
+            <div id="root"></div>
+            <script type="module" src="./assets/$ENTRY_NAME"></script>
+          </body>
           </html>
           EOF
           fi
           test -s www/index.html
       - name: Add Capacitor Android platform
         run: npx cap add android
+      - name: Set Android version
+        working-directory: android
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('app/build.gradle')
+          text = path.read_text()
+          text = text.replace('versionCode 1', 'versionCode 100014')
+          text = text.replace('versionName "1.0"', 'versionName "1.0.14"')
+          path.write_text(text)
+          print('Configured versionCode 100014 and versionName 1.0.14')
+          PY
+          grep -E 'versionCode|versionName' app/build.gradle
       - name: Sync Capacitor Android
         run: npx cap sync android
       - name: Prepare signing key
