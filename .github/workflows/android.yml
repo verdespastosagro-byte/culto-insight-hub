@@ -63,7 +63,7 @@ jobs:
           npm exec vite -- build --config vite.android.config.ts
           rm -rf www
           mkdir -p www
-          cp -R android-dist/. www/
+          cp -R .output/public/. www/
           test -s www/index.html
           grep -q 'android-entry' www/index.html
       - name: Sync Capacitor Android
