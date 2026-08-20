@@ -59,14 +59,8 @@ jobs:
           test "$(find android/app/src/main/assets/public -name '*.js' | wc -l)" -gt 0
       - name: Set Android version
         run: |
-          sed -i 's/versionCode [0-9]*/versionCode 100016/' android/app/build.gradle
-          sed -i 's/versionName "[^"]*"/versionName "1.0.16"/' android/app/build.gradle
-      - name: Sync Capacitor
-        run: npx cap sync android
-      - name: Verify packaged web assets
-        run: |
-          test -s android/app/src/main/assets/public/index.html
-          test "$(find android/app/src/main/assets/public -name '*.js' | wc -l)" -gt 0
+          sed -i 's/versionCode [0-9]*/versionCode 100017/' android/app/build.gradle
+          sed -i 's/versionName "[^"]*"/versionName "1.0.17"/' android/app/build.gradle
       - name: Configure signing
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -74,13 +68,42 @@ jobs:
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
+          test -n "$KEYSTORE_B64"
           echo "$KEYSTORE_B64" | base64 --decode > android/app/release.keystore
-          printf '\nMYAPP_UPLOAD_STORE_FILE=release.keystore\nMYAPP_UPLOAD_STORE_PASSWORD=%s\nMYAPP_UPLOAD_KEY_ALIAS=%s\nMYAPP_UPLOAD_KEY_PASSWORD=%s\n' "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" >> android/gradle.properties
+          cat >> android/gradle.properties <<EOF
+          MYAPP_UPLOAD_STORE_FILE=release.keystore
+          MYAPP_UPLOAD_STORE_PASSWORD=$STORE_PASSWORD
+          MYAPP_UPLOAD_KEY_ALIAS=$KEY_ALIAS
+          MYAPP_UPLOAD_KEY_PASSWORD=$KEY_PASSWORD
+          EOF
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('android/app/build.gradle')
+          s=p.read_text()
+          signing='''signingConfigs {\n        release {\n            storeFile file(MYAPP_UPLOAD_STORE_FILE)\n            storePassword MYAPP_UPLOAD_STORE_PASSWORD\n            keyAlias MYAPP_UPLOAD_KEY_ALIAS\n            keyPassword MYAPP_UPLOAD_KEY_PASSWORD\n        }\n    }\n\n    '''
+          if 'signingConfigs {' not in s:
+              s=s.replace('buildTypes {', signing+'buildTypes {', 1)
+          if 'signingConfig signingConfigs.release' not in s:
+              s=s.replace('release {', 'release {\n            signingConfig signingConfigs.release', 1)
+          p.write_text(s)
+          PY
+          grep -n -A10 -B3 'signingConfigs\|signingConfig signingConfigs.release' android/app/build.gradle
+      - name: Sync Capacitor
+        run: npx cap sync android
+      - name: Verify packaged web assets
+        run: |
+          test -s android/app/src/main/assets/public/index.html
+          test "$(find android/app/src/main/assets/public -name '*.js' | wc -l)" -gt 0
       - name: Build signed AAB
         working-directory: android
         run: ./gradlew bundleRelease --no-daemon
+      - name: Verify AAB signature
+        working-directory: android
+        run: |
+          test -f app/build/outputs/bundle/release/app-release.aab
+          test "$(unzip -l app/build/outputs/bundle/release/app-release.aab | grep -E 'META-INF/.*\.(RSA|DSA|EC)$' | wc -l)" -gt 0
       - uses: actions/upload-artifact@v4
         with:
-          name: culto-ccb-27
+          name: culto-ccb-28
           path: android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
