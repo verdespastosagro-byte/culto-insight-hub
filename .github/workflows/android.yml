@@ -27,10 +27,11 @@ jobs:
           <!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Deuteronômio 28</title></head><body><div id="root"></div><script type="module" src="/src/android-entry.tsx"></script></body></html>
           EOF
           cat > android-server-shim.ts <<'EOF'
+          export class AsyncLocalStorage<T=any>{value:any;run<R>(v:any,fn:()=>R){this.value=v;return fn()}getStore(){return this.value}enterWith(v:any){this.value=v}}
           export const createServerFn=()=>{const f:any=()=>Promise.resolve(undefined);f.validator=()=>f;f.inputValidator=()=>f;f.handler=()=>f;return f};export const createServerOnlyFn=(f:any)=>f;export const serverOnly=(f:any)=>f;export const getRequestHeader=()=>undefined;export const setResponseHeader=()=>undefined;export const useSession=()=>undefined;
           EOF
           cat > vite.android.config.ts <<'EOF'
-          import {defineConfig} from 'vite';import react from '@vitejs/plugin-react';import tsconfigPaths from 'vite-tsconfig-paths';import path from 'node:path';export default defineConfig({base:'./',plugins:[react(),tsconfigPaths()],resolve:{alias:{'@tanstack/start-server-core':path.resolve('android-server-shim.ts'),'@tanstack/react-start/server':path.resolve('android-server-shim.ts')}},build:{outDir:'android-dist',emptyOutDir:true,sourcemap:false}});
+          import {defineConfig} from 'vite';import react from '@vitejs/plugin-react';import tsconfigPaths from 'vite-tsconfig-paths';import path from 'node:path';export default defineConfig({base:'./',plugins:[react(),tsconfigPaths()],resolve:{alias:{'@tanstack/start-server-core':path.resolve('android-server-shim.ts'),'@tanstack/react-start/server':path.resolve('android-server-shim.ts'),'@tanstack/start-storage-context':path.resolve('android-server-shim.ts')}},build:{outDir:'android-dist',emptyOutDir:true,sourcemap:false}});
           EOF
       - name: Build SPA
         run: npm exec vite -- build --config vite.android.config.ts
