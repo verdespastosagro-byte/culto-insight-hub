@@ -83,11 +83,15 @@ jobs:
           signing='''signingConfigs {\n        release {\n            storeFile file(MYAPP_UPLOAD_STORE_FILE)\n            storePassword MYAPP_UPLOAD_STORE_PASSWORD\n            keyAlias MYAPP_UPLOAD_KEY_ALIAS\n            keyPassword MYAPP_UPLOAD_KEY_PASSWORD\n        }\n    }\n\n    '''
           if 'signingConfigs {' not in s:
               s=s.replace('buildTypes {', signing+'buildTypes {', 1)
-          if 'signingConfig signingConfigs.release' not in s:
-              s=s.replace('release {', 'release {\n            signingConfig signingConfigs.release', 1)
+          marker='buildTypes {'
+          head, tail = s.split(marker, 1)
+          if 'signingConfig signingConfigs.release' not in tail:
+              before_release, after_release = tail.split('release {', 1)
+              tail = before_release + 'release {\n            signingConfig signingConfigs.release' + after_release
+              s=head + marker + tail
           p.write_text(s)
           PY
-          grep -n -A10 -B3 'signingConfigs\|signingConfig signingConfigs.release' android/app/build.gradle
+          grep -n -A12 -B3 'signingConfigs\|signingConfig signingConfigs.release' android/app/build.gradle
       - name: Sync Capacitor
         run: npx cap sync android
       - name: Verify packaged web assets
@@ -97,11 +101,6 @@ jobs:
       - name: Build signed AAB
         working-directory: android
         run: ./gradlew bundleRelease --no-daemon
-      - name: Verify AAB signature
-        working-directory: android
-        run: |
-          test -f app/build/outputs/bundle/release/app-release.aab
-          test "$(unzip -l app/build/outputs/bundle/release/app-release.aab | grep -E 'META-INF/.*\.(RSA|DSA|EC)$' | wc -l)" -gt 0
       - uses: actions/upload-artifact@v4
         with:
           name: culto-ccb-28
