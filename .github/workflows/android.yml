@@ -36,6 +36,8 @@ jobs:
           EOF
       - name: Build SPA
         run: npm exec vite -- build --config vite.android.config.ts
+      - name: Create Android platform
+        run: npx cap add android
       - name: Validate output
         run: test -s android-dist/index.html && test -d android
       - name: Set Android version
