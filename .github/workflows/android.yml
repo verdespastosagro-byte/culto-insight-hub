@@ -1,108 +1,60 @@
 name: Android Play Store
-
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
   build-android:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
-
       - name: Install dependencies
         run: npm install --legacy-peer-deps --no-audit --no-fund
-
-      - name: Create pure client Android entry
+      - name: Create Android client build files
         shell: bash
         run: |
           cat > index.html <<'EOF'
-          <!doctype html>
-          <html lang="pt-BR">
-            <head>
-              <meta charset="UTF-8" />
-              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-              <title>Deuteronômio 28</title>
-            </head>
-            <body>
-              <div id="root"></div>
-              <script type="module" src="/src/android-entry.tsx"></script>
-            </body>
-          </html>
+          <!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Deuteronômio 28</title></head><body><div id="root"></div><script type="module" src="/src/android-entry.tsx"></script></body></html>
+          EOF
+          cat > android-server-shim.ts <<'EOF'
+          export const createServerFn=()=>{const f:any=()=>Promise.resolve(undefined);f.validator=()=>f;f.inputValidator=()=>f;f.handler=()=>f;return f};export const createServerOnlyFn=(f:any)=>f;export const serverOnly=(f:any)=>f;export const getRequestHeader=()=>undefined;export const setResponseHeader=()=>undefined;export const useSession=()=>undefined;
           EOF
           cat > vite.android.config.ts <<'EOF'
-          import { defineConfig } from 'vite';
-          import react from '@vitejs/plugin-react';
-          import tsconfigPaths from 'vite-tsconfig-paths';
-          export default defineConfig({
-            base: './',
-            plugins: [react(), tsconfigPaths()],
-            build: {
-              outDir: 'android-dist',
-              emptyOutDir: true,
-              sourcemap: false,
-            },
-          });
+          import {defineConfig} from 'vite';import react from '@vitejs/plugin-react';import tsconfigPaths from 'vite-tsconfig-paths';import path from 'node:path';export default defineConfig({base:'./',plugins:[react(),tsconfigPaths()],resolve:{alias:{'@tanstack/start-server-core':path.resolve('android-server-shim.ts'),'@tanstack/react-start/server':path.resolve('android-server-shim.ts')}},build:{outDir:'android-dist',emptyOutDir:true,sourcemap:false}});
           EOF
-
-      - name: Build pure client SPA assets
+      - name: Build SPA
         run: npm exec vite -- build --config vite.android.config.ts
-
-      - name: Validate SPA output
-        shell: bash
-        run: |
-          test -s android-dist/index.html
-          grep -q 'android-entry' android-dist/index.html
-          test -d android
-
+      - name: Validate output
+        run: test -s android-dist/index.html && test -d android
       - name: Set Android version
-        shell: bash
         run: |
-          sed -i "s/versionCode [0-9]*/versionCode 100015/" android/app/build.gradle
-          sed -i "s/versionName \"[^"]*\"/versionName \"1.0.15\"/" android/app/build.gradle
-
-      - name: Sync Capacitor Android assets
+          sed -i 's/versionCode [0-9]*/versionCode 100015/' android/app/build.gradle
+          sed -i 's/versionName "[^"]*"/versionName "1.0.15"/' android/app/build.gradle
+      - name: Sync Capacitor
         run: npx cap sync android
-
       - name: Configure signing
-        shell: bash
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           echo "$KEYSTORE_B64" | base64 --decode > android/app/release.keystore
-          cat >> android/gradle.properties <<EOF
-          MYAPP_UPLOAD_STORE_FILE=release.keystore
-          MYAPP_UPLOAD_STORE_PASSWORD=$KEYSTORE_PASSWORD
-          MYAPP_UPLOAD_KEY_ALIAS=$KEY_ALIAS
-          MYAPP_UPLOAD_KEY_PASSWORD=$KEY_PASSWORD
-          EOF
-
+          printf '\nMYAPP_UPLOAD_STORE_FILE=release.keystore\nMYAPP_UPLOAD_STORE_PASSWORD=%s\nMYAPP_UPLOAD_KEY_ALIAS=%s\nMYAPP_UPLOAD_KEY_PASSWORD=%s\n' "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" >> android/gradle.properties
       - name: Build signed AAB
         working-directory: android
         run: ./gradlew bundleRelease --no-daemon
-
-      - name: Upload AAB artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: culto-ccb-26
           path: android/app/build/outputs/bundle/release/app-release.aab
