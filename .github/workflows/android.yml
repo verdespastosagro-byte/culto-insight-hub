@@ -1,10 +1,13 @@
 name: Android Play Store
+
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
 permissions:
   contents: read
+
 jobs:
   build-android:
     runs-on: ubuntu-latest
@@ -36,16 +39,34 @@ jobs:
           EOF
       - name: Build SPA
         run: npm exec vite -- build --config vite.android.config.ts
+      - name: Prepare Capacitor web assets
+        shell: bash
+        run: |
+          test -s android-dist/index.html
+          rm -rf www
+          mkdir -p www
+          cp -R android-dist/. www/
+          test -s www/index.html
       - name: Create Android platform
         run: npx cap add android
-      - name: Validate output
-        run: test -s android-dist/index.html && test -d android
+      - name: Copy Android web assets
+        shell: bash
+        run: |
+          rm -rf android/app/src/main/assets/public
+          mkdir -p android/app/src/main/assets/public
+          cp -R android-dist/. android/app/src/main/assets/public/
+          test -s android/app/src/main/assets/public/index.html
+          test "$(find android/app/src/main/assets/public -name '*.js' | wc -l)" -gt 0
       - name: Set Android version
         run: |
-          sed -i 's/versionCode [0-9]*/versionCode 100015/' android/app/build.gradle
-          sed -i 's/versionName "[^"]*"/versionName "1.0.15"/' android/app/build.gradle
+          sed -i 's/versionCode [0-9]*/versionCode 100016/' android/app/build.gradle
+          sed -i 's/versionName "[^"]*"/versionName "1.0.16"/' android/app/build.gradle
       - name: Sync Capacitor
         run: npx cap sync android
+      - name: Verify packaged web assets
+        run: |
+          test -s android/app/src/main/assets/public/index.html
+          test "$(find android/app/src/main/assets/public -name '*.js' | wc -l)" -gt 0
       - name: Configure signing
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -60,6 +81,6 @@ jobs:
         run: ./gradlew bundleRelease --no-daemon
       - uses: actions/upload-artifact@v4
         with:
-          name: culto-ccb-26
+          name: culto-ccb-27
           path: android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
