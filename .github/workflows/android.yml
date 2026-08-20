@@ -30,101 +30,80 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps --no-audit --no-fund
 
-      - name: Create Android SPA entry files
+      - name: Create pure client Android entry
+        shell: bash
         run: |
-          cp src/start.ts src/start.ts.original
-          cp src/android-entry.tsx src/start.ts
           cat > index.html <<'EOF'
           <!doctype html>
           <html lang="pt-BR">
-          <head>
-            <meta charset="UTF-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <meta name="theme-color" content="#0f172a" />
-            <title>Deuteronômio 28</title>
-          </head>
-          <body>
-            <div id="root"></div>
-            <script type="module" src="/src/start.ts"></script>
-          </body>
+            <head>
+              <meta charset="UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+              <title>Deuteronômio 28</title>
+            </head>
+            <body>
+              <div id="root"></div>
+              <script type="module" src="/src/android-entry.tsx"></script>
+            </body>
           </html>
           EOF
           cat > vite.android.config.ts <<'EOF'
-          import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-
+          import { defineConfig } from 'vite';
+          import react from '@vitejs/plugin-react';
+          import tsconfigPaths from 'vite-tsconfig-paths';
           export default defineConfig({
-            base: "./",
-            tanstackStart: {
-              server: { entry: "server" },
-            },
+            base: './',
+            plugins: [react(), tsconfigPaths()],
             build: {
-              outDir: "android-dist",
+              outDir: 'android-dist',
               emptyOutDir: true,
-              rollupOptions: { input: "index.html" },
+              sourcemap: false,
             },
           });
           EOF
 
-      - name: Build Android SPA assets
-        run: |
-          npm exec vite -- build --config vite.android.config.ts || echo "Vite/TanStack terminou com código não-zero após gerar os assets; validando a saída estática."
-          rm -rf www
-          mkdir -p www
-          cp -R android-dist/. www/
-          if [ ! -s www/index.html ]; then
-            ENTRY=$(grep -l "createRoot" www/assets/*.js | head -n 1 || true)
-            test -n "$ENTRY"
-            ENTRY_NAME=$(basename "$ENTRY")
-            cat > www/index.html <<EOF
-          <!doctype html>
-          <html lang="pt-BR">
-          <head>
-            <meta charset="UTF-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <title>Deuteronômio 28</title>
-          </head>
-          <body>
-            <div id="root"></div>
-            <script type="module" src="./assets/$ENTRY_NAME"></script>
-          </body>
-          </html>
-          EOF
-          fi
-          test -s www/index.html
-          grep -R "createRoot" www/assets >/dev/null
+      - name: Build pure client SPA assets
+        run: npm exec vite -- build --config vite.android.config.ts
 
-      - name: Add Capacitor Android platform
-        run: npx cap add android
+      - name: Validate SPA output
+        shell: bash
+        run: |
+          test -s android-dist/index.html
+          grep -q 'android-entry' android-dist/index.html
+          test -d android
 
       - name: Set Android version
-        working-directory: android
+        shell: bash
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path('app/build.gradle')
-          text = path.read_text()
-          text = text.replace('versionCode 1', 'versionCode 100015')
-          text = text.replace('versionName "1.0"', 'versionName "1.0.15"')
-          path.write_text(text)
-          print('Configured versionCode 100015 and versionName 1.0.15')
-          PY
-          grep -E 'versionCode|versionName' app/build.gradle
+          sed -i "s/versionCode [0-9]*/versionCode 100015/" android/app/build.gradle
+          sed -i "s/versionName \"[^"]*\"/versionName \"1.0.15\"/" android/app/build.gradle
 
-      - name: Sync Capacitor Android
+      - name: Sync Capacitor Android assets
         run: npx cap sync android
 
-      - name: Prepare signing key
+      - name: Configure signing
+        shell: bash
         env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.keystore"
+          echo "$KEYSTORE_B64" | base64 --decode > android/app/release.keystore
+          cat >> android/gradle.properties <<EOF
+          MYAPP_UPLOAD_STORE_FILE=release.keystore
+          MYAPP_UPLOAD_STORE_PASSWORD=$KEYSTORE_PASSWORD
+          MYAPP_UPLOAD_KEY_ALIAS=$KEY_ALIAS
+          MYAPP_UPLOAD_KEY_PASSWORD=$KEY_PASSWORD
+          EOF
 
       - name: Build signed AAB
         working-directory: android
-        run: ./gradlew bundleRelease -Pandroid.injected.signing.store.file="$RUNNER_TEMP/release.keystore" -Pandroid.injected.signing.store.password="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" -Pandroid.injected.signing.key.alias="${{ secrets.ANDROID_KEY_ALIAS }}" -Pandroid.injected.signing.key.password="${{ secrets.ANDROID_KEY_PASSWORD }}"
+        run: ./gradlew bundleRelease --no-daemon
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: culto-ccb-${{ github.run_number }}
+          name: culto-ccb-26
           path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
