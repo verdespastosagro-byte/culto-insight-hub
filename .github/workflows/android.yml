@@ -59,8 +59,8 @@ jobs:
           test "$(find android/app/src/main/assets/public -name '*.js' | wc -l)" -gt 0
       - name: Set Android version
         run: |
-          sed -i 's/versionCode [0-9]*/versionCode 100017/' android/app/build.gradle
-          sed -i 's/versionName "[^"]*"/versionName "1.0.17"/' android/app/build.gradle
+          sed -i 's/versionCode [0-9]*/versionCode 100018/' android/app/build.gradle
+          sed -i 's/versionName "[^"]*"/versionName "1.0.18"/' android/app/build.gradle
       - name: Configure signing
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
